@@ -29,6 +29,42 @@ function groupMantenimientoByPlaca(items) {
     });
 }
 
+/** Agrupa gastos del mismo día + misma placa (resumen, no 1 card por producto). */
+function groupMantenimientoByFechaPlaca(items) {
+  const map = new Map();
+  (items || []).forEach((m) => {
+    const placa = (typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(m.placa) : m.placa) || m.placa || '';
+    const fecha = (typeof normalizeDateISO === 'function' ? normalizeDateISO(m.fecha) : m.fecha) || '';
+    const key = `${fecha}|${placa}`;
+    if (!map.has(key)) {
+      map.set(key, { fecha, placa, gastos: [] });
+    }
+    map.get(key).gastos.push(m);
+  });
+
+  return [...map.values()]
+    .map((g) => {
+      const gastos = [...g.gastos].sort(compareMaintRecords);
+      const total = gastos.reduce((s, x) => s + (Number(x.monto) || 0), 0);
+      const horas = [...new Set(gastos.map((x) =>
+        (typeof displayGastoHora === 'function' ? displayGastoHora(x) : formatTime(x.hora))
+      ).filter((h) => h && h !== '\u2014'))];
+      return {
+        fecha: g.fecha,
+        placa: g.placa,
+        gastos,
+        total,
+        count: gastos.length,
+        horaLabel: horas.length === 1 ? horas[0] : (horas.length > 1 ? `${horas.length} horas` : '\u2014'),
+        chofer: typeof getChoferByPlaca === 'function' ? getChoferByPlaca(g.placa) : ''
+      };
+    })
+    .sort((a, b) =>
+      b.fecha.localeCompare(a.fecha) ||
+      a.placa.localeCompare(b.placa, 'es')
+    );
+}
+
 function renderMaintActionButtons(id) {
   return `
     <div class="actions-group">
@@ -37,13 +73,14 @@ function renderMaintActionButtons(id) {
     </div>`;
 }
 
-function maintTableRowHtml(m) {
+function maintTableRowHtml(m, options = {}) {
   const placa = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(m.placa) : m.placa;
+  const hideMeta = !!options.hideMeta;
   return `
     <tr data-maint-id="${m.id}" data-maint-placa="${escapeHtml(placa)}">
-      <td class="maint-col-fecha">${formatDate(m.fecha)}</td>
+      <td class="maint-col-fecha">${hideMeta ? '' : formatDate(m.fecha)}</td>
       <td class="maint-col-hora"><time datetime="${m.fecha}T${m.hora || '00:00'}">${typeof displayGastoHora === 'function' ? displayGastoHora(m) : formatTime(m.hora)}</time></td>
-      <td class="maint-col-placa">${escapeHtml(placa)}</td>
+      <td class="maint-col-placa">${hideMeta ? '' : escapeHtml(placa)}</td>
       <td class="num maint-col-un">${formatMaintUnidad(m.unidad)}</td>
       <td class="maint-col-desc">${escapeHtml(m.descripcion)}</td>
       <td class="num">${formatMoney(m.costoUnit != null ? m.costoUnit : m.monto)}</td>
@@ -52,35 +89,67 @@ function maintTableRowHtml(m) {
     </tr>`;
 }
 
-function maintExpenseCardHtml(m, i = 0) {
-  const placa = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(m.placa) : m.placa;
+function maintExpenseGroupCardHtml(group, i = 0) {
+  const placa = group.placa || '';
+  const productos = (group.gastos || []).map((m) => `
+    <li class="maint-expense-group__item" data-maint-id="${m.id}">
+      <div class="maint-expense-group__item-main">
+        <span class="maint-expense-group__item-name">${escapeHtml(m.descripcion || 'Sin descripción')}</span>
+        <span class="maint-expense-group__item-meta">Un. ${formatMaintUnidad(m.unidad)} · ${formatMoney(m.costoUnit != null ? m.costoUnit : m.monto)}</span>
+      </div>
+      <strong class="maint-expense-group__item-total">${formatMoney(m.monto)}</strong>
+      <div class="maint-expense-group__item-actions">
+        <button type="button" class="btn btn--action btn--action-edit btn--sm btn--action-icon" title="Editar" aria-label="Editar" onclick="editMantenimiento('${m.id}')">${lucideIcon('square-pen', 'lucide-icon--btn')}</button>
+        <button type="button" class="btn btn--action btn--action-delete btn--sm btn--action-icon" title="Eliminar" aria-label="Eliminar" onclick="deleteMantenimiento('${m.id}')">${lucideIcon('trash-2', 'lucide-icon--btn')}</button>
+      </div>
+    </li>
+  `).join('');
+
   return `
-    <article class="maint-expense-card" data-maint-id="${m.id}" data-maint-placa="${escapeHtml(placa)}" style="animation-delay:${i * 0.04}s">
+    <article class="maint-expense-card maint-expense-card--group" data-maint-fecha="${escapeHtml(group.fecha)}" data-maint-placa="${escapeHtml(placa)}" style="animation-delay:${i * 0.04}s">
       <div class="maint-expense-card__head">
-        <time class="maint-expense-card__when" datetime="${m.fecha}T${m.hora || '00:00'}">
-          <span class="maint-expense-card__fecha">${formatDate(m.fecha)}</span>
-          <span class="maint-expense-card__hora">${typeof displayGastoHora === 'function' ? displayGastoHora(m) : formatTime(m.hora)}</span>
+        <time class="maint-expense-card__when" datetime="${group.fecha}">
+          <span class="maint-expense-card__fecha">${formatDate(group.fecha)}</span>
+          <span class="maint-expense-card__hora">${escapeHtml(group.horaLabel || '\u2014')}</span>
         </time>
-        <span class="maint-expense-card__monto">${formatMoney(m.monto)}</span>
+        <span class="maint-expense-card__monto">${formatMoney(group.total)}</span>
       </div>
-      <p class="maint-expense-card__desc">${escapeHtml(m.descripcion)}</p>
-      <div class="maint-expense-card__meta">
+      <div class="maint-expense-card__meta maint-expense-card__meta--group">
         <span>Placa <strong>${escapeHtml(placa)}</strong></span>
-        <span>Un. <strong>${formatMaintUnidad(m.unidad)}</strong></span>
-        <span>Costo <strong>${formatMoney(m.costoUnit != null ? m.costoUnit : m.monto)}</strong></span>
+        <span><strong>${group.count}</strong> producto${group.count !== 1 ? 's' : ''}</span>
       </div>
-      <div class="maint-expense-card__actions">
-        <button type="button" class="btn btn--action btn--action-edit btn--sm btn--icon-text" onclick="editMantenimiento('${m.id}')">${ICON_EDIT}</button>
-        <button type="button" class="btn btn--action btn--action-delete btn--sm btn--icon-text" onclick="deleteMantenimiento('${m.id}')">${ICON_DELETE}</button>
-      </div>
+      <ul class="maint-expense-group__list" role="list">
+        ${productos}
+      </ul>
     </article>`;
 }
 
 function renderMaintMobilePage(slice) {
-  return `<div class="maint-vehicle__cards">${slice.map((m, i) => maintExpenseCardHtml(m, i)).join('')}</div>`;
+  const groups = Array.isArray(slice) && slice[0]?.gastos
+    ? slice
+    : groupMantenimientoByFechaPlaca(slice);
+  return `<div class="maint-vehicle__cards">${groups.map((g, i) => maintExpenseGroupCardHtml(g, i)).join('')}</div>`;
 }
 
 function renderMaintDesktopPage(slice) {
+  const groups = Array.isArray(slice) && slice[0]?.gastos
+    ? slice
+    : groupMantenimientoByFechaPlaca(slice);
+
+  const body = groups.map((g) => {
+    const rows = (g.gastos || []).map((m, idx) => maintTableRowHtml(m, { hideMeta: idx > 0 })).join('');
+    return `
+      <tr class="maint-group-head" data-maint-fecha="${escapeHtml(g.fecha)}" data-maint-placa="${escapeHtml(g.placa)}">
+        <td colspan="8">
+          <div class="maint-group-head__inner">
+            <span><strong>${formatDate(g.fecha)}</strong> · ${escapeHtml(g.placa)} · ${g.count} producto${g.count !== 1 ? 's' : ''}</span>
+            <strong>${formatMoney(g.total)}</strong>
+          </div>
+        </td>
+      </tr>
+      ${rows}`;
+  }).join('');
+
   return `
     <section class="maint-vehicle maint-vehicle--paged">
       <div class="table-wrapper maint-vehicle__table-wrap">
@@ -98,7 +167,7 @@ function renderMaintDesktopPage(slice) {
             </tr>
           </thead>
           <tbody>
-            ${slice.map((m) => maintTableRowHtml(m)).join('')}
+            ${body}
           </tbody>
         </table>
       </div>
@@ -163,8 +232,8 @@ function renderMantenimiento() {
   }
 
   const pageSize = getListPageSize();
-  const sortedItems = [...items].sort(compareMaintRecords);
-  const meta = paginateItems(sortedItems, maintPage, pageSize);
+  const groupedItems = groupMantenimientoByFechaPlaca(items);
+  const meta = paginateItems(groupedItems, maintPage, pageSize);
   maintPage = meta.page;
 
   if (items.length === 0) {
@@ -199,7 +268,7 @@ function renderMantenimiento() {
   const maintCount = $('#maintCount');
   if (maintCount) {
     const textEl = maintCount.querySelector('.panel__count__text') || maintCount;
-    textEl.textContent = `${items.length} gasto${items.length !== 1 ? 's' : ''}`;
+    textEl.textContent = `${items.length} gasto${items.length !== 1 ? 's' : ''} · ${groupedItems.length} día${groupedItems.length !== 1 ? 's' : ''}`;
   }
   const maintWelcomeCount = $('#maintWelcomeCount');
   if (maintWelcomeCount) {

@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=205">
+  <link rel="stylesheet" href="css/main.css?v=211">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <link rel="icon" href="assets/icon-192.png?v=1" type="image/png" sizes="192x192">
   <link rel="icon" href="assets/logo-truck.svg?v=3" type="image/svg+xml">
@@ -325,18 +325,17 @@
           <header class="camp-list-panel__head">
             <div class="camp-list-panel__title-group">
               <h2 class="camp-list-panel__title">Viajes guardados</h2>
-              <p class="camp-list-panel__sub">Hoy, ayer y historial por fecha</p>
+              <p class="camp-list-panel__sub">Últimos registros e historial por fecha</p>
             </div>
             <span class="camp-list-panel__count" id="campListCount" aria-live="polite">0</span>
           </header>
 
           <div class="camp-list-controls">
             <div class="camp-list-toolbar camp-list-toolbar--simple">
-              <div class="camp-list-search-wrap">
-                <input type="search" id="campListSearch" class="field-input camp-list-search" placeholder="Buscar nombre o placa…" autocomplete="off" enterkeyhint="search">
-                <button type="button" class="camp-list-search__clear" id="campListClear" aria-label="Limpiar búsqueda" hidden>
-                  <i data-lucide="x" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i>
-                </button>
+              <div class="camp-list-placa-wrap">
+                <label class="camp-list-placa-label" for="campListPlacaPicker">Placa</label>
+                <input type="hidden" id="campListPlaca" value="">
+                <div id="campListPlacaPicker" class="camp-list-placa-picker-mount"></div>
               </div>
               <div class="camp-list-fecha-bar">
                 <input type="hidden" id="campListFecha" value="">
@@ -347,8 +346,7 @@
                 </button>
               </div>
             </div>
-            <input type="hidden" id="campListPlaca" value="">
-            <div id="campListPlacaPicker" hidden></div>
+            <button type="button" class="btn btn--ghost btn--sm camp-list-clear" id="campListClear" hidden>Limpiar</button>
           </div>
 
           <div class="camp-historial-results" id="campHistorialResults" hidden></div>
@@ -604,22 +602,23 @@
   <script src="js/core.js?v=3"></script>
   <script src="js/config/constants.js?v=8"></script>
   <script src="js/core/utils.js?v=11"></script>
-  <script src="js/services/sync.js?v=15"></script>
+  <script src="js/services/sync.js?v=16"></script>
+  <script src="js/services/drafts.js?v=1"></script>
   <script src="js/core/placas.js?v=4"></script>
   <script src="js/components/pickers.js?v=12"></script>
-  <script src="js/core/calculations.js?v=18"></script>
-  <script src="js/services/render.js?v=13"></script>
-  <script src="js/components/modals.js?v=12"></script>
+  <script src="js/core/calculations.js?v=19"></script>
+  <script src="js/services/render.js?v=14"></script>
+  <script src="js/components/modals.js?v=14"></script>
   <script src="js/pages/camiones.js?v=14"></script>
-  <script src="js/pages/mantenimiento.js?v=14"></script>
-  <script src="js/pages/viajes.js?v=43"></script>
+  <script src="js/pages/mantenimiento.js?v=21"></script>
+  <script src="js/pages/viajes.js?v=47"></script>
   <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="js/components/alerts.js?v=8"></script>
   <script src="js/components/shell.js?v=8"></script>
-  <script src="js/components/nav.js?v=4"></script>
+  <script src="js/components/nav.js?v=5"></script>
   <script src="js/offline.js?v=2"></script>
-  <script src="js/app.js?v=18"></script>
+  <script src="js/app.js?v=21"></script>
   <script src="js/components/welcome.js?v=1"></script>
 </body>
 </html>

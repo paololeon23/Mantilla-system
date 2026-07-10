@@ -51,33 +51,89 @@ function isNombreCampamento(nombre) {
 }
 
 function buildCampamentosFromOperaciones() {
-  const ops = (state.operaciones || []).filter((op) => {
-    if (typeof isCampamentoCliente === 'function') return isCampamentoCliente(op.cliente);
-    return (op.cliente || '').toLowerCase().includes('campamento igor');
+  return rebuildCampamentosFromOperaciones({ replace: true });
+}
+
+/**
+ * Reconstruye fichas de viaje (campamentos) desde operaciones.
+ * Así el pull de Sheets se refleja en "Viajes guardados".
+ */
+function rebuildCampamentosFromOperaciones(options = {}) {
+  const replace = options.replace !== false;
+  if (!state.operaciones) state.operaciones = [];
+  if (!state.campamentos) state.campamentos = [];
+
+  const money = (v) => (typeof parseMoneyNumber === 'function' ? parseMoneyNumber(v) : Number(v) || 0);
+  const normFecha = (v) => (typeof normalizeDateISO === 'function' ? normalizeDateISO(v) : String(v || ''));
+  const normPlaca = (v) => (typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(v) : String(v || ''));
+
+  const prevById = new Map((state.campamentos || []).map((c) => [String(c.id), c]));
+  const prevByKey = new Map();
+  (state.campamentos || []).forEach((c) => {
+    const key = `${String(c.nombre || '').trim().toLowerCase()}|${normFecha(c.fecha)}`;
+    prevByKey.set(key, c);
   });
-  const byDate = {};
-  ops.forEach((op) => {
-    if (!byDate[op.fecha]) byDate[op.fecha] = [];
-    byDate[op.fecha].push(op);
-  });
-  return Object.keys(byDate).sort().map((fecha) => ({
-    id: uid('camp'),
-    nombre: 'Campamento Igor',
-    fecha,
-    tarifa: byDate[fecha][0]?.tarifa || 110,
-    filas: byDate[fecha].map((op) => ({
-      cliente: op.cliente || '',
-      dniRuc: op.dniRuc || '',
+
+  const groups = new Map();
+
+  (state.operaciones || []).forEach((op) => {
+    if (!op?.placa || !(money(op.peso) > 0)) return;
+    const fecha = normFecha(op.fecha);
+    if (!fecha) return;
+
+    const nombre = String(op.cliente || '').trim() || 'Sin cliente';
+    const key = `${nombre.toLowerCase()}|${fecha}`;
+
+    let camp = groups.get(key);
+    if (!camp) {
+      const prev = (op.campamentoId && prevById.get(String(op.campamentoId))) || prevByKey.get(key);
+      camp = {
+        id: prev?.id || uid('camp'),
+        nombre: prev?.nombre || nombre,
+        fecha,
+        tarifa: money(op.tarifa) || prev?.tarifa || 110,
+        saldoAnterior: prev?.saldoAnterior || 0,
+        filas: []
+      };
+      groups.set(key, camp);
+    }
+
+    const tarifa = money(op.tarifa);
+    if (tarifa > 0) camp.tarifa = tarifa;
+
+    camp.filas.push({
+      opId: String(op.id || ''),
+      fecha,
+      cliente: nombre,
       producto: op.producto || '',
-      fecha: op.fecha || fecha,
-      toneladas: op.peso,
-      guia: op.guia,
-      placa: op.placa,
-      pesaje: op.pesaje,
-      combustible: op.combustible || 0,
-      viaticos: op.viaticos || 0
-    }))
-  }));
+      dniRuc: op.dniRuc || '',
+      toneladas: money(op.peso),
+      guia: money(op.guia),
+      placa: normPlaca(op.placa),
+      pesaje: money(op.pesaje),
+      combustible: money(op.combustible),
+      viaticos: money(op.viaticos)
+    });
+
+    op.campamentoId = camp.id;
+  });
+
+  const next = [...groups.values()].sort((a, b) =>
+    b.fecha.localeCompare(a.fecha) || String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es')
+  );
+
+  if (!replace && !next.length) return false;
+
+  const prevSig = (state.campamentos || []).map((c) =>
+    `${c.id}|${c.fecha}|${c.nombre}|${(c.filas || []).map((f) => f.opId || f.placa).join(',')}`
+  ).join(';');
+  const nextSig = next.map((c) =>
+    `${c.id}|${c.fecha}|${c.nombre}|${(c.filas || []).map((f) => f.opId || f.placa).join(',')}`
+  ).join(';');
+
+  if (prevSig === nextSig) return false;
+  state.campamentos = next;
+  return true;
 }
 
 function syncOperacionesFromCampamento(camp) {
@@ -185,6 +241,9 @@ function loadData() {
         });
       });
       purgeStaleCampamentos();
+      if ((state.operaciones || []).length) {
+        rebuildCampamentosFromOperaciones();
+      }
       if (!state.camiones) state.camiones = [];
       if (!state.mantenimiento) state.mantenimiento = [];
       (state.mantenimiento || []).forEach((m) => {
@@ -271,17 +330,33 @@ function isCampamentoWithinRetention(camp) {
   return effective >= cutoff;
 }
 
+/** Últimos N viajes para la lista (aunque sean más viejos que hoy/ayer). */
+const CAMP_LIST_RECENT_MIN = 3;
+
+function getRecentCampamentos(minCount = CAMP_LIST_RECENT_MIN) {
+  const all = [...(state.campamentos || [])]
+    .filter((c) => (c.filas || []).some((f) => f.placa && Number(f.toneladas) > 0))
+    .sort((a, b) => {
+      const byDate = campamentoEffectiveDate(b).localeCompare(campamentoEffectiveDate(a));
+      return byDate || String(b.id).localeCompare(String(a.id));
+    });
+
+  const retained = all.filter(isCampamentoWithinRetention);
+  if (retained.length >= minCount) return retained;
+  return all.slice(0, Math.max(minCount, retained.length));
+}
+
 function purgeStaleCampamentos() {
   if (!state.campamentos) state.campamentos = [];
-  const removedIds = new Set();
+  // No borrar operaciones: el pull las necesita para reconstruir fichas.
+  // Solo limpia fichas muy viejas fuera de retención y fuera del top reciente.
+  const keepIds = new Set(getRecentCampamentos(CAMP_LIST_RECENT_MIN).map((c) => String(c.id)));
+  const before = state.campamentos.length;
   state.campamentos = state.campamentos.filter((c) => {
-    const keep = isCampamentoWithinRetention(c);
-    if (!keep) removedIds.add(c.id);
-    return keep;
+    if (keepIds.has(String(c.id))) return true;
+    return isCampamentoWithinRetention(c);
   });
-  if (removedIds.size) {
-    state.operaciones = (state.operaciones || []).filter((op) => !removedIds.has(op.campamentoId));
-  }
+  return state.campamentos.length !== before;
 }
 
 function registerCatalogValue(key, value) {

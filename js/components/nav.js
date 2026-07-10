@@ -33,20 +33,6 @@
     }
   }
 
-  /** mainWrapper + modales; la bottom-nav queda fija para no parpadear */
-  function collectShellNodes(root) {
-    const start = root.getElementById('mainWrapper');
-    if (!start) return [];
-    const nodes = [];
-    let el = start;
-    while (el) {
-      if (el.id === 'bottomNav' || el.tagName === 'SCRIPT') break;
-      nodes.push(el);
-      el = el.nextElementSibling;
-    }
-    return nodes;
-  }
-
   function syncNavActive(page) {
     document.querySelectorAll('.sidebar__nav .nav-btn[href]').forEach((link) => {
       const linkPage = pageFromHref(link.href);
@@ -94,15 +80,50 @@
     return xhr.responseText;
   }
 
-  function replaceShell(doc) {
-    const newNodes = collectShellNodes(doc).map((n) => n.cloneNode(true));
-    const oldNodes = collectShellNodes(document);
-    if (!newNodes.length || !oldNodes.length) throw new Error('Shell no encontrado');
+  /** Modales que van después de bottom-nav (hasta los <script>). */
+  function collectModals(root) {
+    const bottom = root.getElementById('bottomNav');
+    const nodes = [];
+    let el = bottom ? bottom.nextElementSibling : null;
+    while (el) {
+      if (el.tagName === 'SCRIPT') break;
+      nodes.push(el);
+      el = el.nextElementSibling;
+    }
+    return nodes;
+  }
 
-    const parent = oldNodes[0].parentNode;
-    const anchor = oldNodes[oldNodes.length - 1].nextSibling;
-    oldNodes.forEach((n) => n.remove());
-    newNodes.forEach((n) => parent.insertBefore(n, anchor));
+  function isPickerBackdrop(el) {
+    return el?.id === 'dpBackdrop' || el?.id === 'msBackdrop';
+  }
+
+  function replaceShell(doc) {
+    const newMain = doc.getElementById('mainWrapper');
+    const oldMain = document.getElementById('mainWrapper');
+    if (!newMain || !oldMain) throw new Error('Shell no encontrado');
+
+    oldMain.replaceWith(newMain.cloneNode(true));
+
+    const bottomNav = document.getElementById('bottomNav');
+    const parent = bottomNav?.parentNode || document.body;
+
+    // Quitar modales de la página anterior (después del bottom-nav)
+    let sibling = bottomNav?.nextElementSibling;
+    while (sibling && sibling.tagName !== 'SCRIPT') {
+      const next = sibling.nextElementSibling;
+      if (!isPickerBackdrop(sibling)) sibling.remove();
+      sibling = next;
+    }
+
+    // Insertar antes del primer <script> (o al final del body)
+    let anchor = bottomNav ? bottomNav.nextSibling : null;
+    while (anchor && anchor.nodeType === 1 && anchor.tagName !== 'SCRIPT') {
+      anchor = anchor.nextSibling;
+    }
+
+    collectModals(doc).forEach((n) => {
+      parent.insertBefore(n.cloneNode(true), anchor);
+    });
 
     const page = doc.body?.dataset?.page || pageFromHref(location.href) || 'viajes';
     document.body.dataset.page = page;

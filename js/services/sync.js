@@ -974,45 +974,31 @@
 
 
   function reconcileCampamentosAfterViajesPull() {
+    // Reconstruir fichas desde operaciones del servidor (refleja historial en la lista)
+    if (typeof rebuildCampamentosFromOperaciones === 'function') {
+      return rebuildCampamentosFromOperaciones();
+    }
 
     if (!state.campamentos) return false;
 
     const opIds = new Set((state.operaciones || []).map((o) => String(o.id)));
-
     let changed = false;
 
-
-
     state.campamentos = state.campamentos.map((camp) => {
-
       const filas = (camp.filas || []).filter((f) => {
-
         if (!f.opId) return true;
-
         if (opIds.has(String(f.opId))) return true;
-
         changed = true;
-
         return false;
-
       });
-
       return { ...camp, filas };
-
     }).filter((camp) => {
-
       const valid = (camp.filas || []).some((f) => f.placa && Number(f.toneladas) > 0);
-
       if (!valid) changed = true;
-
       return valid;
-
     });
 
-
-
     return changed;
-
   }
 
 
@@ -1147,7 +1133,10 @@
 
 
 
-      const changedCamps = changedViajes ? reconcileCampamentosAfterViajesPull() : false;
+      // Siempre reconstruir fichas si el fetch de viajes ok (refleja historial aunque local esté vacío)
+      const changedCamps = viajesRes.ok
+        ? reconcileCampamentosAfterViajesPull()
+        : false;
 
 
 

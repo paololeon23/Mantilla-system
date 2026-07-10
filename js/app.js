@@ -1,11 +1,85 @@
 // ---- Init ----
-function handleModalClose(id) {
+function isViajeFormDirty() {
+  if ($('#campId')?.value) return true;
+  if (($('#campNombre')?.value || '').trim()) return true;
+  if (Number($('#campSaldoAnterior')?.value) > 0) return true;
+  try {
+    const filas = typeof getCampamentoFilasFromDom === 'function' ? getCampamentoFilasFromDom() : [];
+    return filas.some((f) => (f.placa && String(f.placa).trim()) || Number(f.toneladas) > 0);
+  } catch (_) {
+    return false;
+  }
+}
+
+function isMaintFormDirty() {
+  const form = $('#formMantenimiento');
+  if (!form) return false;
+  if ($('#maintId')?.value || form.dataset.editIds) return true;
+  if (($('#maintPlaca')?.value || '').trim()) return true;
+  try {
+    const items = typeof getMaintItemsFromDom === 'function' ? getMaintItemsFromDom() : [];
+    return items.some((i) => (i.descripcion && String(i.descripcion).trim()) || Number(i.costoUnit) > 0);
+  } catch (_) {
+    return false;
+  }
+}
+
+function isCamionFormDirty() {
+  if ($('#camionId')?.value) return true;
+  if (($('#camionPlaca')?.value || '').trim()) return true;
+  if (($('#camionChofer')?.value || '').trim()) return true;
+  if (($('#camionTelefono')?.value || '').trim()) return true;
+  if (($('#camionMarca')?.value || '').trim()) return true;
+  return false;
+}
+
+async function confirmDiscardModalData() {
+  if (typeof showConfirm !== 'function') return true;
+  return showConfirm({
+    title: '¿Cerrar sin guardar?',
+    message: 'Se perderán los datos que aún no guardaste.',
+    confirmLabel: 'Cerrar',
+    cancelLabel: 'Seguir',
+    danger: true
+  });
+}
+
+async function handleModalClose(id) {
   if (id === 'modalViaje') {
+    if (isViajeFormDirty()) {
+      const ok = await confirmDiscardModalData();
+      if (!ok) return;
+    }
     resetViajeForm();
+    Mantilla.drafts?.clearViaje?.();
+    return;
+  }
+  if (id === 'modalMantenimiento') {
+    if (isMaintFormDirty()) {
+      const ok = await confirmDiscardModalData();
+      if (!ok) return;
+    }
+    const form = $('#formMantenimiento');
+    if (form) {
+      form.reset();
+      form.dataset.editIds = '';
+      $('#maintId').value = '';
+    }
+    Mantilla.drafts?.clearGasto?.();
+    closeModal(id);
+    return;
+  }
+  if (id === 'modalCamion') {
+    if (isCamionFormDirty()) {
+      const ok = await confirmDiscardModalData();
+      if (!ok) return;
+    }
+    closeModal(id);
     return;
   }
   if (id === 'modalChoferGastos' && typeof cancelChoferGastosModal === 'function') {
     cancelChoferGastosModal();
+    return;
   }
   closeModal(id);
 }
@@ -17,26 +91,25 @@ function wireModalDelegation() {
   document.addEventListener('click', (e) => {
     const closeBtn = e.target.closest('[data-close]');
     if (closeBtn) {
+      e.preventDefault();
       handleModalClose(closeBtn.dataset.close);
       return;
     }
 
+    // Tocar fuera del modal (backdrop) también cierra
     const overlay = e.target.closest('.modal-overlay');
-    if (!overlay || e.target !== overlay) return;
+    if (!overlay || !overlay.classList.contains('modal-overlay--open')) return;
+    if (e.target !== overlay) return;
 
     if (overlay.id === 'modalConfirm') {
       finishConfirm(false);
       return;
     }
-    if (overlay.id === 'modalViaje') {
-      resetViajeForm();
+    if (overlay.id === 'modalWelcome') {
+      closeModal(overlay.id);
       return;
     }
-    if (overlay.id === 'modalChoferGastos' && typeof cancelChoferGastosModal === 'function') {
-      cancelChoferGastosModal();
-      return;
-    }
-    closeModal(overlay.id);
+    handleModalClose(overlay.id);
   });
 }
 
@@ -175,6 +248,11 @@ function initViajesPage() {
 }
 
 function initMantenimientoPage() {
+  // Pickers apuntan al DOM actual (importante tras SPA)
+  dpMaintFecha = null;
+  tpMaintHora = null;
+  maintPlacaPicker = null;
+
   if (typeof initMaintPlacaPicker === 'function') initMaintPlacaPicker();
   if (typeof wireMaintItemsForm === 'function') wireMaintItemsForm();
   if ($('#maintFecha') && $('#maintFechaPicker')) {
@@ -193,10 +271,22 @@ function initMantenimientoPage() {
     renderMantenimiento();
   }
 
-  $('#btnAddMantenimiento')?.addEventListener('click', () => openMantenimientoModal());
-  $('#btnAddMain')?.addEventListener('click', () => openMantenimientoModal());
-  $('#fabAdd')?.addEventListener('click', () => openMantenimientoModal());
-  $('#formMantenimiento')?.addEventListener('submit', saveMantenimiento);
+  const page = document.body;
+  if (!page.dataset.maintActionsWired) {
+    page.dataset.maintActionsWired = '1';
+    document.addEventListener('click', (e) => {
+      if (getPage() !== 'mantenimiento') return;
+      if (e.target.closest('#btnAddMantenimiento, #btnAddMain, #fabAdd')) {
+        e.preventDefault();
+        openMantenimientoModal();
+      }
+    });
+    document.addEventListener('submit', (e) => {
+      if (e.target?.id === 'formMantenimiento') {
+        saveMantenimiento(e);
+      }
+    });
+  }
   refreshLucideIcons();
 }
 
@@ -229,6 +319,10 @@ function refreshCurrentPage() {
 function init() {
   initShared();
   initPageForCurrentRoute();
+  if (window.Mantilla?.drafts?.wire) Mantilla.drafts.wire();
+  if (window.Mantilla?.drafts?.restore) {
+    setTimeout(() => Mantilla.drafts.restore(), 200);
+  }
   if (window.Mantilla?.sync?.init) {
     Mantilla.sync.init().then((result) => {
       if (result?.changed) refreshCurrentPage();

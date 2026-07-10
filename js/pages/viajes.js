@@ -155,6 +155,10 @@ function refreshCampPlacaPickers() {
     picker.updateTrigger();
     updateChoferGastosButton(card);
   });
+  if (campListPlacaPicker) {
+    campListPlacaPicker.renderList();
+    campListPlacaPicker.updateTrigger();
+  }
 }
 
 function initCampPlacaPickers(root = $('#campViajesList')) {
@@ -194,8 +198,8 @@ function initCampListPlacaPicker() {
   const mount = $('#campListPlacaPicker');
   if (!input || !mount || campListPlacaPicker) return;
   campListPlacaPicker = new MantillaSelectPicker(input, mount, {
-    placeholder: 'Todas',
-    title: 'Filtrar por placa',
+    placeholder: 'Todas las placas',
+    title: 'Buscar por placa',
     allowEmpty: true,
     searchable: true,
     getOptions: () => getCamionPlacaPickerOptions(input.value)
@@ -782,7 +786,7 @@ function wireCampViajesList() {
 
 function getCampListFilters() {
   return {
-    q: ($('#campListSearch')?.value || '').trim().toLowerCase(),
+    q: '',
     fecha: (campListFechaFilter || $('#campListFecha')?.value || '').trim(),
     placa: ($('#campListPlaca')?.value || '').trim()
   };
@@ -790,9 +794,11 @@ function getCampListFilters() {
 
 function filterCampamentosForList() {
   const f = getCampListFilters();
-  let items = [...(state.campamentos || [])]
-    .filter(isCampamentoWithinRetention)
-    .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id.localeCompare(a.id));
+  let items = typeof getRecentCampamentos === 'function'
+    ? getRecentCampamentos()
+    : [...(state.campamentos || [])]
+      .filter(isCampamentoWithinRetention)
+      .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id.localeCompare(a.id));
 
   if (f.fecha) {
     const fechaKey = typeof normalizeDateISO === 'function' ? normalizeDateISO(f.fecha) : f.fecha;
@@ -1097,7 +1103,7 @@ function campListEmptyHtml(isFiltered) {
         <i data-lucide="clipboard-list" class="lucide-icon"></i>
       </div>
       <h3 class="camp-list-empty__title">Sin viajes guardados</h3>
-      <p class="camp-list-empty__text">Completa el formulario de arriba y presiona <strong>Guardar viajes</strong>. Aquí verás los registros de hoy y ayer.</p>
+      <p class="camp-list-empty__text">Completa el formulario de arriba y presiona <strong>Guardar viajes</strong>. Aquí verás los últimos registros guardados.</p>
       <button type="button" class="btn btn--primary btn--sm" id="campEmptyAdd">
         <i data-lucide="plus" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i>
         Agregar viaje
@@ -1117,26 +1123,27 @@ function renderCampamentoList() {
   if (!list) return;
 
   const retained = filterCampamentosForList();
-  const allRetained = [...(state.campamentos || [])]
-    .filter(isCampamentoWithinRetention)
-    .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id.localeCompare(a.id));
+  const allRetained = typeof getRecentCampamentos === 'function'
+    ? getRecentCampamentos()
+    : [...(state.campamentos || [])]
+      .filter(isCampamentoWithinRetention)
+      .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id.localeCompare(a.id));
 
   renderCampHistoryMini();
   updateCampListCount(allRetained.length);
 
   const clearBtn = $('#campListClear');
-  const searchVal = $('#campListSearch')?.value?.trim() || '';
-  if (clearBtn) clearBtn.hidden = !searchVal && !campListFechaFilter;
+  const placaVal = $('#campListPlaca')?.value?.trim() || '';
+  if (clearBtn) clearBtn.hidden = !placaVal && !campListFechaFilter;
 
   if (!retained.length) {
-    const isFiltered = allRetained.length > 0 || !!campListFechaFilter;
+    const isFiltered = allRetained.length > 0 || !!campListFechaFilter || !!placaVal;
     list.innerHTML = campListFechaFilter ? '' : campListEmptyHtml(isFiltered);
     $('#campEmptyAdd')?.addEventListener('click', () => {
       resetViajeForm();
       focusViajeForm();
     });
     $('#campEmptyClear')?.addEventListener('click', () => {
-      if ($('#campListSearch')) $('#campListSearch').value = '';
       campListDayFilter = 'all';
       clearCampHistorialResults();
       setCampListPlacaFilter('');
@@ -1167,6 +1174,7 @@ function renderCampamentoList() {
     list.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, pageSize);
   refreshLucideIcons();
+  if (typeof applyPendingCampHighlight === 'function') applyPendingCampHighlight();
 }
 
 function addCampamentoFila() {
@@ -1225,26 +1233,51 @@ function addCampamentoFila() {
 }
 
 
-function goToCampamentoGuardado(campId) {
-  if (!campId) return;
+function goToCampamentoGuardado(campId, options = {}) {
+  if (!campId && !options.nombre) return;
 
   if (typeof closeOverlayPickers === 'function') closeOverlayPickers();
   if (typeof closeModal === 'function') closeModal('modalViaje');
 
-  let items = filterCampamentosForList();
-  let idx = items.findIndex((c) => c.id === campId);
+  // Limpiar filtros para que la ficha recién guardada sea visible
+  campListDayFilter = 'all';
+  clearCampHistorialResults();
+  setCampListPlacaFilter('');
+  campListPage = 1;
 
-  if (idx < 0) {
-    campListDayFilter = 'all';
-    clearCampHistorialResults();
-    if ($('#campListSearch')) $('#campListSearch').value = '';
-    setCampListPlacaFilter('');
-    items = filterCampamentosForList();
+  const matchCamp = (c) => {
+    if (campId && c.id === campId) return true;
+    if (options.nombre && options.fecha) {
+      const fecha = typeof normalizeDateISO === 'function' ? normalizeDateISO(options.fecha) : options.fecha;
+      const cFecha = typeof normalizeDateISO === 'function' ? normalizeDateISO(c.fecha) : c.fecha;
+      return String(c.nombre || '').trim().toLowerCase() === String(options.nombre || '').trim().toLowerCase()
+        && cFecha === fecha;
+    }
+    return false;
+  };
+
+  let items = typeof getRecentCampamentos === 'function'
+    ? getRecentCampamentos()
+    : filterCampamentosForList();
+  let camp = items.find(matchCamp) || (state.campamentos || []).find(matchCamp);
+  if (camp) campId = camp.id;
+
+  items = filterCampamentosForList();
+  let idx = items.findIndex((c) => c.id === campId);
+  if (idx < 0 && camp) {
+    // Asegurar que aparezca en la lista reciente
+    items = getRecentCampamentos ? getRecentCampamentos(Math.max(3, (state.campamentos || []).length)) : (state.campamentos || []);
     idx = items.findIndex((c) => c.id === campId);
   }
-
   campListPage = idx >= 0 ? Math.floor(idx / getListPageSize()) + 1 : 1;
   renderCampamentoList();
+
+  window._pendingCampHighlight = {
+    id: campId,
+    nombre: options.nombre || camp?.nombre || '',
+    fecha: options.fecha || camp?.fecha || '',
+    until: Date.now() + 6000
+  };
 
   const scrollToCard = () => {
     const panel = document.querySelector('.camp-list-panel');
@@ -1252,31 +1285,58 @@ function goToCampamentoGuardado(campId) {
     const target = card || panel;
     if (!target) return false;
 
-    if (panel) panel.classList.add('camp-list-panel--focus');
+    if (panel) {
+      panel.classList.remove('camp-list-panel--focus');
+      void panel.offsetWidth;
+      panel.classList.add('camp-list-panel--focus');
+    }
     if (card) {
       card.classList.remove('campamento-sheet--highlight');
       void card.offsetWidth;
       card.classList.add('campamento-sheet--highlight');
     }
 
-    const top = target.getBoundingClientRect().top + window.pageYOffset - 72;
-    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    try {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    } catch (_) {
+      const top = target.getBoundingClientRect().top + window.pageYOffset - 80;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }
 
     clearTimeout(goToCampamentoGuardado._focusTimer);
     goToCampamentoGuardado._focusTimer = setTimeout(() => {
       panel?.classList.remove('camp-list-panel--focus');
       card?.classList.remove('campamento-sheet--highlight');
-    }, 2800);
+      if (window._pendingCampHighlight?.id === campId) {
+        window._pendingCampHighlight = null;
+      }
+    }, 3200);
 
-    return true;
+    return !!card;
   };
 
-  // Varios intentos: el DOM puede tardar tras resetear el formulario
   requestAnimationFrame(() => {
-    setTimeout(scrollToCard, 50);
-    setTimeout(scrollToCard, 200);
-    setTimeout(scrollToCard, 450);
+    setTimeout(scrollToCard, 60);
+    setTimeout(scrollToCard, 220);
+    setTimeout(scrollToCard, 500);
+    setTimeout(scrollToCard, 900);
   });
+}
+
+/** Si hubo un guardado reciente, vuelve a señalar la ficha tras un re-render/sync. */
+function applyPendingCampHighlight() {
+  const pending = window._pendingCampHighlight;
+  if (!pending || Date.now() > pending.until) {
+    window._pendingCampHighlight = null;
+    return;
+  }
+  const card = document.querySelector(`.campamento-sheet[data-id="${pending.id}"]`);
+  if (!card) {
+    goToCampamentoGuardado(pending.id, { nombre: pending.nombre, fecha: pending.fecha });
+    return;
+  }
+  card.classList.add('campamento-sheet--highlight');
+  document.querySelector('.camp-list-panel')?.classList.add('camp-list-panel--focus');
 }
 
 
@@ -1285,24 +1345,14 @@ function wireCampListPanel() {
   if (!panel || panel.dataset.wired) return;
   panel.dataset.wired = '1';
 
-  const search = $('#campListSearch');
-  let debounce;
-  search?.addEventListener('input', () => {
-    clearTimeout(debounce);
-    debounce = setTimeout(() => {
-      campListPage = 1;
-      renderCampamentoList();
-    }, 200);
-  });
+  initCampListPlacaPicker();
 
   $('#campListClear')?.addEventListener('click', () => {
-    if (search) search.value = '';
     campListDayFilter = 'all';
     clearCampHistorialResults();
     setCampListPlacaFilter('');
     campListPage = 1;
     renderCampamentoList();
-    search?.focus();
   });
 
   initCampListFechaPicker();
@@ -1482,19 +1532,22 @@ function saveCampamento(e) {
   }
 
   campListDayFilter = 'all';
-  if ($('#campListSearch')) $('#campListSearch').value = '';
   setCampListPlacaFilter('');
   campListPage = 1;
 
   const savedCampId = camp.id;
+  const savedNombre = camp.nombre;
+  const savedFecha = camp.fecha;
   resetViajeForm();
   renderOperaciones();
   renderCampamentoList();
 
-  // Ir directo a la tarjeta guardada (después del reset del formulario)
-  setTimeout(() => goToCampamentoGuardado(savedCampId), 80);
+  // Señalar la ficha en "Viajes guardados"
+  setTimeout(() => goToCampamentoGuardado(savedCampId, { nombre: savedNombre, fecha: savedFecha }), 120);
+  setTimeout(() => goToCampamentoGuardado(savedCampId, { nombre: savedNombre, fecha: savedFecha }), 450);
 
   const activas = filas.length;
+  Mantilla.drafts?.clearViaje?.();
   showToast({
     title: isEdit ? 'Viajes actualizados' : 'Viajes guardados',
     detail: alertDetailHtml([

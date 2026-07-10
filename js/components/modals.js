@@ -196,19 +196,55 @@ function openViajeForm(editId) {
 
 function openMantenimientoModal(editId) {
   const form = $('#formMantenimiento');
+  if (!form) {
+    console.warn('[Mantilla] formMantenimiento no está en el DOM');
+    return;
+  }
+
+  // Asegurar pickers tras navegación SPA
+  if (typeof initMaintPlacaPicker === 'function') {
+    if (!maintPlacaPicker || !$('#maintPlacaPicker')?.querySelector('.ms')) {
+      if (typeof maintPlacaPicker !== 'undefined') maintPlacaPicker = null;
+      initMaintPlacaPicker();
+    }
+  }
+  if (!dpMaintFecha && $('#maintFecha') && $('#maintFechaPicker')) {
+    dpMaintFecha = new MantillaDatePicker('#maintFecha', '#maintFechaPicker', { placeholder: 'dd/mm/aaaa', allowEmpty: false });
+  }
+  if (!tpMaintHora && $('#maintHora') && $('#maintHoraPicker')) {
+    tpMaintHora = new MantillaTimePicker('#maintHora', '#maintHoraPicker', {
+      placeholder: 'Elegir hora',
+      title: 'Elegir hora'
+    });
+  }
+  if ($('#maintItemsList') && !$('#maintItemsList').dataset.wired && typeof wireMaintItemsForm === 'function') {
+    wireMaintItemsForm();
+  }
+
   form.reset();
   $('#maintId').value = '';
+  form.dataset.editIds = '';
 
   if (editId) {
     const m = state.mantenimiento.find((x) => x.id === editId);
     if (!m) return;
-    $('#modalMaintEyebrow').textContent = 'Gastos';
-    $('#modalMaintTitle').textContent = m.placa;
+
+    const group = typeof getMaintGroupByFechaPlaca === 'function'
+      ? getMaintGroupByFechaPlaca(m.fecha, m.placa)
+      : [m];
+    const records = group.length ? group : [m];
+
+    $('#modalMaintEyebrow').textContent = 'Editar gastos';
+    $('#modalMaintTitle').textContent = records.length > 1
+      ? `${m.placa} · ${records.length} productos`
+      : (m.placa || 'Gasto');
     $('#maintId').value = m.id;
+    form.dataset.editIds = records.map((r) => r.id).join(',');
     setMaintPlacaValue(m.placa);
     dpMaintFecha?.setValue(m.fecha);
-    tpMaintHora?.setValue(m.hora || nowTime());
-    renderMaintItems([maintItemFromRecord(m)]);
+    const horaShow = (typeof displayGastoHora === 'function' ? displayGastoHora(m) : m.hora) || nowTime();
+    tpMaintHora?.setValue(horaShow === '\u2014' ? (m.hora || nowTime()) : horaShow);
+    renderMaintItems(records.map((r) => maintItemFromRecord(r)));
     setMaintFormMode(true);
   } else {
     $('#modalMaintEyebrow').textContent = 'Gastos';

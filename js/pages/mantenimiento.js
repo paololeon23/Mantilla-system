@@ -1,18 +1,32 @@
 // ---- CRUD ----
 
 function defaultMaintItem() {
-  return { unidad: 1, descripcion: '', costoUnit: '', total: 0 };
+  return { id: '', unidad: 1, descripcion: '', costoUnit: '', total: 0 };
 }
 
 function maintItemFromRecord(m) {
   const unidad = Number(m.unidad) > 0 ? Number(m.unidad) : 1;
   const costoUnit = m.costoUnit != null ? m.costoUnit : (unidad > 0 ? (Number(m.monto) || 0) / unidad : m.monto);
   return {
+    id: m.id || '',
     unidad,
     descripcion: m.descripcion || '',
     costoUnit: costoUnit === '' ? '' : costoUnit,
-    total: Number(m.monto) || 0
+    total: Number(m.monto) || 0,
+    horaRegistro: m.horaRegistro || ''
   };
+}
+
+function getMaintGroupByFechaPlaca(fecha, placa) {
+  const fechaKey = typeof normalizeDateISO === 'function' ? normalizeDateISO(fecha) : String(fecha || '');
+  const placaKey = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(placa) : String(placa || '');
+  return (state.mantenimiento || [])
+    .filter((m) => {
+      const mf = typeof normalizeDateISO === 'function' ? normalizeDateISO(m.fecha) : m.fecha;
+      const mp = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(m.placa) : m.placa;
+      return mf === fechaKey && mp === placaKey;
+    })
+    .sort(typeof compareMaintRecords === 'function' ? compareMaintRecords : ((a, b) => 0));
 }
 
 function calcMaintItemTotal(unidad, costoUnit) {
@@ -23,12 +37,18 @@ function calcMaintItemTotal(unidad, costoUnit) {
 }
 
 function getMaintItemsFromDom() {
-  return [...$('#maintItemsList').querySelectorAll('.maint-item-row')].map((row) => {
+  return [...($('#maintItemsList')?.querySelectorAll('.maint-item-row') || [])].map((row) => {
     const unidad = parseMoneyNumber(maintItemInput(row, 'unidad')?.value) || 0;
     const descripcion = maintItemInput(row, 'descripcion')?.value.trim() || '';
     const costoUnit = parseMoneyNumber(maintItemInput(row, 'costoUnit')?.value);
     const total = calcMaintItemTotal(unidad, costoUnit);
-    return { unidad, descripcion, costoUnit, total };
+    return {
+      id: row.dataset.maintId || '',
+      unidad,
+      descripcion,
+      costoUnit,
+      total
+    };
   });
 }
 
@@ -36,8 +56,9 @@ function maintItemRowHtml(item, index) {
   const num = index + 1;
   const total = calcMaintItemTotal(item.unidad, item.costoUnit);
   const totalVal = total > 0 ? total.toFixed(2) : '';
+  const idAttr = item.id ? ` data-maint-id="${escapeHtml(item.id)}"` : '';
   return `
-    <article class="maint-item-row" data-row="${index}" role="listitem">
+    <article class="maint-item-row" data-row="${index}"${idAttr} role="listitem">
       <span class="maint-item-row__num" aria-hidden="true">${num}</span>
       <div class="maint-item-field maint-item-field--un">
         <label class="maint-item-field__lbl">Unidad</label>
@@ -154,7 +175,6 @@ function wireMaintItemsForm() {
   });
 
   $('#btnAddMaintItem')?.addEventListener('click', () => {
-    if ($('#maintId')?.value) return;
     addMaintItemRow();
   });
 }
@@ -162,8 +182,8 @@ function wireMaintItemsForm() {
 function setMaintFormMode(editMode) {
   const addBtn = $('#btnAddMaintItem');
   const saveBtn = $('#btnSaveMantenimiento');
-  if (addBtn) addBtn.hidden = editMode;
-  if (saveBtn) saveBtn.textContent = editMode ? 'Guardar cambio' : 'Guardar gastos';
+  if (addBtn) addBtn.hidden = false;
+  if (saveBtn) saveBtn.textContent = editMode ? 'Guardar cambios' : 'Guardar gastos';
 }
 
 function saveMantenimiento(e) {
@@ -191,27 +211,60 @@ function saveMantenimiento(e) {
 
   const fecha = normalizeDateISO($('#maintFecha').value) || todayISO();
   const hora = normalizeTime($('#maintHora').value) || nowTime();
-  const editId = $('#maintId').value;
+  const form = $('#formMantenimiento');
+  const editIds = String(form?.dataset?.editIds || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const isEdit = editIds.length > 0 || !!$('#maintId')?.value;
   const synced = [];
+  const deleted = [];
 
-  if (editId) {
-    const item = items[0];
-    const record = {
-      id: editId,
-      placa,
-      fecha,
-      hora,
-      descripcion: item.descripcion,
-      unidad: item.unidad,
-      costoUnit: item.costoUnit,
-      monto: item.total
-    };
-    const idx = state.mantenimiento.findIndex((m) => m.id === editId);
-    if (idx >= 0) state.mantenimiento[idx] = record;
-    synced.push(record);
+  if (isEdit) {
+    const prevById = new Map((state.mantenimiento || []).map((m) => [String(m.id), m]));
+    const keptIds = new Set();
+
+    items.forEach((item) => {
+      const existingId = item.id && editIds.includes(item.id) ? item.id : '';
+      const prev = existingId ? prevById.get(String(existingId)) : null;
+      const record = {
+        id: existingId || uid('mt'),
+        placa,
+        fecha,
+        hora,
+        descripcion: item.descripcion,
+        unidad: item.unidad,
+        costoUnit: item.costoUnit,
+        monto: item.total,
+        horaRegistro: prev?.horaRegistro || ''
+      };
+      if (existingId) {
+        const idx = state.mantenimiento.findIndex((m) => m.id === existingId);
+        if (idx >= 0) state.mantenimiento[idx] = record;
+        else state.mantenimiento.push(record);
+        keptIds.add(String(existingId));
+      } else {
+        state.mantenimiento.push(record);
+      }
+      synced.push(record);
+    });
+
+    editIds.forEach((id) => {
+      if (keptIds.has(String(id))) return;
+      deleted.push(id);
+      state.mantenimiento = state.mantenimiento.filter((m) => m.id !== id);
+    });
+
+    const grand = synced.reduce((s, r) => s + (Number(r.monto) || 0), 0);
     showToast({
-      title: 'Gasto actualizado',
-      detail: alertDetailHtml([{ b: record.placa }, ' · ', { b: formatMoney(record.monto) }])
+      title: 'Gastos actualizados',
+      detail: alertDetailHtml([
+        { b: placa },
+        ' · ',
+        { b: String(synced.length) },
+        ` producto${synced.length !== 1 ? 's' : ''} · `,
+        { b: formatMoney(grand) }
+      ])
     });
   } else {
     const grand = items.reduce((s, item) => s + item.total, 0);
@@ -241,11 +294,18 @@ function saveMantenimiento(e) {
     });
   }
 
+  if (form) {
+    form.dataset.editIds = '';
+    $('#maintId').value = '';
+  }
+
   registerCatalogValue('placas', placa);
   populateMaintFilterPlacas();
 
   saveData();
   Mantilla.sync?.syncGastos?.(synced);
+  deleted.forEach((id) => Mantilla.sync?.syncDelete?.('gastos', id));
+  Mantilla.drafts?.clearGasto?.();
   closeModal('modalMantenimiento');
   renderMantenimiento();
   updateKPIs(filterOperaciones(), filterMantenimiento());
@@ -317,7 +377,9 @@ let maintFilterPlacaPicker;
 function initMaintPlacaPicker() {
   const input = $('#maintPlaca');
   const mount = $('#maintPlacaPicker');
-  if (!input || !mount || maintPlacaPicker) return;
+  if (!input || !mount) return;
+  // Tras navegación SPA el mount es nuevo: recrear el picker
+  if (maintPlacaPicker && mount.querySelector('.ms')) return;
   maintPlacaPicker = new MantillaSelectPicker(input, mount, {
     placeholder: 'Elegir placa',
     title: 'Placa del camión',

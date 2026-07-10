@@ -1384,6 +1384,43 @@
   vertical-align: middle;
 }
 
+/* Móvil: tabla compacta, sin huecos laterales raros */
+@media (max-width: 899px) {
+  .campamento-detail-table-wrap {
+    margin: 0.55rem 0;
+    padding: 0;
+  }
+
+  .campamento-detail-table {
+    font-size: 0.68rem;
+  }
+
+  .campamento-detail-table th {
+    font-size: 0.58rem;
+    letter-spacing: 0.02em;
+    padding: 0.35rem 0.15rem;
+  }
+
+  .campamento-detail-table td {
+    padding: 0.35rem 0.15rem;
+  }
+
+  .campamento-detail-table .col-fecha { width: 19%; }
+  .campamento-detail-table .col-tm { width: 16%; }
+  .campamento-detail-table .col-guia { width: 16%; }
+  .campamento-detail-table .col-placa { width: 30%; }
+  .campamento-detail-table .col-pesaje { width: 19%; }
+
+  .camp-placa-tag {
+    font-size: 0.66rem;
+    padding: 0.12rem 0.28rem;
+    letter-spacing: 0.01em;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: none;
+  }
+}
+
 .camp-num-stepper {
   display: inline-flex;
   align-items: stretch;
@@ -2013,6 +2050,53 @@
   }
 }
 
+.camp-list-placa-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.camp-list-placa-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #6b7c93);
+}
+
+.camp-list-placa-picker-mount {
+  min-width: 0;
+  width: 100%;
+}
+
+.camp-list-placa-picker-mount .ms__trigger {
+  min-height: 2.45rem;
+  width: 100%;
+  border-radius: 10px;
+  border-color: #cddced;
+  background: #fbfdff;
+  font-size: 0.84rem;
+}
+
+.camp-list-placa-picker-mount .ms__trigger:focus,
+.camp-list-placa-picker-mount .ms__trigger[aria-expanded="true"] {
+  border-color: #7eb0e8;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(30, 90, 158, 0.1);
+}
+
+.camp-list-clear {
+  margin-top: 0.15rem;
+  align-self: flex-start;
+}
+
+.camp-list-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
 .camp-list-search-wrap {
   position: relative;
   display: flex;
@@ -2244,40 +2328,41 @@
 }
 
 .camp-list-panel--focus {
-  animation: campListPanelFocus 2.2s ease;
+  animation: campListPanelFocus 2.8s ease;
 }
 
 @keyframes campListPanelFocus {
   0%, 100% { box-shadow: none; }
-  20% {
-    box-shadow: 0 0 0 3px rgba(30, 90, 158, 0.28);
+  15%, 45% {
+    box-shadow: 0 0 0 3px rgba(30, 90, 158, 0.35);
   }
 }
 
 .campamento-sheet--highlight {
-  animation: campSheetHighlight 2.2s ease;
-  outline: 3px solid rgba(30, 90, 158, 0.55);
-  outline-offset: 2px;
-  background: #f0f7ff;
+  animation: campSheetHighlight 2.8s ease;
+  outline: 3px solid #1e5a9e;
+  outline-offset: 3px;
+  background: #e8f1fc;
   position: relative;
   z-index: 2;
+  box-shadow: 0 12px 32px rgba(30, 90, 158, 0.28);
 }
 
 @keyframes campSheetHighlight {
   0% {
-    transform: translateY(0);
-    box-shadow: 0 0 0 0 rgba(30, 90, 158, 0.45);
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(30, 90, 158, 0.5);
+    background: #bfdbfe;
+  }
+  25% {
+    transform: scale(1.015);
+    box-shadow: 0 14px 36px rgba(30, 90, 158, 0.3);
     background: #dbeafe;
   }
-  35% {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 28px rgba(30, 90, 158, 0.22);
-    background: #eff6ff;
-  }
   100% {
-    transform: translateY(0);
-    box-shadow: var(--shadow-sm);
-    background: var(--color-surface, #fff);
+    transform: scale(1);
+    box-shadow: 0 4px 14px rgba(12, 31, 61, 0.08);
+    background: #f8fafc;
     outline-color: transparent;
   }
 }
