@@ -1,0 +1,278 @@
+/* ---- Camiones registrados ---- */
+
+#panelCamiones.panel {
+  padding: 0 1rem 1.25rem;
+}
+
+.camiones-head {
+  margin: 0 0 0.85rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.camiones-head__top {  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.45rem;
+}
+
+.camiones-head__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.panel__count--pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  padding: 0.22rem 0.7rem;
+  border-radius: 99px;
+  background: #e8f0fa;
+  color: var(--color-primary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.camiones-intro {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.camiones-intro strong {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.camiones-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.camiones-empty {
+  text-align: center;
+  padding: 2.5rem 1.5rem 2.25rem;
+  background: var(--color-surface);
+  border: 1px dashed #c5d9ef;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.camiones-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: 0.85rem;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #eef4fc 0%, #e4edf9 100%);
+  border: 1px solid #c5d9ef;
+  color: var(--color-primary);
+}
+
+.camiones-empty__icon .lucide-icon {
+  width: 1.55rem;
+  height: 1.55rem;
+}
+
+.camiones-empty__title {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  letter-spacing: -0.01em;
+}
+
+.camiones-empty__text {
+  margin: 0 auto 1.1rem;
+  max-width: 22rem;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.camiones-empty .btn {
+  min-width: 11rem;
+}
+
+.camion-card {  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.95rem 1rem;
+  box-shadow: var(--shadow-sm);
+  animation: fadeSlideUp 0.35s ease both;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.camion-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.camion-card__placa {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  font-variant-numeric: tabular-nums;
+  padding: 0.28rem 0.62rem;
+  background: #eef4fb;
+  border: 1px solid #d5e3f2;
+  border-radius: 8px;
+}
+
+.camion-card__fecha {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.camion-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.camion-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.camion-card__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.camion-card__value {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  text-align: right;
+  line-height: 1.3;
+}
+
+.camion-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.field-hint {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 899px) {
+  #panelCamiones.panel {
+    padding: 0 1rem 1rem;
+  }
+
+  .camiones-head {
+    margin-bottom: 0.75rem;
+  }
+
+  .camiones-list {
+    gap: 0.65rem;
+  }
+
+  .camiones-empty {
+    padding: 2rem 1.15rem 1.85rem;
+  }
+}
+
+@media (min-width: 900px) {
+  #panelCamiones.panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 1.25rem 1.35rem 1.15rem;
+  }
+
+  .camiones-head {
+    margin-bottom: 1rem;
+    padding: 1rem 1.15rem;
+    box-shadow: none;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    border-color: #dbe7f5;
+  }
+
+  .camiones-head__title {
+    font-size: 1.35rem;
+  }
+
+  .camiones-intro {
+    font-size: 0.86rem;
+    max-width: 46rem;
+  }
+
+  .camiones-list {
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    gap: 1rem;
+    margin-top: 0.15rem;
+  }
+
+  .camiones-empty {
+    grid-column: 1 / -1;
+    padding: 3rem 2rem 2.75rem;
+  }
+
+  .camion-card {    padding: 1.1rem 1.2rem;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(12, 31, 61, 0.06);
+  }
+
+  .camion-card:hover {
+    border-color: #c5d9ef;
+    box-shadow: 0 4px 14px rgba(12, 31, 61, 0.08);
+  }
+
+  .camion-card__placa {
+    font-size: 1rem;
+  }
+
+  .camion-card__value {
+    font-size: 0.92rem;
+  }
+}
+
+.pagination--camiones {
+  margin-top: 0.6rem;
+}
+
+@media (min-width: 900px) {
+  .pagination--camiones {
+    margin-top: 0.75rem;
+  }
+}

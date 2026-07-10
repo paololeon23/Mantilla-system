@@ -1,0 +1,14 @@
+/* Pintado inmediato — evita flash blanco entre páginas */
+html {
+  background: #eef2f7;
+  color: #0b1220;
+}
+
+body {
+  background: #eef2f7;
+}
+
+/* Sin re-animar KPI en cada cambio de sección */
+html.mantilla-skip-entrance .kpi-card--slide {
+  animation: none;
+}

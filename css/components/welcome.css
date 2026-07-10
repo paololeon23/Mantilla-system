@@ -1,0 +1,250 @@
+/* ---- Modal de bienvenida ---- */
+
+.modal-overlay--welcome {
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 360;
+  background: rgba(12, 31, 61, 0.62);
+}
+
+.modal--welcome {
+  border-radius: var(--radius-xl);
+  max-width: 420px;
+  width: 100%;
+  overflow: hidden;
+  box-shadow:
+    0 24px 60px rgba(12, 31, 61, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  animation: welcomeModalIn 0.55s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+
+@keyframes welcomeModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.welcome-modal__hero {
+  position: relative;
+  background: linear-gradient(165deg, #0c1f3d 0%, #1e5a9e 55%, #4f9cf9 100%);
+  padding: 1.5rem 1.25rem 0;
+  overflow: hidden;
+}
+
+.welcome-modal__hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.22) 0%, transparent 42%),
+    radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.12) 0%, transparent 35%);
+  pointer-events: none;
+}
+
+.welcome-scene {
+  position: relative;
+  height: 148px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  overflow: hidden;
+}
+
+.welcome-scene__sky {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+}
+
+.welcome-scene__hills {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 38px;
+  height: 56px;
+  background:
+    radial-gradient(ellipse 120% 100% at 20% 100%, rgba(12, 31, 61, 0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 90% 80% at 75% 100%, rgba(12, 31, 61, 0.35) 0%, transparent 68%);
+}
+
+.welcome-scene__road {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42px;
+  background: linear-gradient(180deg, #2a3f5c 0%, #1a2d45 100%);
+  border-top: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+.welcome-scene__dash {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.75) 0,
+    rgba(255, 255, 255, 0.75) 18px,
+    transparent 18px,
+    transparent 36px
+  );
+  animation: welcomeRoadMove 0.9s linear infinite;
+}
+
+@keyframes welcomeRoadMove {
+  from { background-position: 0 0; }
+  to   { background-position: -36px 0; }
+}
+
+.welcome-scene__truck {
+  position: absolute;
+  bottom: 14px;
+  left: 10%;
+  width: 64px;
+  height: 40px;
+  z-index: 2;
+  animation: welcomeTruckDrive 3.2s cubic-bezier(0.45, 0.05, 0.25, 1) infinite;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+}
+
+.welcome-scene__truck svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.welcome-scene__wheel {
+  transform-origin: center;
+  animation: welcomeWheelSpin 0.5s linear infinite;
+}
+
+@keyframes welcomeWheelSpin {
+  to { transform: rotate(360deg); }
+}
+
+.welcome-scene__dust {
+  position: absolute;
+  left: -8px;
+  bottom: 4px;
+  width: 28px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.35) 0%, transparent 72%);
+  animation: welcomeDust 0.6s ease-out infinite;
+}
+
+@keyframes welcomeDust {
+  0%   { opacity: 0.7; transform: scale(0.6) translateX(0); }
+  100% { opacity: 0; transform: scale(1.4) translateX(-14px); }
+}
+
+@keyframes welcomeTruckDrive {
+  0%   { left: 8%; transform: translateY(0); }
+  12%  { transform: translateY(-2px); }
+  24%  { transform: translateY(0); }
+  50%  { left: 52%; transform: translateY(-1px); }
+  78%  { left: 68%; transform: translateY(0); }
+  92%  { left: 68%; transform: translateY(-2px); }
+  100% { left: 8%; transform: translateY(0); }
+}
+
+.welcome-scene__dest {
+  position: absolute;
+  right: 10%;
+  bottom: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 3;
+  animation: welcomeDestPulse 2s ease-in-out infinite;
+}
+
+.welcome-scene__dest .lucide-icon {
+  width: 28px;
+  height: 28px;
+  color: #ffd166;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+
+.welcome-scene__dest-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@keyframes welcomeDestPulse {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-4px) scale(1.06); }
+}
+
+.welcome-modal__body {
+  padding: 1.35rem 1.5rem 0.5rem;
+  text-align: center;
+}
+
+.welcome-modal__brand {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  color: var(--color-primary);
+}
+
+.welcome-modal__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--color-text);
+}
+
+.welcome-modal__name {
+  color: var(--color-primary);
+  display: inline-block;
+}
+
+.welcome-modal__sub {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.welcome-modal__footer {
+  padding: 1rem 1.5rem 1.35rem;
+}
+
+.welcome-modal__ok {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 20px rgba(30, 90, 158, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.welcome-modal__ok:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-scene__truck,
+  .welcome-scene__dash,
+  .welcome-scene__dust,
+  .welcome-scene__wheel,
+  .welcome-scene__dest,
+  .modal--welcome {
+    animation: none;
+  }
+}

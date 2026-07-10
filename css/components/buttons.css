@@ -1,0 +1,320 @@
+/* ---- Buttons ---- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+  white-space: nowrap;
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn--primary {
+  background: linear-gradient(165deg, var(--color-primary-light) 0%, var(--color-primary) 55%, var(--color-primary-dark) 100%);
+  color: var(--color-text-inverse);
+  box-shadow: 0 4px 14px rgba(30, 90, 158, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.btn--primary:hover {
+  background: linear-gradient(165deg, #3d8ee8 0%, var(--color-primary-light) 55%, var(--color-primary) 100%);
+}
+
+.btn--secondary {
+  background: var(--color-primary-mid);
+  color: var(--color-text-inverse);
+}
+
+.btn--secondary:hover {
+  background: var(--color-primary);
+}
+
+.btn--whatsapp {
+  background: #25d366;
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.28);
+}
+
+.btn--whatsapp:hover {
+  background: #1ebe5d;
+}
+
+.btn--whatsapp .lucide-icon {
+  color: #fff;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.btn--ghost:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.btn--danger {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+}
+
+.btn--sm {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+.btn--icon {
+  padding: 0.4rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition), color var(--transition), transform var(--transition-bounce);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn--icon:hover {
+  background: var(--color-surface-2);
+  color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+.btn--icon-danger:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+.btn--icon-text {
+  gap: 0.5rem;
+}
+
+.btn--icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn--icon-text svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+
+.btn--icon-text:hover svg {
+  transform: scale(1.1);
+}
+
+/* Botones de acción — tonos suaves */
+.btn--action {
+  border: 1px solid transparent;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn--action-edit {
+  background: #e4eef8;
+  color: #1e5a9e;
+  border-color: rgba(30, 90, 158, 0.14);
+  box-shadow: 0 1px 3px rgba(30, 90, 158, 0.06);
+}
+
+.btn--action-edit:hover {
+  background: #d6e6f5;
+  border-color: rgba(30, 90, 158, 0.22);
+  box-shadow: 0 2px 6px rgba(30, 90, 158, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn--action-delete {
+  background: #f6eaea;
+  color: #9b4545;
+  border-color: rgba(155, 69, 69, 0.14);
+  box-shadow: 0 1px 3px rgba(155, 69, 69, 0.06);
+}
+
+.btn--action-delete:hover {
+  background: #eddcdc;
+  border-color: rgba(155, 69, 69, 0.22);
+  box-shadow: 0 2px 6px rgba(155, 69, 69, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn--action-print {
+  background: linear-gradient(165deg, #fff5f5 0%, #fde8e8 100%);
+  color: #b42318;
+  border-color: rgba(220, 38, 38, 0.16);
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.08);
+}
+
+.btn--action-print:hover {
+  background: linear-gradient(165deg, #ffecec 0%, #fdd9d9 100%);
+  border-color: rgba(220, 38, 38, 0.24);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.14);
+  transform: translateY(-1px);
+}
+
+.btn--action-print .mantilla-pdf-icon {
+  transition: transform 0.15s ease;
+}
+
+.btn--action-print:hover .mantilla-pdf-icon {
+  transform: translateY(-1px) scale(1.06);
+}
+
+.mantilla-pdf-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.12rem;
+  height: 1.12rem;
+  flex-shrink: 0;
+}
+
+.mantilla-pdf-icon__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(180, 35, 24, 0.22));
+}
+
+.mantilla-pdf-icon__shadow {
+  fill: rgba(15, 23, 42, 0.08);
+  transform: translate(0.35px, 1.1px);
+}
+
+.mantilla-pdf-icon__page {
+  fill: #ffffff;
+  stroke: #c5d4e8;
+  stroke-width: 0.9;
+}
+
+.mantilla-pdf-icon__fold {
+  fill: #e8eef6;
+  stroke: #c5d4e8;
+  stroke-width: 0.7;
+  stroke-linejoin: round;
+}
+
+.mantilla-pdf-icon__lines {
+  stroke: #94a3b8;
+  stroke-width: 0.85;
+  stroke-linecap: round;
+}
+
+.mantilla-pdf-icon__badge {
+  fill: #e74c3c;
+}
+
+.mantilla-pdf-icon__label {
+  fill: #ffffff;
+  font-size: 3.6px;
+  font-weight: 800;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.mantilla-pdf-icon--btn {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.campamento-sheet__actions .btn--action-print {
+  order: -1;
+}
+
+@media (max-width: 420px) {
+  .campamento-sheet__actions .btn-print-label {
+    display: none;
+  }
+
+  .campamento-sheet__actions .btn--action-print {
+    min-width: 2.35rem;
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+  }
+
+  .campamento-sheet__actions .btn--action-print .mantilla-pdf-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .campamento-sheet__actions .btn--action-print .mantilla-pdf-icon {
+    width: 1.08rem;
+    height: 1.08rem;
+  }
+}
+
+.btn--action:active {
+  transform: scale(0.97) translateY(0);
+}
+
+.btn--action svg {
+  stroke: currentColor;
+}
+
+.btn--action-icon {
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn--action-icon .lucide-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.actions-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.campamento-sheet__actions .btn--action {
+  flex: 0 0 auto;
+  justify-content: center;
+  min-height: 2.2rem;
+  padding: 0.38rem 0.7rem;
+  font-size: 0.76rem;
+  border-radius: 10px;
+}
+
+.btn--primary:hover {
+  box-shadow: 0 4px 14px rgba(26, 77, 140, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn--primary:active {
+  transform: scale(0.97) translateY(0);
+}
+

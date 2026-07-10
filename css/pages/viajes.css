@@ -1,0 +1,2435 @@
+/* ---- Viaje directo (formulario inline) ---- */
+
+.viaje-form-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem;
+  margin-bottom: 1.35rem;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  max-width: 52rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.viaje-form-card--focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+.viaje-form-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  position: relative;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e8f0fa;
+  text-align: left;
+}
+
+.viaje-form-card__head h2,
+.viaje-form-card__head h3 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  margin: 0;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  flex: 1;
+  padding-inline: 0 2.4rem;
+}
+
+.viaje-form-help {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border: 1px solid #c5d9ef;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+  color: #1e5a9e;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(30, 90, 158, 0.35);
+  animation: viajeHelpCall 2.4s ease-in-out infinite;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.viaje-form-help:hover {
+  animation: none;
+  background: #e8f1fb;
+  border-color: #7eb0e8;
+  box-shadow: 0 4px 12px rgba(30, 90, 158, 0.2);
+  transform: scale(1.08);
+}
+
+.viaje-form-help:active {
+  animation: none;
+  transform: scale(0.96);
+}
+
+.viaje-form-help .lucide-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+@keyframes viajeHelpCall {
+  0%, 100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    box-shadow: 0 0 0 0 rgba(30, 90, 158, 0.4);
+    border-color: #c5d9ef;
+  }
+  12% {
+    transform: translateY(-3px) scale(1.06) rotate(-10deg);
+  }
+  24% {
+    transform: translateY(0) scale(1.04) rotate(8deg);
+  }
+  36% {
+    transform: translateY(-2px) scale(1.08) rotate(-4deg);
+    box-shadow: 0 0 0 8px rgba(30, 90, 158, 0);
+    border-color: #7eb0e8;
+  }
+  50%, 100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    box-shadow: 0 0 0 0 rgba(30, 90, 158, 0);
+    border-color: #c5d9ef;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viaje-form-help {
+    animation: none;
+  }
+}
+
+.modal-overlay--tutorial {
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 370;
+  background: rgba(12, 31, 61, 0.55);
+}
+
+.modal--tutorial {
+  width: 100%;
+  max-width: 420px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(12, 31, 61, 0.28);
+  animation: welcomeModalIn 0.45s cubic-bezier(0.34, 1.2, 0.64, 1);
+  padding-bottom: 0.25rem;
+}
+
+.viaje-tutorial__hero {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1.25rem 1.25rem 1.1rem;
+  background: linear-gradient(145deg, #0c1f3d 0%, #1e5a9e 70%, #3b82f6 100%);
+  color: #fff;
+}
+
+.viaje-tutorial__hero-icon {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+}
+
+.viaje-tutorial__hero-icon .lucide-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #fff;
+}
+
+.viaje-tutorial__eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.viaje-tutorial__hero-text h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.viaje-tutorial__lead {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  opacity: 0.88;
+}
+
+.viaje-tutorial__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: none;
+}
+
+.viaje-tutorial__close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.viaje-tutorial__body {
+  padding: 0.85rem 1.15rem 0.5rem;
+}
+
+.viaje-tutorial__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.viaje-tutorial__step {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  background: #f8fbff;
+  border: 1px solid #e8f0fa;
+}
+
+.viaje-tutorial__num {
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(180deg, #1e5a9e 0%, #0c1f3d 100%);
+}
+
+.viaje-tutorial__step strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #0c1f3d;
+  margin-bottom: 0.15rem;
+}
+
+.viaje-tutorial__step p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #5c6b7e;
+}
+
+.viaje-tutorial__step em {
+  font-style: normal;
+  font-weight: 700;
+  color: #1e5a9e;
+}
+
+.viaje-tutorial__footer {
+  padding: 1rem 1.25rem calc(1.35rem + env(safe-area-inset-bottom, 0px));
+}
+
+.viaje-tutorial__ok {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  margin: -16px 0 0.85rem;
+}
+
+.viaje-section {
+  margin-bottom: 0.85rem;
+}
+
+.viaje-section--datos {
+  background: linear-gradient(180deg, #f8fbff 0%, #fff 100%);
+  border: 1px solid #dce8f5;
+  border-radius: var(--radius-md);
+  padding: 0.8rem 0.75rem 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.viaje-section--camiones {
+  background: linear-gradient(180deg, #f8fbff 0%, #fff 100%);
+  border: 1px solid #dce8f5;
+  border-radius: var(--radius-md);
+  padding: 0.7rem;
+  margin-bottom: 0.55rem;
+}
+
+.viaje-section--resumen {
+  display: grid;
+  gap: 0.4rem;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.viaje-form-card__hint {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.viaje-form-card__body .form-group label {
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.viaje-form-card__body .field-input {
+  background: #fff;
+  border: 1.5px solid #cbd5e1;
+  min-height: 2.75rem;
+  font-size: 1rem;
+}
+
+.viaje-form-card__body .field-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(12, 95, 196, 0.12);
+}
+
+.viaje-form-card__footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  padding-bottom: 0.25rem;
+  border-top: 1px solid var(--color-border);
+  position: static;
+}
+
+.viaje-form-card__footer .btn--primary {
+  flex: 1;
+  min-height: 3rem;
+  font-size: 1rem;
+}
+
+#btnCancelViaje[hidden] {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .viaje-form-card {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .viaje-form-card__footer .btn--primary {
+    flex: 0 1 auto;
+    min-width: 10rem;
+  }
+}
+
+.btn--xs {
+  font-size: 0.72rem;
+  padding: 0.3rem 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.campamento-sheet__saldo {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.campamento-table th:nth-child(3),
+.campamento-table td:nth-child(3) {
+  background: rgba(5, 150, 105, 0.08);
+}
+
+.campamento-table td:nth-child(3) .field-input {
+  font-weight: 700;
+  border-color: #059669;
+}
+
+.campamento-table th {
+  background: #e8f0fa;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary-dark);
+}
+
+.campamento-table td.num,
+.campamento-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.campamento-table__totals td {
+  background: #e8f0fa;
+  font-weight: 700;
+}
+
+.campamento-table .field-input {
+  padding: 0.35rem 0.45rem;
+  font-size: 0.85rem;
+  min-height: 2rem;
+}
+
+.campamento-table .camp-input--date {
+  min-width: 7.5rem;
+  padding: 0.3rem 0.35rem;
+  min-height: 2rem;
+}
+
+.campamento-calc {
+  margin-top: 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+}
+
+.campamento-calc--live {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  text-align: center;
+  padding: 0.75rem 0.95rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.campamento-calc__title {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+  margin-bottom: 0.45rem;
+}
+
+.campamento-calc__lines {
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.campamento-calc__lines p {
+  margin: 0;
+}
+
+.campamento-calc__lines p + p {
+  margin-top: 0.2rem;
+}
+
+.campamento-calc__lines--center {
+  text-align: center;
+}
+
+.campamento-calc__line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.76rem;
+}
+
+.campamento-calc__line span {
+  min-width: 0;
+}
+
+.campamento-calc__placeholder {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  margin: 0;
+  font-style: normal;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+.campamento-calc__grand {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.campamento-calc__grand strong {
+  font-size: 0.92rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.campamento-sheet__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #c5d9ef;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.campamento-sheet__actions .btn {
+  flex: 0 0 auto;
+  justify-content: center;
+  min-height: 2.2rem;
+}
+
+.campamento-sheet--form-inner {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid #c5d9ef;
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  max-width: 52rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.viaje-form-card.campamento-sheet {
+  margin-bottom: 1.25rem;
+}
+
+.viaje-form-card.campamento-sheet .viaje-form-card__head h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary-dark);
+  margin: 0 0 0.75rem;
+}
+
+.camp-form-top {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  margin-bottom: 0;
+  align-items: stretch;
+  width: 100%;
+  max-width: none;
+}
+
+.camp-form-meta,
+.camp-form-secondary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  align-items: end;
+  min-width: 0;
+}
+
+.camp-form-top .catalog-combo,
+.camp-form-top .catalog-combo .field-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.form-group--full {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.camp-form-doc,
+.camp-form-nombre,
+.camp-form-producto {
+  min-width: 0;
+}
+
+.camp-form-nombre .field-input--title {
+  font-size: 1rem;
+}
+
+.camp-form-fecha,
+.camp-form-saldo {
+  min-width: 0;
+}
+
+.camp-form-fecha .dp,
+.camp-form-fecha .dp__trigger,
+.camp-form-saldo .field-input {
+  width: 100%;
+}
+
+.field-input--title {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.campamento-table__totals--live td {
+  background: rgba(30, 90, 158, 0.1);
+  font-weight: 800;
+  font-size: 0.95rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.campamento-table__totals--live td.num {
+  color: var(--color-primary);
+}
+
+.camp-sum-live {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0.55rem 0.85rem;
+  background: var(--hero-gradient-soft);
+  border: 1px solid #93c5fd;
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+}
+
+.camp-sum-live__label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.camp-sum-live__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.4rem;
+  width: 100%;
+}
+
+.camp-sum-live__parts {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--color-primary-mid);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+  text-align: center;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.camp-sum-live__parts:not(:empty) {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.camp-sum-live__eq {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.camp-sum-live__total {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@keyframes calcFlash {
+  0%   { background-color: #fef08a; transform: scale(1.04); }
+  100% { background-color: transparent; transform: scale(1); }
+}
+
+.calc-flash {
+  animation: calcFlash 0.45s ease;
+  border-radius: 4px;
+}
+
+.campamento-calc__result.calc-flash,
+.campamento-calc__grand strong.calc-flash {
+  display: inline-block;
+  padding: 0 0.2rem;
+}
+
+.camp-table-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0.35rem 0 0.75rem;
+  text-align: center;
+}
+
+.campamento-calc__formula {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.45rem;
+  margin: 0 0 0.65rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.campamento-calc__arrow {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.campamento-calc__lbl {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.campamento-calc__op {
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.camp-calc-input {
+  width: 5.5rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  background: #fff;
+  border: 2px solid #93c5fd;
+  border-radius: var(--radius-sm);
+}
+
+.camp-calc-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  outline: none;
+}
+
+.camp-calc-input--sm {
+  width: 3.25rem;
+}
+
+.campamento-calc__result {
+  color: var(--color-primary-dark);
+  font-size: 0.95rem;
+}
+
+.campamento-calc__subtotal {
+  margin: 0.55rem 0 0;
+  padding-bottom: 0.15rem;
+  font-size: 0.78rem;
+}
+
+.campamento-calc__saldo-line {
+  margin: 0.2rem 0 0;
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+}
+
+.camp-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  min-height: 2.4rem;
+  padding: 0 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(180deg, var(--color-primary) 0%, #0a4d9e 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(12, 95, 196, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.camp-add-btn:hover {
+  box-shadow: 0 4px 10px rgba(12, 95, 196, 0.28);
+}
+
+.camp-add-btn:active {
+  transform: scale(0.97);
+}
+
+.camp-add-btn__icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.camp-row-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.7rem;
+  background: #fff;
+  border: 1px solid #d8e6f4;
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(12, 31, 61, 0.05);
+}
+
+.camp-row-toolbar__leading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.camp-row-toolbar__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
+}
+
+.camp-row-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.7rem;
+  height: 1.7rem;
+  padding: 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  background: linear-gradient(180deg, #f4f8fc 0%, #e8f0fa 100%);
+  border: 1px solid #c5d9ef;
+  border-radius: 8px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---- Viajes del día: placa arriba + 3 campos abajo ---- */
+
+.camp-viajes-board {
+  margin-top: 0.5rem;
+}
+
+.camp-viajes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.5rem;
+}
+
+.camp-viaje-row,
+.camp-viaje-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.75rem;
+  min-width: 0;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.camp-viaje-row--filled,
+.camp-viaje-card--filled,
+.camp-viaje-row:focus-within {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.1);
+}
+
+.camp-viaje-row--incomplete {
+  border-color: #f0a04b;
+  box-shadow: 0 0 0 1px rgba(240, 160, 75, 0.35);
+}
+
+.campamento-calc__placeholder--warn {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.camp-viaje-row__top {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr) 1.75rem;
+  align-items: start;
+  gap: 0.45rem;
+}
+
+.camp-viaje-row__placa-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 0.4rem;
+}
+
+.camp-viaje-row__fecha {
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.camp-viaje-row__fecha .camp-viaje-field__lbl {
+  text-align: center;
+}
+
+.camp-fecha-picker-mount .dp,
+.camp-fecha-picker-mount .camp-fecha-picker-mount {
+  width: 100%;
+}
+
+.camp-fecha-picker-mount .dp__trigger--compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  box-sizing: border-box;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  margin-bottom: 0.15rem;
+  padding: 0;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.camp-fecha-picker-mount .dp__icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.camp-fecha-picker-mount .dp__text {
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+/* En desktop el compact puede mostrar fecha; en móvil solo ícono (ver media query) */
+@media (min-width: 641px) {
+  .camp-fecha-picker-mount .dp__trigger--compact {
+    width: auto;
+    min-width: 4.6rem;
+    padding: 0.3rem 0.45rem;
+  }
+}
+
+.dp--compact .dp__trigger--open {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(79, 156, 249, 0.12);
+}
+
+.camp-viaje-row__placa-picker {
+  min-width: 0;
+}
+
+.camp-viaje-row__placa-picker .ms,
+.camp-viaje-row__placa-picker .camp-placa-picker-mount {
+  width: 100%;
+}
+
+.camp-viaje-row__bottom {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.camp-viaje-row__num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: 1.35rem;
+  margin-bottom: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.camp-viaje-row__placa {
+  min-width: 0;
+}
+
+.camp-viaje-row__placa .camp-viaje-field__lbl {
+  text-align: left;
+}
+
+.camp-viaje-row__placa .camp-viaje-card__placa,
+.camp-viaje-row__placa .ms__trigger {
+  width: 100%;
+  min-height: 2.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 0.35rem 2rem 0.35rem 0.5rem;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231e5a9e' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.55rem center;
+  background-size: 1rem;
+  cursor: pointer;
+}
+
+.camp-viaje-row__placa .ms__trigger--has-chofer {
+  min-height: 2.85rem;
+  padding-top: 0.42rem;
+  padding-bottom: 0.42rem;
+}
+
+.camp-viaje-row__placa .camp-viaje-card__placa:focus,
+.camp-viaje-row__placa .ms__trigger:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(30, 90, 158, 0.12);
+  outline: none;
+}
+
+.camp-placa-picker-mount,
+.camp-viaje-row__placa .ms {
+  width: 100%;
+  min-width: 0;
+}
+
+.camp-viaje-field {
+  min-width: 0;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.35rem 0.45rem;
+}
+
+.camp-viaje-field__lbl {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.3rem;
+  text-align: center;
+}
+
+.camp-viaje-field--toneladas {
+  background: var(--hero-gradient-soft);
+  border-color: var(--input-accent-border);
+}
+
+.camp-viaje-field--toneladas .camp-viaje-field__lbl {
+  color: var(--color-primary);
+}
+
+.camp-viaje-input {
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.camp-viaje-field .camp-viaje-input {
+  min-height: 2.35rem;
+  padding: 0.35rem 0.3rem;
+  font-size: 0.88rem;
+}
+
+.camp-viaje-field--toneladas .camp-viaje-input {
+  background: var(--input-accent-bg);
+  border-color: var(--input-accent-border);
+  color: var(--input-accent-text);
+  font-weight: 800;
+}
+
+.camp-viaje-card__remove {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: 1.35rem;
+  margin-bottom: 0;
+  align-self: start;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.camp-viaje-card__remove:hover {
+  background: #fecaca;
+}
+
+/* ---- Gastos de chofer por viaje ---- */
+
+.camp-chofer-gastos-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  margin-bottom: 0.15rem;
+  padding: 0;
+  border: 1.5px solid #dbe7f5;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fc 100%);
+  color: var(--color-primary);
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.camp-chofer-gastos-btn:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+}
+
+.camp-chofer-gastos-btn--ready {
+  border-color: #93c5fd;
+}
+
+.camp-chofer-gastos-btn--filled {
+  border-color: #60a5fa;
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.camp-chofer-gastos-btn__text {
+  display: none;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.camp-chofer-gastos-btn__util {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #15803d;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  max-width: 3.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.camp-chofer-gastos-btn__util--neg {
+  color: #dc2626;
+}
+
+.modal--chofer-gastos {
+  max-width: 420px;
+}
+
+.modal--chofer-gastos .modal__header--form {
+  padding: 1.2rem 1.5rem;
+}
+
+.modal--chofer-gastos .modal__subtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.modal--chofer-gastos .chofer-gastos-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  padding: 1.35rem 1.5rem 0.65rem;
+}
+
+.modal--chofer-gastos .form-group {
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.modal--chofer-gastos .chofer-gastos-calc {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  padding-top: 0.35rem;
+  margin-top: 0.1rem;
+}
+
+.modal--chofer-gastos .chofer-gastos-calc__item {
+  margin: 0;
+}
+
+.modal--chofer-gastos .chofer-gastos-calc .field-input {
+  min-height: 2.65rem;
+  padding: 0.5rem 0.65rem;
+}
+
+.modal--chofer-gastos .modal__footer--form {
+  padding: 1rem 1.5rem 1.4rem;
+  margin-top: 0;
+  gap: 0.85rem;
+}
+
+.modal--chofer-gastos .modal__footer--form .btn {
+  min-height: 2.75rem;
+  padding: 0.6rem 1.15rem;
+}
+
+.chofer-gastos-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.chofer-gastos-calc {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  padding-top: 0.15rem;
+}
+
+.chofer-gastos-calc__item {
+  margin: 0;
+}
+
+.chofer-gastos-util--pos {
+  color: #15803d !important;
+  background: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+
+.chofer-gastos-util--neg {
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+.camp-viajes-totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #e8f0fa 0%, #dce8f5 100%);
+  border: 2px solid #b8cce8;
+  border-radius: var(--radius-md);
+}
+
+.camp-viajes-totals__item {
+  text-align: center;
+  padding: 0.5rem 0.35rem;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-sm);
+}
+
+.camp-viajes-totals__item span {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.camp-viajes-totals__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.22rem;
+}
+
+.camp-viajes-totals__item strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.camp-viajes-totals__item--tm strong {
+  color: var(--color-primary);
+  font-size: 1.15rem;
+}
+
+.viaje-form-title--cuenta {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid var(--color-primary);
+  display: inline-block;
+  padding-bottom: 0.15rem;
+}
+
+/* Tabla detalle en viajes guardados */
+.campamento-detail-table-wrap {
+  margin: 0.75rem 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 1px solid #c5d9ef;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.campamento-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  table-layout: fixed;
+}
+
+.campamento-detail-table th {
+  background: #e8f0fa;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.5rem 0.2rem;
+  color: var(--color-primary-dark);
+  text-align: center;
+}
+
+.campamento-detail-table td {
+  padding: 0.5rem 0.2rem;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.campamento-detail-table .col-fecha { width: 18%; }
+.campamento-detail-table .col-tm { width: 19%; }
+.campamento-detail-table .col-guia { width: 19%; }
+.campamento-detail-table .col-placa { width: 25%; }
+.campamento-detail-table .col-pesaje { width: 19%; }
+
+.campamento-detail-table .col-fecha {
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.campamento-detail-table td.num,
+.campamento-detail-table th.num {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.campamento-detail-table .col-placa {
+  white-space: nowrap;
+}
+
+.campamento-detail-table .col-placa .camp-placa-tag {
+  margin: 0 auto;
+}
+
+.campamento-detail-table tr:nth-child(even) td {
+  background: rgba(248, 251, 255, 0.8);
+}
+
+.camp-placa-tag {
+  display: inline-block;
+  font-weight: 800;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  background: #e8f0fa;
+  color: var(--color-primary-dark);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.camp-num-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1.5px solid #93c5fd;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #fff;
+  min-width: 6.5rem;
+}
+
+.camp-num-stepper .camp-input {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  text-align: center;
+  font-weight: 700;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.15rem;
+  width: 3.5rem;
+  flex: 1;
+  -moz-appearance: textfield;
+}
+
+.camp-num-stepper .camp-input::-webkit-outer-spin-button,
+.camp-num-stepper .camp-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.camp-step-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0 0.35rem;
+  border: none;
+  background: #e8f0fa;
+  color: var(--color-primary-dark);
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.camp-step-btn:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.camp-row-enter {
+  animation: campRowIn 0.25s ease both;
+}
+
+@keyframes campRowIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.campamento-table .camp-remove-row {
+  min-width: 2rem;
+  min-height: 2rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.btn, .nav-btn, .bottom-nav__tab {
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.modal--campamento {
+  max-width: 720px;
+}
+
+.modal-overlay--sheet {
+  z-index: 320;
+}
+
+.modal-overlay--sheet.modal-overlay--open {
+  align-items: flex-end;
+}
+
+.modal--form,
+.modal--viaje {
+  width: 100%;
+  max-height: 92dvh;
+  box-shadow:
+    0 24px 48px rgba(10, 24, 48, 0.18),
+    0 8px 20px rgba(10, 24, 48, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.modal--viaje {
+  max-width: 860px;
+}
+
+.modal__header--form {
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid #e8eef5;
+}
+
+.modal__header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.modal__header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  flex-shrink: 0;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #0a1830 0%, #0f2744 38%, #123a66 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(10, 24, 48, 0.18);
+}
+
+.modal__header-icon .lucide-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #fff;
+}
+
+.modal__header-text {
+  min-width: 0;
+}
+
+.modal__eyebrow {
+  display: block;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.15rem;
+}
+
+.modal__header--form h3 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f2744;
+  letter-spacing: -0.03em;
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal__close .lucide-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.modal__body--viaje {
+  padding: 1rem 1.15rem 1.15rem;
+}
+
+.modal__body--form {
+  padding: 1.1rem 1.15rem 0.25rem;
+}
+
+.modal__footer--form {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, #ffffff 28%);
+  backdrop-filter: blur(8px);
+  margin-top: 0.75rem;
+  padding: 0.85rem 0 1.1rem;
+  border-top: 1px solid #e8eef5;
+}
+
+#modalViajeBody .viaje-form-card {
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+
+#modalViajeBody .viaje-form-card__head {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 0.55rem;
+  padding: 0;
+  border: none;
+  text-align: right;
+}
+
+#modalViajeBody .viaje-form-card__head h2 {
+  display: none;
+}
+
+#modalViajeBody .viaje-form-help {
+  position: static;
+  transform: none;
+  animation: none;
+}
+
+#modalViajeBody .viaje-form-help:hover,
+#modalViajeBody .viaje-form-help:active {
+  transform: scale(1.04);
+}
+
+#modalViajeBody .viaje-form-card__footer {
+  position: static;
+  background: #fff;
+  backdrop-filter: none;
+  margin-top: 1.35rem;
+  padding-top: 1rem;
+  padding-bottom: 0.35rem;
+  border-top: 1px solid #e8eef5;
+}
+
+#modalViajeBody .viaje-form-card__body {
+  padding-bottom: 0.5rem;
+}
+
+#modalViajeBody .viaje-section--camiones {
+  margin-bottom: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .modal-overlay--sheet.modal-overlay--open {
+    align-items: center;
+    padding: 1.25rem;
+  }
+
+  .modal--form,
+  .modal--viaje {
+    border-radius: 18px;
+    max-height: 88dvh;
+  }
+
+  .modal__header--form {
+    padding: 1.1rem 1.35rem;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .modal__body--viaje,
+  .modal__body--form {
+    padding: 1.15rem 1.35rem 0.35rem;
+  }
+}
+
+.campamento-sheet--edit .campamento-table td {
+  padding: 0.25rem;
+}
+
+.campamento-sheet .campamento-calc {
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .viaje-section--datos,
+  .viaje-section--camiones {
+    padding: 0.7rem 0.65rem;
+  }
+
+  .camp-form-top {
+    gap: 0.55rem;
+  }
+
+  .camp-form-meta,
+  .camp-form-secondary {
+    gap: 0.5rem;
+  }
+
+  .viaje-form-card__body .field-input {
+    min-height: 2.5rem;
+    font-size: 0.92rem;
+  }
+
+  .camp-form-nombre .field-input--title {
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+  }
+
+  .camp-row-toolbar {
+    padding: 0.55rem 0.6rem;
+    gap: 0.5rem;
+  }
+  .camp-row-toolbar__label {
+    font-size: 0.78rem;
+  }
+  .camp-add-btn {
+    min-height: 2.5rem;
+    padding: 0 0.7rem;
+    border-radius: 9px;
+  }
+  .camp-add-btn__text {
+    font-size: 0.8rem;
+  }
+  .camp-viaje-row__bottom {
+    gap: 0.35rem;
+  }
+
+  .camp-viaje-row,
+  .camp-viaje-card {
+    padding-bottom: 0.85rem;
+  }
+
+  .camp-viaje-row__top {
+    grid-template-columns: minmax(0, 1fr) 2.5rem;
+    align-items: end;
+    gap: 0.3rem;
+  }
+
+  .camp-viaje-row__placa-wrap {
+    grid-template-columns: minmax(0, 1fr) 2.5rem 2.5rem;
+    align-items: end;
+    gap: 0.3rem;
+  }
+
+  .camp-viaje-row__placa-picker {
+    min-width: 0;
+  }
+
+  .camp-viaje-row__placa .camp-viaje-field__lbl {
+    font-size: 0.65rem;
+    margin-bottom: 0.28rem;
+    padding-right: 1.75rem;
+  }
+
+  .camp-viaje-row__placa .ms__trigger {
+    min-height: 2.5rem;
+    font-size: 0.76rem;
+    padding: 0.28rem 1.45rem 0.28rem 0.4rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .camp-viaje-row__num {
+    position: absolute;
+    top: 0.15rem;
+    right: 0.15rem;
+    z-index: 2;
+    width: 1.4rem;
+    height: 1.4rem;
+    margin: 0;
+    font-size: 0.66rem;
+    box-shadow: 0 2px 6px rgba(30, 90, 158, 0.28);
+    pointer-events: none;
+  }
+
+  .camp-viaje-card__remove,
+  .camp-chofer-gastos-btn,
+  .camp-fecha-picker-mount .dp__trigger--compact {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    max-width: 2.5rem;
+    max-height: 2.5rem;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 0;
+    border-radius: 10px;
+    align-self: end;
+  }
+
+  .camp-viaje-card__remove {
+    border: 1.5px solid #fecaca;
+    background: #fff5f5;
+  }
+
+  .camp-chofer-gastos-btn__util {
+    display: none;
+  }
+
+  .camp-chofer-gastos-btn .lucide-icon,
+  .camp-viaje-card__remove .lucide-icon,
+  .camp-fecha-picker-mount .dp__icon {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .camp-viajes-section__hint {
+    padding: 0.4rem 0.55rem;
+    margin-bottom: 0.45rem;
+    font-size: 0.68rem;
+    line-height: 1.3;
+    gap: 0.35rem;
+    border-radius: 8px;
+  }
+
+  .camp-viajes-section__hint-long {
+    display: none;
+  }
+
+  .camp-viajes-section__hint-short {
+    display: inline;
+  }
+
+  .camp-viajes-section__hint .lucide-icon {
+    width: 0.8rem;
+    height: 0.8rem;
+    margin-top: 0.08rem;
+  }
+
+  .camp-viaje-field .camp-viaje-input {
+    font-size: 0.82rem;
+    min-height: 2.25rem;
+  }
+  .camp-viajes-totals {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.35rem;
+    padding: 0.55rem;
+  }
+  .camp-viajes-totals__item strong {
+    font-size: 0.92rem;
+  }
+  .camp-viajes-totals .lucide-icon--totals {
+    display: none;
+  }
+  .camp-viaje-row__fecha .camp-viaje-field__lbl {
+    display: none;
+  }
+  .camp-viaje-row__fecha {
+    width: 2.5rem;
+    flex-shrink: 0;
+  }
+  .camp-fecha-picker-mount,
+  .camp-fecha-picker-mount .dp {
+    width: 2.5rem;
+  }
+  .camp-fecha-picker-mount .dp__trigger--compact {
+    gap: 0;
+    justify-content: center;
+  }
+  .camp-fecha-picker-mount .dp__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .campamento-table { font-size: 0.75rem; }
+  .campamento-table th,
+  .campamento-table td { padding: 0.35rem 0.3rem; }
+}
+
+/* ---- Modal vista previa PDF ---- */
+
+.modal-overlay--pdf {
+  z-index: 335;
+}
+
+.modal--pdf {
+  width: 100%;
+  max-width: 920px;
+  height: min(94dvh, 900px);
+  max-height: 94dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal__header-icon--pdf {
+  background: linear-gradient(145deg, #fee2e2 0%, #fecaca 100%);
+  color: #b91c1c;
+}
+
+.modal__body--pdf {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  background: #dbe4ef;
+}
+
+#pdfPreviewFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  border: 0;
+  background: #fff;
+}
+
+.modal__footer.modal__footer--pdf {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+  justify-content: stretch;
+  align-items: stretch;
+  margin-top: 0;
+  padding: 0.85rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.modal__footer.modal__footer--pdf .btn {
+  width: 100%;
+  min-height: 2.65rem;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+@media (min-width: 520px) {
+  .modal__footer.modal__footer--pdf {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .modal-overlay--pdf.modal-overlay--open {
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+  }
+
+  .modal--pdf {
+    border-radius: var(--radius-xl);
+    height: min(88vh, 860px);
+    max-height: 88vh;
+    box-shadow:
+      0 24px 48px rgba(10, 24, 48, 0.2),
+      0 8px 20px rgba(10, 24, 48, 0.1);
+  }
+
+  .modal__footer.modal__footer--pdf {
+    padding: 1rem 1.15rem;
+  }
+}
+
+/* ---- Lista guardados: buscador + historial + paginación ---- */
+
+.camp-list-panel {
+  margin-top: 1.75rem;
+  padding: 1.35rem 1.15rem 1.5rem;
+  background: linear-gradient(180deg, #f8fbff 0%, #fff 42%);
+  border: 1px solid #d4e3f4;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 18px rgba(12, 31, 61, 0.06);
+}
+
+.camp-list-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.95rem;
+  border-bottom: 1px solid #e2ebf6;
+}
+
+.camp-list-panel__title {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-primary-dark);
+}
+
+.camp-list-panel__sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.camp-list-panel__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.15rem;
+  height: 2.15rem;
+  padding: 0 0.65rem;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #e8f1fb 0%, #dceaf8 100%);
+  border: 1px solid #b8cce8;
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.camp-list-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  padding: 0.75rem;
+  background: #fff;
+  border: 1px solid #e2ebf6;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 4px rgba(12, 31, 61, 0.04);
+}
+
+.camp-list-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.camp-list-toolbar--simple {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+}
+
+@media (min-width: 640px) {
+  .camp-list-toolbar--simple {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: center;
+  }
+}
+
+.camp-list-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.camp-list-search {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 0.55rem 2.35rem 0.55rem 0.75rem;
+  min-height: 2.45rem;
+  border-radius: 10px;
+  border-color: #cddced;
+  background: #fbfdff;
+  font-size: 0.84rem;
+}
+
+.camp-list-search:focus {
+  border-color: #7eb0e8;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(30, 90, 158, 0.1);
+}
+
+.camp-list-search__clear {
+  position: absolute;
+  right: 0.35rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.camp-list-search__clear:hover {
+  background: rgba(12, 31, 61, 0.06);
+  color: var(--color-primary);
+}
+
+.camp-list-fecha-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.camp-list-fecha-picker-mount {
+  flex: 1;
+  min-width: 0;
+}
+
+.camp-list-fecha-picker-mount .dp__trigger {
+  min-height: 2.45rem;
+  width: 100%;
+}
+
+.camp-list-fecha-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 2.45rem;
+  padding: 0.45rem 0.85rem;
+}
+
+.camp-historial-results {
+  margin: 0 0 0.85rem;
+}
+
+.camp-historial-card {
+  border: 1px solid #d4e3f4;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.camp-historial-card__label {
+  margin: 0;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  background: #f8fbff;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.camp-historial-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.camp-historial-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.55rem 0.65rem;
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border: none;
+  border-bottom: 1px solid #eef2f7;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s ease;
+}
+
+.camp-historial-row:last-child {
+  border-bottom: none;
+}
+
+.camp-historial-row:hover,
+.camp-historial-row:focus-visible {
+  background: #f0f7ff;
+  outline: none;
+}
+
+.camp-historial-row__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.camp-historial-row__name {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #0c1f3d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.camp-historial-row__meta {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.camp-historial-row__total {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #1e5a9e;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.camp-historial-row__chev {
+  color: #94a3b8;
+  display: inline-flex;
+}
+
+.camp-historial-empty {
+  padding: 1rem;
+  text-align: center;
+  border: 1px dashed #c5d9ef;
+  border-radius: 12px;
+  background: #f8fbff;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.camp-historial-empty p {
+  margin: 0;
+}
+
+.camp-list-empty {
+  grid-column: 1 / -1;
+  margin: 0.5rem 0 0;
+  padding: 2.5rem 1.5rem 2.25rem;
+  background: #fff;
+  border: 1px dashed #c5d9ef;
+  border-radius: var(--radius-lg);
+}
+
+.empty-state--camp {
+  text-align: center;
+}
+
+.camp-list-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: 0.85rem;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #eef4fc 0%, #e4edf9 100%);
+  border: 1px solid #c5d9ef;
+  color: var(--color-primary);
+}
+
+.camp-list-empty__icon .lucide-icon {
+  width: 1.55rem;
+  height: 1.55rem;
+  opacity: 1;
+  margin: 0;
+}
+
+.camp-list-empty__title {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  letter-spacing: -0.01em;
+}
+
+.camp-list-empty__text {
+  margin: 0 auto 1.1rem;
+  max-width: 22rem;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.camp-list-empty .btn {
+  margin-top: 0;
+}
+
+.camp-list-empty .btn .lucide-icon {
+  margin-right: 0.25rem;
+}
+
+.camp-list-panel--focus {
+  animation: campListPanelFocus 2.2s ease;
+}
+
+@keyframes campListPanelFocus {
+  0%, 100% { box-shadow: none; }
+  20% {
+    box-shadow: 0 0 0 3px rgba(30, 90, 158, 0.28);
+  }
+}
+
+.campamento-sheet--highlight {
+  animation: campSheetHighlight 2.2s ease;
+  outline: 3px solid rgba(30, 90, 158, 0.55);
+  outline-offset: 2px;
+  background: #f0f7ff;
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes campSheetHighlight {
+  0% {
+    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(30, 90, 158, 0.45);
+    background: #dbeafe;
+  }
+  35% {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(30, 90, 158, 0.22);
+    background: #eff6ff;
+  }
+  100% {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+    background: var(--color-surface, #fff);
+    outline-color: transparent;
+  }
+}
+
+.pagination--camp-list {
+  margin-top: 1rem;
+}
+
+.camp-form-details {
+  margin: 0 0 1rem;
+  padding: 0.85rem 0.95rem 0.95rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f8fbff 0%, #f2f7fd 100%);
+  border: 1px solid #d4e3f4;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.camp-viajes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.camp-viajes-section__hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.78rem;
+  color: #5b7294;
+  background: #fff8ed;
+  border: 1px solid #f0d9a8;
+  border-radius: 10px;
+  line-height: 1.45;
+}
+
+.camp-viajes-section__hint-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.camp-viajes-section__hint-short {
+  display: none;
+}
+
+.camp-viajes-section__hint .lucide-icon {
+  color: #b45309;
+  flex-shrink: 0;
+  margin-top: 0.12rem;
+}
+
+.camp-viajes-section__hint strong {
+  color: #92400e;
+}
+
+.camp-viajes-section--locked .camp-row-toolbar,
+.camp-viajes-section--locked .camp-viajes-board {
+  opacity: 0.52;
+  filter: grayscale(0.15);
+}
+
+.camp-viajes-section--locked .camp-viajes-board {
+  pointer-events: none;
+  user-select: none;
+}
+
+.camp-add-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.camp-add-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.camp-form-details__title {
+  margin: 0 0 0.6rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+}
+
+.camp-form-details__grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1fr;
+  gap: 0.55rem;
+}
+
+.camp-form-details .field-input {
+  font-size: 0.82rem;
+  min-height: 2.3rem;
+  border-radius: 10px;
+  border-color: #cddced;
+  background: #fff;
+}
+
+.camp-viaje-field--cliente,
+.camp-viaje-field--doc,
+.camp-viaje-field--producto {
+  min-width: 0;
+}
+
+.campamento-detail-table .col-cliente,
+.campamento-detail-table .col-producto {
+  max-width: 7rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 640px) {
+  .camp-form-details__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .camp-list-panel {
+    padding: 1.15rem 1rem 1.35rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .camp-list-panel__head {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.05rem;
+  }
+
+  .camp-list-controls {
+    gap: 0.55rem;
+    margin-bottom: 0.85rem;
+    padding: 0.7rem;
+  }
+
+  .camp-list-toolbar--simple {
+    grid-template-columns: 1fr;
+  }
+
+  .camp-list-search {
+    min-height: 2.5rem;
+    font-size: 0.84rem;
+  }
+
+  .camp-list-fecha-btn span {
+    display: none;
+  }
+
+  .camp-historial-row {
+    padding: 0.7rem 0.75rem;
+  }
+}

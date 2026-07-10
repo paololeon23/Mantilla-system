@@ -1,0 +1,308 @@
+/* ---- Filters ---- */
+
+.filters {
+  background: var(--color-surface);
+  margin: 0.5rem 1rem 0.75rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+}
+
+.filters__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--transition);
+}
+
+.filters__toggle:hover {
+  background: var(--color-surface-2);
+}
+
+.filters__chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+  transition: transform var(--transition);
+  flex-shrink: 0;
+}
+
+.filters--collapsed .filters__chevron {
+  transform: rotate(-90deg);
+}
+
+.filters--collapsed .filters__body {
+  display: none;
+}
+
+.filters__body {
+  padding: 0 1rem 1rem;
+  animation: fadeSlideUp 0.3s ease;
+}
+
+.filters__header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filters__header svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-accent);
+}
+
+.filters__badge {
+  background: var(--color-accent);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+  min-width: 18px;
+  text-align: center;
+}
+
+.filters__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.filters__row .btn--clear {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 0.15rem;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+}
+
+@media (min-width: 640px) {
+  .filters__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .filters__row .btn--clear {
+    grid-column: auto;
+    margin-top: 0;
+  }
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 130px;
+  min-width: 120px;
+}
+
+.filter-group label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding-left: 2px;
+}
+
+/* ---- Input Wrap (icon inputs) ---- */
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition), transform var(--transition);
+  overflow: hidden;
+}
+
+.input-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(59,130,246,0.04), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+
+.input-wrap:hover {
+  border-color: #cbd5e1;
+}
+
+.input-wrap:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  transform: translateY(-1px);
+}
+
+.input-wrap:focus-within::before {
+  opacity: 1;
+}
+
+.input-wrap--filter {
+  border-radius: var(--radius-sm);
+}
+
+.input-wrap--calc {
+  background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+  border-color: #93c5fd;
+}
+
+.input-wrap--calc:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(26, 77, 140, 0.12);
+}
+
+.input-wrap--danger {
+  border-color: #fecaca;
+}
+
+.input-wrap--danger:focus-within {
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.input-wrap--has-value .input-wrap__icon {
+  color: var(--color-primary);
+  animation: iconBounce 0.4s ease;
+}
+
+.input-wrap__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 100%;
+  min-height: 44px;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: color var(--transition), transform var(--transition);
+  pointer-events: none;
+}
+
+.input-wrap--filter .input-wrap__icon {
+  min-height: 38px;
+  width: 34px;
+}
+
+.input-wrap__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.input-wrap--filter .input-wrap__icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.input-wrap:focus-within .input-wrap__icon {
+  color: var(--color-accent);
+}
+
+.input-wrap input,
+.input-wrap select {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 0.65rem 0.5rem 0.65rem 0;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text);
+  outline: none;
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input-wrap--filter input,
+.input-wrap--filter select {
+  padding: 0.5rem 0.4rem 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+.input-wrap input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.input-wrap input[type="date"],
+.input-wrap input[type="month"] {
+  padding-right: 0.25rem;
+}
+
+.input-wrap select {
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.input-wrap__chevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  display: flex;
+  transition: transform var(--transition), color var(--transition);
+}
+
+.input-wrap__chevron svg {
+  width: 16px;
+  height: 16px;
+}
+
+.input-wrap:focus-within .input-wrap__chevron {
+  color: var(--color-accent);
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.input-wrap__suffix {
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.input-wrap--calc .input-wrap__suffix {
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--color-primary);
+}
+
+.input--calc {
+  font-weight: 700 !important;
+  color: var(--color-primary) !important;
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem !important;
+}
+
+.input--calc-updated {
+  animation: numberPop 0.35s ease;
+}
+

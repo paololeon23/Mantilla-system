@@ -1,0 +1,498 @@
+/* ---- Layout ---- */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100dvh;
+  z-index: 250;
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), box-shadow var(--transition), visibility 0.32s;
+  overflow: hidden;
+}
+
+.sidebar--open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.sidebar__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background:
+    radial-gradient(ellipse 90% 50% at 0% 0%, rgba(79, 156, 249, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, #0a1830 0%, #0f2744 38%, #123a66 100%);
+  color: var(--color-text-inverse);
+  padding: 1.35rem 0 1.25rem;
+  border-right: 1px solid rgba(96, 165, 250, 0.12);
+}
+
+.sidebar__glow {
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0 1.15rem 1.25rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.14);
+}
+
+.sidebar__logo {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: none;
+}
+
+.sidebar__logo .lucide-icon--sidebar-brand {
+  width: 1.2rem;
+  height: 1.2rem;
+  color: #fff;
+  filter: none;
+  animation: none;
+}
+
+.sidebar__head {
+  display: none;
+}
+
+.sidebar__title {
+  display: block;
+  font-weight: 800;
+  font-size: 1.24rem;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.sidebar__subtitle {
+  display: block;
+  font-size: 0.67rem;
+  opacity: 0.8;
+  margin-top: 4px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #93c5fd;
+  font-weight: 700;
+}
+
+.sidebar__section-label {
+  padding: 0.85rem 1.35rem 0.55rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(147, 197, 253, 0.75);
+}
+
+.sidebar__nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0 0.9rem;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  font-family: inherit;
+  font-size: 0.94rem;
+  font-weight: 500;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition), transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+  text-align: left;
+  width: 100%;
+  position: relative;
+  text-decoration: none;
+}
+
+.nav-btn__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.nav-btn[href*="viajes"] .nav-btn__icon,
+.nav-btn[href*="mantenimiento"] .nav-btn__icon {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+
+.nav-btn--active .nav-btn__icon {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: none;
+}
+
+.nav-btn__icon .lucide-icon,
+.nav-btn__icon .icon-3d {
+  color: #fff !important;
+  animation: none !important;
+  filter: none !important;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  border-color: rgba(96, 165, 250, 0.15);
+}
+
+.nav-btn:hover .nav-btn__icon {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.nav-btn--active {
+  background: transparent;
+  color: #fff;
+  font-weight: 700;
+  border-color: transparent;
+}
+
+.nav-btn--active .nav-btn__icon {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.nav-btn--active .nav-btn__arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: #93c5fd;
+}
+
+.sidebar__footer-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  margin-bottom: 0.85rem;
+}
+
+.sidebar__footer-card .lucide-icon--footer {
+  color: rgba(255, 255, 255, 0.75);
+  opacity: 1;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 2px;
+}
+
+.sidebar__footer-card strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 3px;
+  color: #fff;
+}
+
+.sidebar__footer-card span {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.72;
+  line-height: 1.45;
+  color: #bfdbfe;
+}
+
+.sidebar__version {
+  display: block;
+  text-align: center;
+  font-size: 0.68rem;
+  opacity: 0.45;
+  color: #93c5fd;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.sidebar__collapse-btn {
+  display: none;
+}
+
+.sidebar__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  flex-shrink: 0;
+}
+
+.sidebar__close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.sidebar__close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.sidebar__brand-text {
+  flex: 1;
+  min-width: 0;
+}
+
+a.nav-btn,
+a.bottom-nav__tab {
+  text-decoration: none;
+  color: inherit;
+}
+
+body.sidebar-open {
+  overflow: hidden;
+}
+
+.nav-btn__icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  stroke: currentColor;
+  fill: none;
+}
+
+.nav-btn__text {
+  flex: 1;
+}
+
+.nav-btn__arrow {
+  font-size: 1.1rem;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.nav-btn:hover .nav-btn__arrow {
+  opacity: 0.55;
+  transform: translateX(0);
+}
+
+.sidebar__footer {
+  padding: 1rem 1.15rem 0;
+  margin-top: auto;
+}
+
+.sidebar__install-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.62rem 0.85rem;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  border-radius: 12px;
+  background: rgba(96, 165, 250, 0.12);
+  color: #e8f2ff;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar__install-btn:hover {
+  background: rgba(96, 165, 250, 0.22);
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #fff;
+}
+
+.sidebar__install-btn[hidden] {
+  display: none !important;
+}
+
+.main-wrapper {
+  min-height: 100dvh;
+  padding-bottom: calc(var(--bottom-nav-height) + 0.5rem);
+}
+
+/* ---- App Hero (móvil) ---- */
+
+.app-hero {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 899px) {
+  .main-wrapper--viajes,
+  .main-wrapper--mantenimiento,
+  .main-wrapper--camiones {
+    position: relative;
+  }
+
+  .app-hero {
+    background: var(--hero-gradient);
+    padding: 0 0 0.5rem;
+    overflow: visible;
+  }
+
+  .app-hero--viajes {
+    padding-bottom: 1.35rem;
+    z-index: 1;
+  }
+
+  .app-hero--camiones {
+    padding-bottom: 1.1rem;
+    z-index: 1;
+  }
+
+  .app-hero::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+    pointer-events: none;
+  }
+
+  .app-content {
+    background: #ffffff;
+    border-radius: 1.35rem 1.35rem 0 0;
+    margin-top: 0;
+    position: relative;
+    z-index: 2;
+    padding-top: 0.85rem;
+    min-height: unset;
+    box-shadow: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.8);
+    overflow: hidden;
+  }
+
+  .app-content::before {
+    display: none;
+  }
+
+  .main-wrapper--viajes .app-content {
+    margin-top: -1.15rem;
+    z-index: 5;
+    padding-top: 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 120px, var(--color-bg) 240px);
+  }
+
+  .main-wrapper--mantenimiento .app-content {
+    margin-top: -0.85rem;
+    z-index: 5;
+    padding-top: 0.75rem;
+    box-shadow: none;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 120px, var(--color-bg) 240px);
+  }
+
+  .main-wrapper--camiones .app-content {
+    margin-top: -0.85rem;
+    z-index: 5;
+    padding-top: 1rem;
+    box-shadow: none;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 120px, var(--color-bg) 240px);
+  }
+
+  .panel {
+    padding: 0 1rem 1rem;
+  }
+
+  .app-hero--mantenimiento {
+    padding-bottom: 0.85rem;
+  }
+
+  .app-hero--mantenimiento .kpi-scroll {
+    display: none !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .main-wrapper--viajes,
+  .main-wrapper--mantenimiento,
+  .main-wrapper--camiones {
+    display: flex;
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .app-hero,
+  .app-content {
+    display: block;
+  }
+
+  .app-hero--viajes,
+  .app-hero--mantenimiento,
+  .app-hero--camiones {
+    background: transparent;
+    padding: 0;
+    overflow: visible;
+    z-index: auto;
+  }
+
+  .app-content {
+    flex: 0 0 auto;
+    background: transparent;
+    border-radius: 0;
+    margin-top: 0;
+    padding-top: 0;
+    z-index: auto;
+    overflow: visible;
+    box-shadow: none;
+    border: none;
+  }
+
+  .main-wrapper--viajes .app-content,
+  .main-wrapper--mantenimiento .app-content,
+  .main-wrapper--camiones .app-content {
+    margin-top: 0;
+    background: transparent;
+  }
+
+  .main-wrapper--mantenimiento .app-content {
+    padding-top: 0.35rem;
+    padding-bottom: 0;
+  }
+
+  .main-wrapper--camiones .app-content {
+    padding-top: 0.35rem;
+    padding-bottom: 0;
+  }
+}
+

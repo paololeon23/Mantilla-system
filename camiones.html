@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Registro de camiones y choferes — Mantilla">
+  <meta name="theme-color" content="#0c1f3d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mantilla">
+  <meta name="application-name" content="Mantilla">
+  <title>Mantilla — Camiones</title>
+  <script src="js/pwa.js?v=2"></script>
+  <link rel="stylesheet" href="css/base/boot.css?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css?v=180">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <link rel="icon" href="assets/icon-192.png?v=1" type="image/png" sizes="192x192">
+  <link rel="icon" href="assets/logo-truck.svg?v=3" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1" sizes="180x180">
+</head>
+<body data-page="camiones">
+<script>
+(function(){try{if(localStorage.getItem('mantilla-sidebar-collapsed')==='1'&&window.innerWidth>=900)document.body.classList.add('sidebar-desktop-collapsed');if(sessionStorage.getItem('mantilla-session'))document.documentElement.classList.add('mantilla-skip-entrance');sessionStorage.setItem('mantilla-session','1');}catch(e){}})();
+</script>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__glow"></div>
+    <div class="sidebar__inner">
+      <div class="sidebar__head">
+        <button type="button" class="sidebar__collapse-btn" id="sidebarCollapseBtn" aria-label="Contraer menú" aria-expanded="true" data-tooltip="Contraer menú">
+          <i data-lucide="chevrons-left" class="lucide-icon sidebar__collapse-icon sidebar__collapse-icon--expand" aria-hidden="true"></i>
+          <i data-lucide="chevrons-right" class="lucide-icon sidebar__collapse-icon sidebar__collapse-icon--collapse" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="sidebar__brand">
+        <div class="sidebar__logo" data-tooltip="Mantilla — Gestión de Flota">
+          <i data-lucide="truck" class="lucide-icon lucide-icon--sidebar-brand" aria-hidden="true"></i>
+        </div>
+        <div class="sidebar__brand-text">
+          <span class="sidebar__title">Mantilla</span>
+          <span class="sidebar__subtitle">Gestión de Flota</span>
+        </div>
+        <button class="sidebar__close" id="sidebarClose" type="button" aria-label="Cerrar menú" data-tooltip="Cerrar menú">
+          <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <p class="sidebar__section-label">Menú principal</p>
+      <nav class="sidebar__nav" aria-label="Navegación principal">
+        <a href="viajes.html" class="nav-btn" data-tooltip="Viajes">
+          <span class="nav-btn__icon">
+            <i data-lucide="route" class="lucide-icon lucide-icon--nav" aria-hidden="true"></i>
+          </span>
+          <span class="nav-btn__text">Viajes</span>
+          <span class="nav-btn__arrow">›</span>
+        </a>
+        <a href="camiones.html" class="nav-btn nav-btn--active" aria-current="page" data-tooltip="Camiones">
+          <span class="nav-btn__icon">
+            <i data-lucide="truck" class="lucide-icon lucide-icon--nav" aria-hidden="true"></i>
+          </span>
+          <span class="nav-btn__text">Camiones</span>
+          <span class="nav-btn__arrow">›</span>
+        </a>
+        <a href="mantenimiento.html" class="nav-btn" data-tooltip="Gastos">
+          <span class="nav-btn__icon">
+            <i data-lucide="settings-2" class="lucide-icon lucide-icon--nav" aria-hidden="true"></i>
+          </span>
+          <span class="nav-btn__text">Gastos</span>
+          <span class="nav-btn__arrow">›</span>
+        </a>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="sidebar__footer-card" data-tooltip="Placas válidas Perú">
+          <i data-lucide="info" class="lucide-icon lucide-icon--footer" aria-hidden="true"></i>
+          <div>
+            <strong>Flota registrada</strong>
+            <span>Placa y chofer por vehículo</span>
+          </div>
+        </div>
+        <small class="sidebar__version">Mantilla v1.1</small>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrapper main-wrapper--camiones" id="mainWrapper">
+    <div class="app-hero app-hero--camiones" id="appHero">
+      <header class="topbar">
+        <div class="topbar__inner">
+          <div class="topbar__start">
+            <button class="topbar__menu-btn" id="menuToggle" type="button" aria-label="Abrir menú">
+              <i data-lucide="menu" class="lucide-icon" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="topbar__lead">
+            <span class="topbar__page-icon" aria-hidden="true">
+              <i data-lucide="truck" class="lucide-icon" aria-hidden="true"></i>
+            </span>
+            <div class="topbar__titles">
+              <h1 class="topbar__heading topbar__breadcrumb">
+                <span class="topbar__brand-label">Mantilla</span>
+                <span class="topbar__breadcrumb-sep" aria-hidden="true">/</span>
+                <span class="topbar__page-label" id="pageTitle">Camiones</span>
+              </h1>
+              <p class="topbar__page-sub">Historial de vehículos y choferes</p>
+            </div>
+          </div>
+          <div class="topbar__actions">
+            <button type="button" class="btn btn--primary btn--sm btn--round topbar__add-btn" id="btnAddMain" aria-label="Registrar camión">
+              <i data-lucide="plus" class="lucide-icon" aria-hidden="true"></i>
+              <span class="btn-label">Agregar</span>
+            </button>
+            <div class="topbar__actions-end">
+              <button type="button" class="btn btn--live topbar__live-btn" id="btnLiveViaje">
+                <span class="live-dot" aria-hidden="true"></span>
+                En vivo
+              </button>
+              <div class="topbar-profile" id="topbarProfile">
+                <button type="button" class="topbar-profile__btn" id="topbarProfileBtn" aria-expanded="false" aria-haspopup="true" aria-controls="topbarProfileMenu">
+                  <span class="topbar-profile__avatar" aria-hidden="true">MR</span>
+                  <span class="topbar-profile__info">
+                    <strong class="topbar-profile__name">Marco Ruben</strong>
+                    <span class="topbar-profile__role">Dueño de la empresa</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="lucide-icon topbar-profile__chev" aria-hidden="true"></i>
+                </button>
+                <div class="topbar-profile__menu topbar-profile__menu--owner" id="topbarProfileMenu" role="dialog" aria-label="Detalle del dueño" hidden>
+                  <div class="topbar-profile__owner-card">
+                    <span class="topbar-profile__avatar topbar-profile__avatar--lg" aria-hidden="true">MR</span>
+                    <div class="topbar-profile__menu-meta">
+                      <strong>Marco Ruben</strong>
+                      <span class="topbar-profile__owner-badge">Dueño de la empresa</span>
+                    </div>
+                  </div>
+                  <div class="topbar-profile__owner-details">
+                    <p><span>Cargo</span><strong>Dueño de la empresa</strong></p>
+                    <p><span>Empresa</span><strong>Mantilla</strong></p>
+                    <p><span>Rol</span><strong>Administrador principal</strong></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <main class="app-content">
+      <section class="panel panel--active" id="panelCamiones" aria-label="Camiones">
+        <header class="camiones-head">
+          <div class="camiones-head__top">
+            <h2 class="camiones-head__title">Camiones registrados</h2>
+            <span class="panel__count panel__count--pill" id="camionesCount">
+              <i data-lucide="truck" class="lucide-icon lucide-icon--count" aria-hidden="true"></i>
+              <span class="panel__count__text">0 camiones</span>
+            </span>
+          </div>
+          <p class="camiones-intro">Las placas registradas aquí salen en los selectores de Viajes y Gastos. Formato: <strong>7 caracteres con guión</strong> — ej. <strong>GT5-765</strong>, <strong>CHM-786</strong>.</p>
+        </header>
+        <div class="camiones-list" id="camionesList" aria-label="Historial de camiones"></div>
+        <div class="pagination pagination--camiones" id="camionesPagination" hidden aria-label="Paginación de camiones"></div>
+      </section>
+    </main>
+  </div>
+
+  <button type="button" class="mobile-fab" id="fabAdd" aria-label="Agregar camión">
+    <i data-lucide="plus" class="lucide-icon" aria-hidden="true"></i>
+  </button>
+
+  <nav class="bottom-nav" id="bottomNav" aria-label="Navegación inferior">
+    <a href="viajes.html" class="bottom-nav__tab">
+      <i data-lucide="route" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
+      <span>Viajes</span>
+    </a>
+    <a href="camiones.html" class="bottom-nav__tab bottom-nav__tab--active" aria-current="page">
+      <i data-lucide="truck" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
+      <span>Camiones</span>
+    </a>
+    <a href="mantenimiento.html" class="bottom-nav__tab">
+      <i data-lucide="settings-2" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
+      <span>Gastos</span>
+    </a>
+  </nav>
+
+  <div class="modal-overlay modal-overlay--sheet" id="modalCamion" role="dialog" aria-modal="true" aria-labelledby="modalCamionTitle">
+    <div class="modal modal--sm modal--form">
+      <div class="modal__header modal__header--form">
+        <div class="modal__header-brand">
+          <span class="modal__header-icon" aria-hidden="true">
+            <i data-lucide="truck" class="lucide-icon" aria-hidden="true"></i>
+          </span>
+          <div class="modal__header-text">
+            <span class="modal__eyebrow" id="modalCamionEyebrow">Nuevo camión</span>
+            <h3 id="modalCamionTitle">Registrar vehículo</h3>
+          </div>
+        </div>
+        <button class="modal__close" data-close="modalCamion" type="button" aria-label="Cerrar">
+          <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+      <form id="formCamion" class="modal__body modal__body--form" novalidate>
+        <input type="hidden" id="camionId">
+        <div class="form-group">
+          <label for="camionPlaca">Placa *</label>
+          <input type="text" id="camionPlaca" class="field-input" required placeholder="Ej: CHM-786" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="7">
+          <small class="field-hint">7 caracteres con guión (ej: CHM-786, GT5-765)</small>
+        </div>
+        <div class="form-group form-group--chofer">
+          <label for="camionChofer">Chofer *</label>
+          <input type="text" id="camionChofer" class="field-input" required placeholder="Nombre del chofer" autocomplete="off">
+        </div>
+        <div class="form-group form-group--telefono">
+          <label for="camionTelefono">Teléfono</label>
+          <input type="tel" id="camionTelefono" class="field-input" placeholder="Opcional" autocomplete="off" maxlength="9" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label for="camionMarca">Marca / modelo</label>
+          <input type="text" id="camionMarca" class="field-input" placeholder="Opcional" autocomplete="off">
+        </div>
+        <div class="modal__footer modal__footer--form">
+          <button type="button" class="btn btn--ghost" data-close="modalCamion">Cancelar</button>
+          <button type="submit" class="btn btn--primary">Guardar camión</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay modal-overlay--confirm" id="modalConfirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+    <div class="modal modal--sm modal--confirm">
+      <div class="modal__header modal__header--compact">
+        <h3 id="confirmTitle">Confirmar acción</h3>
+      </div>
+      <div class="modal__body modal__body--confirm">
+        <p id="confirmMessage"></p>
+      </div>
+      <div class="modal__footer modal__footer--confirm">
+        <button type="button" class="btn btn--ghost" id="confirmCancel">Cancelar</button>
+        <button type="button" class="btn btn--secondary" id="confirmOk">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <datalist id="dlPlacas"></datalist>
+  <datalist id="dlChoferes"></datalist>
+
+  <div class="dp-backdrop" id="dpBackdrop" hidden></div>
+  <div id="dpPortal"></div>
+
+  <script src="js/config/api-config.js?v=3"></script>
+  <script src="js/core.js?v=3"></script>
+  <script src="js/config/constants.js?v=7"></script>
+  <script src="js/core/utils.js?v=11"></script>
+  <script src="js/services/sync.js?v=15"></script>
+  <script src="js/core/placas.js?v=4"></script>
+  <script src="js/components/pickers.js?v=12"></script>
+  <script src="js/core/calculations.js?v=18"></script>
+  <script src="js/services/render.js?v=13"></script>
+  <script src="js/components/modals.js?v=12"></script>
+  <script src="js/pages/camiones.js?v=14"></script>
+  <script src="js/pages/mantenimiento.js?v=14"></script>
+  <script src="js/pages/viajes.js?v=30"></script>
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="js/components/alerts.js?v=8"></script>
+  <script src="js/components/shell.js?v=8"></script>
+  <script src="js/components/nav.js?v=4"></script>
+  <script src="js/offline.js?v=2"></script>
+  <script src="js/app.js?v=18"></script>
+  <script src="js/components/welcome.js?v=1"></script>
+</body>
+</html>

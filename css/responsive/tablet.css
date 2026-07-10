@@ -1,0 +1,54 @@
+/* ============================================
+   TABLET (â‰¥ 640px)
+   ============================================ */
+
+@media (min-width: 640px) {
+  .maint-summary {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .modal-overlay {
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .modal {
+    border-radius: var(--radius-xl);
+    max-width: 640px;
+    animation: modalIn 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+  }
+
+  .form-grid--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .form-group--span2 {
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 899px) {
+  .kpi-scroll {
+    scroll-padding-inline: 1rem;
+  }
+
+  .kpi-grid {
+    gap: 0.65rem;
+    padding: 0 1rem 0.1rem;
+  }
+
+  .kpi-card {
+    flex: 0 0 min(42vw, 12rem);
+    width: min(42vw, 12rem);
+    padding: 0.72rem 0.85rem 0.78rem;
+    min-height: 4.5rem;
+  }
+
+  .kpi-card__head .kpi-card__label {
+    font-size: 0.62rem;
+  }
+
+  .kpi-card__value {
+    font-size: clamp(1rem, 2.8vw, 1.15rem) !important;
+  }
+}

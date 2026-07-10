@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Registro y gestión de viajes de flota — Mantilla">
+  <meta name="theme-color" content="#0c1f3d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mantilla">
+  <meta name="application-name" content="Mantilla">
+  <title>Mantilla — Viajes</title>
+  <script src="js/pwa.js?v=2"></script>
+  <link rel="stylesheet" href="css/base/boot.css?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css?v=205">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <link rel="icon" href="assets/icon-192.png?v=1" type="image/png" sizes="192x192">
+  <link rel="icon" href="assets/logo-truck.svg?v=3" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1" sizes="180x180">
+</head>
+<body data-page="viajes">
+<script>
+(function(){try{if(localStorage.getItem('mantilla-sidebar-collapsed')==='1'&&window.innerWidth>=900)document.body.classList.add('sidebar-desktop-collapsed');if(sessionStorage.getItem('mantilla-session'))document.documentElement.classList.add('mantilla-skip-entrance');sessionStorage.setItem('mantilla-session','1');}catch(e){}})();
+</script>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__glow"></div>
+    <div class="sidebar__inner">
+      <div class="sidebar__head">
+        <button type="button" class="sidebar__collapse-btn" id="sidebarCollapseBtn" aria-label="Contraer menú" aria-expanded="true" data-tooltip="Contraer menú">
+          <i data-lucide="chevrons-left" class="lucide-icon sidebar__collapse-icon sidebar__collapse-icon--expand" aria-hidden="true"></i>
+          <i data-lucide="chevrons-right" class="lucide-icon sidebar__collapse-icon sidebar__collapse-icon--collapse" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="sidebar__brand">
+        <div class="sidebar__logo" data-tooltip="Mantilla — Gestión de Flota">
+          <i data-lucide="truck" class="lucide-icon lucide-icon--sidebar-brand" aria-hidden="true"></i>
+        </div>
+        <div class="sidebar__brand-text">
+          <span class="sidebar__title">Mantilla</span>
+          <span class="sidebar__subtitle">Gestión de Flota</span>
+        </div>
+        <button class="sidebar__close" id="sidebarClose" type="button" aria-label="Cerrar menú" data-tooltip="Cerrar menú">
+          <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <p class="sidebar__section-label">Menú principal</p>
+      <nav class="sidebar__nav" aria-label="Navegación principal">
+        <a href="viajes.html" class="nav-btn nav-btn--active" aria-current="page" data-tooltip="Viajes">
+          <span class="nav-btn__icon">
+            <i data-lucide="route" class="lucide-icon lucide-icon--nav" aria-hidden="true"></i>
+          </span>
+          <span class="nav-btn__text">Viajes</span>
+          <span class="nav-btn__arrow">›</span>
+        </a>
+        <a href="camiones.html" class="nav-btn" data-tooltip="Camiones">
+          <span class="nav-btn__icon">
+            <i data-lucide="truck" class="lucide-icon lucide-icon--nav" aria-hidden="true"></i>
+          </span>
+          <span class="nav-btn__text">Camiones</span>
+          <span class="nav-btn__arrow">›</span>
+        </a>
+        <a href="mantenimiento.html" class="nav-btn" data-tooltip="Gastos">
+          <span class="nav-btn__icon">
+            <i data-lucide="settings-2" class="lucide-icon lucide-icon--nav" aria-hidden="true"></i>
+          </span>
+          <span class="nav-btn__text">Gastos</span>
+          <span class="nav-btn__arrow">›</span>
+        </a>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="sidebar__footer-card" data-tooltip="Los datos se guardan en tu dispositivo">
+          <i data-lucide="info" class="lucide-icon lucide-icon--footer" aria-hidden="true"></i>
+          <div>
+            <strong>Registra cada viaje</strong>
+            <span>Los datos se guardan en tu dispositivo</span>
+          </div>
+        </div>
+        <small class="sidebar__version">Mantilla v1.1</small>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrapper main-wrapper--viajes" id="mainWrapper">
+
+    <div class="app-hero app-hero--viajes" id="appHero">
+      <header class="topbar">
+        <div class="topbar__inner">
+          <div class="topbar__start">
+            <button class="topbar__menu-btn" id="menuToggle" type="button" aria-label="Abrir menú">
+              <i data-lucide="menu" class="lucide-icon" aria-hidden="true"></i>
+            </button>
+            <div class="topbar__logo-wrap" aria-hidden="true">
+              <span class="app-icon app-icon--light" aria-hidden="true">
+                <i data-lucide="truck" class="lucide-icon" aria-hidden="true"></i>
+              </span>
+            </div>
+          </div>
+
+          <div class="topbar__lead">
+            <span class="topbar__page-icon" aria-hidden="true">
+              <i data-lucide="route" class="lucide-icon" aria-hidden="true"></i>
+            </span>
+            <div class="topbar__titles">
+              <h1 class="topbar__heading topbar__breadcrumb">
+                <span class="topbar__brand-label">Mantilla</span>
+                <span class="topbar__breadcrumb-sep" aria-hidden="true">/</span>
+                <span class="topbar__page-label" id="pageTitle">Viajes</span>
+              </h1>
+              <p class="topbar__page-sub">Registro diario de viajes y fletes</p>
+            </div>
+          </div>
+
+          <div class="topbar__actions">
+            <button type="button" class="btn btn--primary btn--sm btn--round topbar__add-btn" id="btnAddMain" aria-label="Agregar camión">
+              <i data-lucide="plus" class="lucide-icon" aria-hidden="true"></i>
+              <span class="btn-label">Agregar</span>
+            </button>
+            <div class="topbar__actions-end">
+              <button type="button" class="btn btn--live topbar__live-btn" id="btnLiveViaje">
+                <span class="live-dot" aria-hidden="true"></span>
+                En vivo
+              </button>
+              <div class="topbar-profile" id="topbarProfile">
+                <button type="button" class="topbar-profile__btn" id="topbarProfileBtn" aria-expanded="false" aria-haspopup="true" aria-controls="topbarProfileMenu">
+                  <span class="topbar-profile__avatar" aria-hidden="true">MR</span>
+                  <span class="topbar-profile__info">
+                    <strong class="topbar-profile__name">Marco Ruben</strong>
+                    <span class="topbar-profile__role">Dueño de la empresa</span>
+                  </span>
+                  <i data-lucide="chevron-down" class="lucide-icon topbar-profile__chev" aria-hidden="true"></i>
+                </button>
+                <div class="topbar-profile__menu topbar-profile__menu--owner" id="topbarProfileMenu" role="dialog" aria-label="Detalle del dueño" hidden>
+                  <div class="topbar-profile__owner-card">
+                    <span class="topbar-profile__avatar topbar-profile__avatar--lg" aria-hidden="true">MR</span>
+                    <div class="topbar-profile__menu-meta">
+                      <strong>Marco Ruben</strong>
+                      <span class="topbar-profile__owner-badge">Dueño de la empresa</span>
+                    </div>
+                  </div>
+                  <div class="topbar-profile__owner-details">
+                    <p><span>Cargo</span><strong>Dueño de la empresa</strong></p>
+                    <p><span>Empresa</span><strong>Mantilla</strong></p>
+                    <p><span>Rol</span><strong>Administrador principal</strong></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="kpi-scroll" id="kpiScroll">
+        <section class="kpi-grid" id="kpiGrid" aria-label="Resumen de viajes">
+          <div class="kpi-card kpi-card--slide" style="--delay:0.05s">
+            <div class="kpi-card__head">
+              <span class="kpi-card__label">Total a Pagar</span>
+              <span class="app-icon app-icon--kpi" aria-hidden="true">
+                <i data-lucide="wallet" class="lucide-icon lucide-icon--kpi" aria-hidden="true"></i>
+              </span>
+            </div>
+            <span class="kpi-card__value" id="kpiFletes">S/ 0.00</span>
+            <span class="kpi-card__hint">Suma de viajes</span>
+          </div>
+          <div class="kpi-card kpi-card--slide" style="--delay:0.12s">
+            <div class="kpi-card__head">
+              <span class="kpi-card__label">Total de Gastos</span>
+              <span class="app-icon app-icon--kpi" aria-hidden="true">
+                <i data-lucide="receipt-text" class="lucide-icon lucide-icon--kpi" aria-hidden="true"></i>
+              </span>
+            </div>
+            <span class="kpi-card__value" id="kpiGastos">S/ 0.00</span>
+            <span class="kpi-card__hint">Viajes + gastos de flota</span>
+          </div>
+          <div class="kpi-card kpi-card--slide" style="--delay:0.19s">
+            <div class="kpi-card__head">
+              <span class="kpi-card__label">Viajes Registrados</span>
+              <span class="app-icon app-icon--kpi" aria-hidden="true">
+                <i data-lucide="route" class="lucide-icon lucide-icon--kpi" aria-hidden="true"></i>
+              </span>
+            </div>
+            <span class="kpi-card__value" id="kpiViajes">0</span>
+            <span class="kpi-card__hint">En el período filtrado</span>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <main class="app-content">
+      <section class="panel panel--active" id="panelOperaciones" aria-label="Viajes">
+
+        <div id="viajeFormSlot">
+        <div class="viaje-form-card" id="viajeFormSection">
+          <button type="button" class="viaje-form-help" id="btnViajeTutorial" aria-label="Ver tutorial de viajes" title="Cómo registrar un viaje">
+            <i data-lucide="circle-help" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i>
+          </button>
+          <div class="viaje-form-card__head">
+            <h2 id="viajeFormTitle">Agregar viajes del día</h2>
+          </div>
+          <form id="formCampamento" class="viaje-form-card__body" novalidate>
+            <input type="hidden" id="campId">
+
+            <section class="viaje-section viaje-section--datos" aria-label="Datos del día">
+              <div class="camp-form-top" id="campFormTop">
+                <div class="form-group form-group--full camp-form-nombre">
+                  <label for="campNombre">Persona o Campamento *</label>
+                  <input type="text" id="campNombre" class="field-input field-input--title" required placeholder="Ej: Campamento Igor, David Romero" autocomplete="off">
+                </div>
+                <div class="camp-form-secondary">
+                  <div class="form-group camp-form-doc">
+                    <label for="campDniRuc">DNI / RUC</label>
+                    <input type="text" id="campDniRuc" class="field-input" placeholder="Documento" autocomplete="off" inputmode="numeric">
+                  </div>
+                  <div class="form-group camp-form-producto">
+                    <label for="campProducto">Producto</label>
+                    <input type="text" id="campProducto" class="field-input" placeholder="Producto" autocomplete="off">
+                  </div>
+                </div>
+                <div class="camp-form-meta">
+                  <div class="form-group camp-form-fecha">
+                    <label for="campFechaPicker">Fecha del día</label>
+                    <input type="hidden" id="campFecha" required>
+                    <div id="campFechaPicker"></div>
+                  </div>
+                  <div class="form-group camp-form-saldo">
+                    <label for="campSaldoAnterior">Saldo (S/)</label>
+                    <input type="number" id="campSaldoAnterior" class="field-input" step="0.01" min="0" value="0" placeholder="0.00">
+                  </div>
+                </div>
+                <input type="hidden" id="campTarifa" value="110">
+              </div>
+            </section>
+
+            <section class="viaje-section viaje-section--camiones" aria-label="Camiones">
+              <div class="camp-viajes-section camp-viajes-section--locked" id="campViajesSection">
+                <p class="camp-viajes-section__hint" id="campViajesLockHint">
+                  <i data-lucide="lock" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i>
+                  <span class="camp-viajes-section__hint-copy">
+                    <span class="camp-viajes-section__hint-long">Completa la <strong>persona o campamento</strong> arriba para agregar camiones</span>
+                    <span class="camp-viajes-section__hint-short">Indica <strong>persona o campamento</strong> para agregar camiones</span>
+                  </span>
+                </p>
+
+                <div class="camp-row-toolbar">
+                  <div class="camp-row-toolbar__leading">
+                    <span class="camp-row-toolbar__label">Camiones</span>
+                    <span class="camp-row-count" id="campRowCount" aria-live="polite" aria-label="0 camiones">0</span>
+                  </div>
+                  <button type="button" class="camp-add-btn" id="btnAddCampFila" disabled>
+                    <i data-lucide="plus" class="lucide-icon camp-add-btn__icon" aria-hidden="true"></i>
+                    <span class="camp-add-btn__text">Agregar</span>
+                  </button>
+                </div>
+
+                <div class="camp-viajes-board" id="campViajesBoard">
+                  <div class="camp-viajes-list" id="campViajesList" role="list"></div>
+                  <div class="camp-viajes-totals" aria-live="polite">
+                    <div class="camp-viajes-totals__item camp-viajes-totals__item--tm">
+                      <span class="camp-viajes-totals__label">
+                        <i data-lucide="sigma" class="lucide-icon lucide-icon--totals" aria-hidden="true"></i>
+                        Toneladas
+                      </span>
+                      <strong id="campTotalToneladas">0.00</strong>
+                    </div>
+                    <div class="camp-viajes-totals__item">
+                      <span class="camp-viajes-totals__label">
+                        <i data-lucide="sigma" class="lucide-icon lucide-icon--totals" aria-hidden="true"></i>
+                        Guías
+                      </span>
+                      <strong id="campTotalGuia">0</strong>
+                    </div>
+                    <div class="camp-viajes-totals__item">
+                      <span class="camp-viajes-totals__label">
+                        <i data-lucide="sigma" class="lucide-icon lucide-icon--totals" aria-hidden="true"></i>
+                        Pesajes
+                      </span>
+                      <strong id="campTotalPesaje">0</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="viaje-section viaje-section--resumen" aria-label="Resumen en vivo">
+              <div class="camp-sum-live" id="campSumLive" aria-live="polite">
+                <span class="camp-sum-live__label">Suma en vivo</span>
+                <div class="camp-sum-live__row">
+                  <span class="camp-sum-live__parts" id="campSumParts">Toneladas por camión</span>
+                  <span class="camp-sum-live__eq">=</span>
+                  <strong class="camp-sum-live__total" id="campSumTotal">0.00 TM</strong>
+                </div>
+              </div>
+
+              <div class="campamento-calc campamento-calc--live" id="campCalcPreview">
+                <p class="campamento-calc__title">Cálculos</p>
+                <div class="campamento-calc__lines campamento-calc__lines--center" id="campCalcLines">
+                  <p class="campamento-calc__placeholder">Toneladas por camión</p>
+                </div>
+                <p class="campamento-calc__saldo-line" id="campCalcSaldoLine" hidden>+ Saldo Anterior = <span id="campCalcSaldoTxt">S/ 0.00</span></p>
+                <div class="campamento-calc__grand">
+                  <span id="campGrandTotalLabel">Total</span>
+                  <strong id="campGrandTotal">S/ 0.00</strong>
+                </div>
+              </div>
+            </section>
+
+            <div class="viaje-form-card__footer">
+              <button type="button" class="btn btn--ghost" id="btnCancelViaje" hidden>Cancelar edición</button>
+              <button type="submit" class="btn btn--primary">Guardar viajes</button>
+            </div>
+          </form>
+        </div>
+        </div>
+
+        <section class="camp-list-panel" aria-label="Viajes guardados">
+          <header class="camp-list-panel__head">
+            <div class="camp-list-panel__title-group">
+              <h2 class="camp-list-panel__title">Viajes guardados</h2>
+              <p class="camp-list-panel__sub">Hoy, ayer y historial por fecha</p>
+            </div>
+            <span class="camp-list-panel__count" id="campListCount" aria-live="polite">0</span>
+          </header>
+
+          <div class="camp-list-controls">
+            <div class="camp-list-toolbar camp-list-toolbar--simple">
+              <div class="camp-list-search-wrap">
+                <input type="search" id="campListSearch" class="field-input camp-list-search" placeholder="Buscar nombre o placa…" autocomplete="off" enterkeyhint="search">
+                <button type="button" class="camp-list-search__clear" id="campListClear" aria-label="Limpiar búsqueda" hidden>
+                  <i data-lucide="x" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="camp-list-fecha-bar">
+                <input type="hidden" id="campListFecha" value="">
+                <div id="campListFechaPicker" class="camp-list-fecha-picker-mount"></div>
+                <button type="button" class="btn btn--primary btn--sm camp-list-fecha-btn" id="campListFechaBuscar" title="Buscar historial">
+                  <i data-lucide="search" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i>
+                  <span>Buscar</span>
+                </button>
+              </div>
+            </div>
+            <input type="hidden" id="campListPlaca" value="">
+            <div id="campListPlacaPicker" hidden></div>
+          </div>
+
+          <div class="camp-historial-results" id="campHistorialResults" hidden></div>
+          <div class="campamento-list" id="campamentoList"></div>
+          <div class="pagination pagination--camp-list" id="campListPagination" hidden></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav" id="bottomNav" aria-label="Navegación inferior">
+    <a href="viajes.html" class="bottom-nav__tab bottom-nav__tab--active" aria-current="page">
+      <i data-lucide="route" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
+      <span>Viajes</span>
+    </a>
+    <a href="camiones.html" class="bottom-nav__tab">
+      <i data-lucide="truck" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
+      <span>Camiones</span>
+    </a>
+    <a href="mantenimiento.html" class="bottom-nav__tab">
+      <i data-lucide="settings-2" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
+      <span>Gastos</span>
+    </a>
+  </nav>
+
+  <div class="modal-overlay modal-overlay--sheet" id="modalViaje" role="dialog" aria-modal="true" aria-labelledby="modalViajeTitle">
+    <div class="modal modal--campamento modal--viaje">
+      <div class="modal__header modal__header--form">
+        <div class="modal__header-brand">
+          <span class="modal__header-icon" aria-hidden="true">
+            <i data-lucide="square-pen" class="lucide-icon" aria-hidden="true"></i>
+          </span>
+          <div class="modal__header-text">
+            <span class="modal__eyebrow">Editar viaje</span>
+            <h3 id="modalViajeTitle">Viaje</h3>
+          </div>
+        </div>
+        <button class="modal__close" data-close="modalViaje" type="button" aria-label="Cerrar">
+          <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal__body modal__body--viaje" id="modalViajeBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay modal-overlay--sheet" id="modalCamion" role="dialog" aria-modal="true" aria-labelledby="modalCamionTitle">
+    <div class="modal modal--sm modal--form">
+      <div class="modal__header modal__header--form">
+        <div class="modal__header-brand">
+          <span class="modal__header-icon" aria-hidden="true">
+            <i data-lucide="truck" class="lucide-icon" aria-hidden="true"></i>
+          </span>
+          <div class="modal__header-text">
+            <span class="modal__eyebrow" id="modalCamionEyebrow">Nuevo camión</span>
+            <h3 id="modalCamionTitle">Registrar vehículo</h3>
+          </div>
+        </div>
+        <button class="modal__close" data-close="modalCamion" type="button" aria-label="Cerrar">
+          <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+      <form id="formCamion" class="modal__body modal__body--form" novalidate>
+        <input type="hidden" id="camionId">
+        <div class="form-group">
+          <label for="camionPlaca">Placa *</label>
+          <input type="text" id="camionPlaca" class="field-input" required placeholder="Ej: CHM-786" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="7">
+          <small class="field-hint">7 caracteres con guión (ej: CHM-786, GT5-765)</small>
+        </div>
+        <div class="form-group form-group--chofer">
+          <label for="camionChofer">Chofer *</label>
+          <input type="text" id="camionChofer" class="field-input" required placeholder="Nombre del chofer" autocomplete="off">
+        </div>
+        <div class="form-group form-group--telefono">
+          <label for="camionTelefono">Teléfono</label>
+          <input type="tel" id="camionTelefono" class="field-input" placeholder="Opcional" autocomplete="off" maxlength="9" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label for="camionMarca">Marca / modelo</label>
+          <input type="text" id="camionMarca" class="field-input" placeholder="Opcional" autocomplete="off">
+        </div>
+        <div class="modal__footer modal__footer--form">
+          <button type="button" class="btn btn--ghost" data-close="modalCamion">Cancelar</button>
+          <button type="submit" class="btn btn--primary">Guardar camión</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay modal-overlay--tutorial" id="modalViajeTutorial" role="dialog" aria-modal="true" aria-labelledby="viajeTutorialTitle">
+    <div class="modal modal--tutorial">
+      <div class="viaje-tutorial__hero">
+        <div class="viaje-tutorial__hero-icon" aria-hidden="true">
+          <i data-lucide="route" class="lucide-icon"></i>
+        </div>
+        <div class="viaje-tutorial__hero-text">
+          <p class="viaje-tutorial__eyebrow">Guía rápida</p>
+          <h2 id="viajeTutorialTitle">Cómo registrar un viaje</h2>
+          <p class="viaje-tutorial__lead">En 5 pasos tienes tu flota lista para guardar y enviar PDF.</p>
+        </div>
+        <button type="button" class="modal__close viaje-tutorial__close" data-close="modalViajeTutorial" aria-label="Cerrar">
+          <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="viaje-tutorial__body">
+        <ol class="viaje-tutorial__steps">
+          <li class="viaje-tutorial__step">
+            <span class="viaje-tutorial__num">1</span>
+            <div>
+              <strong>Cliente o campamento</strong>
+              <p>Escribe el nombre. Eso desbloquea los camiones.</p>
+            </div>
+          </li>
+          <li class="viaje-tutorial__step">
+            <span class="viaje-tutorial__num">2</span>
+            <div>
+              <strong>Producto y fecha</strong>
+              <p>Completa DNI/RUC si aplica, producto, fecha y saldo anterior.</p>
+            </div>
+          </li>
+          <li class="viaje-tutorial__step">
+            <span class="viaje-tutorial__num">3</span>
+            <div>
+              <strong>Agrega camiones</strong>
+              <p>Elige placa, toneladas, guía y pesaje. Usa <em>Gastos</em> para combustible y viáticos.</p>
+            </div>
+          </li>
+          <li class="viaje-tutorial__step">
+            <span class="viaje-tutorial__num">4</span>
+            <div>
+              <strong>Revisa el total</strong>
+              <p>El cálculo se actualiza solo. Cuando esté listo, pulsa <em>Guardar viajes</em>.</p>
+            </div>
+          </li>
+          <li class="viaje-tutorial__step">
+            <span class="viaje-tutorial__num">5</span>
+            <div>
+              <strong>PDF y WhatsApp</strong>
+              <p>En Viajes guardados abre el PDF para imprimir, descargar o compartir.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+      <div class="viaje-tutorial__footer">
+        <button type="button" class="btn btn--primary viaje-tutorial__ok" data-close="modalViajeTutorial">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay modal-overlay--sheet modal-overlay--pdf" id="modalPdfPreview" role="dialog" aria-modal="true" aria-labelledby="pdfPreviewTitle">
+    <div class="modal modal--pdf">
+      <div class="modal__header modal__header--form">
+        <div class="modal__header-brand">
+          <span class="modal__header-icon modal__header-icon--pdf" aria-hidden="true">
+            <i data-lucide="file-text" class="lucide-icon" aria-hidden="true"></i>
+          </span>
+          <div class="modal__header-text">
+            <span class="modal__eyebrow">Vista previa</span>
+            <h3 id="pdfPreviewTitle">Viaje en PDF</h3>
+          </div>
+        </div>
+        <button class="modal__close" data-close="modalPdfPreview" type="button" aria-label="Cerrar">
+          <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal__body modal__body--pdf">
+        <iframe id="pdfPreviewFrame" title="Vista previa del PDF del viaje"></iframe>
+      </div>
+      <div class="modal__footer modal__footer--pdf">
+        <button type="button" class="btn btn--whatsapp btn--sm" id="btnPdfWhatsApp">
+          <i data-lucide="message-circle" class="lucide-icon" aria-hidden="true"></i>
+          <span>WhatsApp</span>
+        </button>
+        <button type="button" class="btn btn--secondary btn--sm" id="btnPdfPrint">
+          <i data-lucide="printer" class="lucide-icon" aria-hidden="true"></i>
+          <span>Imprimir</span>
+        </button>
+        <button type="button" class="btn btn--primary btn--sm" id="btnPdfDownload">
+          <i data-lucide="download" class="lucide-icon" aria-hidden="true"></i>
+          <span>Descargar PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay modal-overlay--sheet" id="modalChoferGastos" role="dialog" aria-modal="true" aria-labelledby="choferGastosTitle">
+    <div class="modal modal--sm modal--form modal--chofer-gastos">
+      <div class="modal__header modal__header--form">
+        <div class="modal__header-brand">
+          <span class="modal__header-icon" aria-hidden="true">
+            <i data-lucide="wallet" class="lucide-icon" aria-hidden="true"></i>
+          </span>
+          <div class="modal__header-text">
+            <span class="modal__eyebrow">Gastos de chofer</span>
+            <h3 id="choferGastosTitle">Placa</h3>
+            <p class="modal__subtitle" id="choferGastosSubtitle">Chofer</p>
+          </div>
+        </div>
+        <button class="modal__close" data-close="modalChoferGastos" type="button" aria-label="Cerrar">
+          <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="modal__body modal__body--form chofer-gastos-body">
+        <div class="form-group form-group--animated">
+          <label for="choferGastosCombustible">Factura combustible (S/)</label>
+          <input type="number" id="choferGastosCombustible" class="field-input" step="0.01" min="0" inputmode="decimal" placeholder="0.00" autocomplete="off">
+        </div>
+        <div class="form-group form-group--animated">
+          <label for="choferGastosViaticos">Biáticos relleno (S/)</label>
+          <input type="number" id="choferGastosViaticos" class="field-input" step="0.01" min="0" inputmode="decimal" placeholder="0.00" autocomplete="off">
+        </div>
+        <div class="chofer-gastos-calc">
+          <div class="form-group chofer-gastos-calc__item">
+            <label for="choferGastosTotal">Total d gastos</label>
+            <input type="text" id="choferGastosTotal" class="field-input field-input--calc field-input--readonly" readonly tabindex="-1" aria-readonly="true" value="S/ 0.00">
+          </div>
+          <div class="form-group chofer-gastos-calc__item">
+            <label for="choferGastosUtilidad">Utilidad por viaje</label>
+            <input type="text" id="choferGastosUtilidad" class="field-input field-input--calc field-input--readonly chofer-gastos-util" readonly tabindex="-1" aria-readonly="true" value="S/ 0.00">
+          </div>
+        </div>
+      </div>
+      <div class="modal__footer modal__footer--form">
+        <button type="button" class="btn btn--ghost" data-close="modalChoferGastos">Cancelar</button>
+        <button type="button" class="btn btn--primary" id="btnSaveChoferGastos">Guardar gastos</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay modal-overlay--confirm" id="modalConfirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+    <div class="modal modal--sm modal--confirm">
+      <div class="modal__header modal__header--compact">
+        <h3 id="confirmTitle">Confirmar acción</h3>
+      </div>
+      <div class="modal__body modal__body--confirm">
+        <p id="confirmMessage"></p>
+      </div>
+      <div class="modal__footer modal__footer--confirm">
+        <button type="button" class="btn btn--ghost" id="confirmCancel">Cancelar</button>
+        <button type="button" class="btn btn--secondary" id="confirmOk">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dp-backdrop" id="dpBackdrop" hidden></div>
+  <div id="dpPortal"></div>
+
+  <datalist id="dlPlacas"></datalist>
+  <datalist id="dlChoferes"></datalist>
+  <datalist id="dlClientes"></datalist>
+  <datalist id="dlProductos"></datalist>
+
+  <script src="js/config/api-config.js?v=3"></script>
+  <script src="js/core.js?v=3"></script>
+  <script src="js/config/constants.js?v=8"></script>
+  <script src="js/core/utils.js?v=11"></script>
+  <script src="js/services/sync.js?v=15"></script>
+  <script src="js/core/placas.js?v=4"></script>
+  <script src="js/components/pickers.js?v=12"></script>
+  <script src="js/core/calculations.js?v=18"></script>
+  <script src="js/services/render.js?v=13"></script>
+  <script src="js/components/modals.js?v=12"></script>
+  <script src="js/pages/camiones.js?v=14"></script>
+  <script src="js/pages/mantenimiento.js?v=14"></script>
+  <script src="js/pages/viajes.js?v=43"></script>
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="js/components/alerts.js?v=8"></script>
+  <script src="js/components/shell.js?v=8"></script>
+  <script src="js/components/nav.js?v=4"></script>
+  <script src="js/offline.js?v=2"></script>
+  <script src="js/app.js?v=18"></script>
+  <script src="js/components/welcome.js?v=1"></script>
+</body>
+</html>
