@@ -101,18 +101,27 @@ function showConfirm({
 }
 
 function resetViajeForm() {
-  $('#campId').value = '';
-  $('#campNombre').value = '';
-  $('#campSaldoAnterior').value = '0';
-  $('#campTarifa').value = '110';
-  $('#viajeFormTitle').textContent = 'Agregar viajes del d\u00eda';
+  const campId = $('#campId');
+  if (!campId) return;
+
+  campId.value = '';
+  const nombre = $('#campNombre');
+  if (nombre) nombre.value = '';
+  const saldo = $('#campSaldoAnterior');
+  if (saldo) saldo.value = '0';
+  const tarifa = $('#campTarifa');
+  if (tarifa) tarifa.value = '110';
+  const title = $('#viajeFormTitle');
+  if (title) title.textContent = 'Agregar viajes del d\u00eda';
   $('#btnCancelViaje')?.setAttribute('hidden', '');
   dpCampFecha?.setValue(todayISO());
-  clearCampFormDetails();
-  renderCampamentoFormFilas(defaultCampamentoFilas('', todayISO()));
+  if (typeof clearCampFormDetails === 'function') clearCampFormDetails();
+  if (typeof renderCampamentoFormFilas === 'function') {
+    renderCampamentoFormFilas(defaultCampamentoFilas('', todayISO()));
+  }
   if (typeof updateCampCamionesLock === 'function') updateCampCamionesLock();
-  updateCampBoardHeader();
-  recalcCampamentoForm();
+  if (typeof updateCampBoardHeader === 'function') updateCampBoardHeader();
+  if (typeof recalcCampamentoForm === 'function') recalcCampamentoForm();
   restoreViajeFormInline();
 }
 
@@ -145,6 +154,15 @@ function restoreViajeFormInline() {
 
 function openViajeForm(editId) {
   if (typeof closeOverlayPickers === 'function') closeOverlayPickers();
+
+  if (!$('#viajeFormSection') || !$('#campId')) {
+    showToast?.({
+      title: 'Formulario no disponible',
+      type: 'warning',
+      detail: 'Abre la pestaña Viajes e intenta de nuevo'
+    });
+    return;
+  }
 
   if (editId) {
     const camp = state.campamentos.find((c) => c.id === editId);
@@ -190,8 +208,17 @@ function openViajeForm(editId) {
     });
     return;
   }
+
   resetViajeForm();
-  focusViajeForm();
+  const modalTitle = $('#modalViajeTitle');
+  if (modalTitle) modalTitle.textContent = 'Nuevo viaje';
+  // En móvil el FAB abre el formulario en modal (mismo patrón que Gastos/Camiones)
+  if (window.innerWidth < 900) {
+    mountViajeFormInModal();
+  } else {
+    focusViajeForm();
+    $('#campNombre')?.focus();
+  }
 }
 
 function openMantenimientoModal(editId) {

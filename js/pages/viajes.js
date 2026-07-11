@@ -957,16 +957,18 @@ function renderCampHistorialTable(camps, fecha, sourceLabel) {
       <p class="camp-historial-card__label">${formatDate(fecha)} · ${camps.length} resultado${camps.length !== 1 ? 's' : ''}${sourceLabel ? ` · ${escapeHtml(sourceLabel)}` : ''}</p>
       <div class="camp-historial-list" role="list">
         ${camps.map((camp) => {
-          const totals = calcCampamentoTotals(camp.filas, camp.tarifa, camp.saldoAnterior || 0);
+          const totals = calcCampamentoTotals(camp.filas || [], camp.tarifa, camp.saldoAnterior || 0);
           const n = (camp.filas || []).filter((f) => f.placa && Number(f.toneladas) > 0).length;
-          return `<button type="button" class="camp-historial-row" data-historial-camp="${camp.id}" role="listitem">
-            <span class="camp-historial-row__main">
-              <strong class="camp-historial-row__name">${escapeHtml(camp.nombre)}</strong>
-              <span class="camp-historial-row__meta">${n} camión${n !== 1 ? 'es' : ''} · ${totals.toneladas.toFixed(2)} TM</span>
-            </span>
-            <strong class="camp-historial-row__total">${formatMoney(totals.totalConSaldo)}</strong>
-            <span class="camp-historial-row__chev" aria-hidden="true">${lucideIcon('chevron-right', 'lucide-icon--sm')}</span>
-          </button>`;
+          return `<div class="camp-historial-row" role="listitem">
+            <button type="button" class="camp-historial-row__open" data-historial-camp="${camp.id}" title="Ver PDF" aria-label="Ver PDF de ${escapeHtml(camp.nombre)}">
+              <span class="camp-historial-row__main">
+                <strong class="camp-historial-row__name">${escapeHtml(camp.nombre)}</strong>
+                <span class="camp-historial-row__meta">${n} camión${n !== 1 ? 'es' : ''} · ${totals.toneladas.toFixed(2)} TM</span>
+              </span>
+              <strong class="camp-historial-row__total">${formatMoney(totals.totalConSaldo)}</strong>
+            </button>
+            <button type="button" class="camp-historial-row__pdf btn btn--action btn--action-print btn--sm btn--icon-text" data-historial-camp="${camp.id}" title="Generar PDF" aria-label="Generar PDF de ${escapeHtml(camp.nombre)}">${ICON_PRINT}</button>
+          </div>`;
         }).join('')}
       </div>
     </div>`;
@@ -1608,19 +1610,29 @@ async function deleteCampamentoById(id) {
 window.deleteCampamento = (id) => deleteCampamentoById(id);
 
 function buildCampamentoPrintHtml(camp) {
-  const totals = calcCampamentoTotals(camp.filas, camp.tarifa, camp.saldoAnterior || 0);
-  const rows = camp.filas.filter((f) => f.placa && Number(f.toneladas) > 0);
+  const filas = camp.filas || [];
+  const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0);
+  const rows = filas.filter((f) => f.placa && Number(f.toneladas) > 0);
   const saldoRow = camp.saldoAnterior > 0
     ? `<p class="saldo">Saldo anterior: <strong>${formatMoney(camp.saldoAnterior)}</strong></p>`
     : '';
   const tableRows = rows.map((f) => `
     <tr>
       <td>${formatDateDM(f.fecha || camp.fecha)}</td>
-      <td class="num">${Number(f.toneladas).toFixed(2)}</td>
-      <td class="num">${Number(f.guia).toFixed(0)}</td>
+      <td>${Number(f.toneladas).toFixed(2)}</td>
+      <td>${Number(f.guia).toFixed(0)}</td>
       <td>${escapeHtml(f.placa)}</td>
-      <td class="num">${Number(f.pesaje).toFixed(1)}</td>
+      <td>${Number(f.pesaje).toFixed(1)}</td>
     </tr>`).join('');
+  const calcLines = `
+    <p>&gt; ${totals.toneladas.toFixed(2)} x ${camp.tarifa} = ${formatMoney(totals.producto)} +</p>
+    <p>&gt; ${totals.count} Guia${totals.count !== 1 ? 's' : ''} = ${formatMoney(totals.guiaTotal)}</p>
+    <p>&gt; ${totals.count} Pesaje${totals.count !== 1 ? 's' : ''} = ${formatMoney(totals.pesajeTotal)}</p>
+    <p class="campamento-calc__subtotal"><strong>Subtotal = ${formatMoney(totals.subtotal)}</strong></p>`;
+
+  const now = new Date();
+  const genFecha = formatDate(todayISO());
+  const genHora = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -1629,13 +1641,15 @@ function buildCampamentoPrintHtml(camp) {
   <title>${escapeHtml(camp.nombre)} — ${formatDate(camp.fecha)}</title>
   <style>
     * { box-sizing: border-box; }
+    html, body { height: auto; }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      color: #0c1f3d;
+      color: #0f172a;
       margin: 0;
-      padding: 1.25rem 1.5rem 2rem;
+      padding: 1.5rem 1.5rem 1.25rem;
       font-size: 13px;
-      line-height: 1.45;
+      line-height: 1.55;
+      background: #fff;
     }
     .brand {
       display: flex;
@@ -1643,99 +1657,153 @@ function buildCampamentoPrintHtml(camp) {
       justify-content: space-between;
       gap: 1rem;
       margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 2px solid #1e5a9e;
+      padding-bottom: 0.85rem;
+      border-bottom: 2px solid #0a1628;
     }
     .brand h1 {
       margin: 0;
-      font-size: 1.15rem;
+      font-size: 1.12rem;
       letter-spacing: 0.04em;
       text-transform: uppercase;
+      color: #0a1628;
     }
     .brand span {
-      font-size: 0.82rem;
-      color: #64748b;
+      font-size: 0.8rem;
+      color: #475569;
     }
-    .meta { margin: 0 0 0.35rem; color: #475569; }
-    .saldo { margin: 0 0 1rem; color: #475569; }
+    .meta { margin: 0 0 0.55rem; color: #475569; }
+    .saldo { margin: 0 0 1.15rem; color: #475569; }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 0.75rem 0 1rem;
+      margin: 1rem 0 1.5rem;
       font-size: 12px;
     }
     th, td {
-      border: 1px solid #c5d9ef;
-      padding: 0.45rem 0.5rem;
-      text-align: left;
+      border: 1px solid #94a3b8;
+      padding: 0.78rem 0.5rem;
+      text-align: center !important;
+      vertical-align: middle;
+      font-variant-numeric: tabular-nums;
     }
     th {
-      background: #e8f1fb;
-      font-size: 0.72rem;
+      background: #e2e8f0;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      color: #1e5a9e;
+      color: #0a1628;
     }
-    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
     .calc {
-      margin-top: 1rem;
-      padding: 0.75rem 0.9rem;
-      border: 1px solid #c5d9ef;
-      border-radius: 8px;
-      background: #f8fbff;
+      margin: 1.5rem 0 0;
+      padding: 1.1rem 1.15rem 1.15rem;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      background: #f8fafc;
     }
     .calc h2 {
-      margin: 0 0 0.5rem;
+      margin: 0 0 0.75rem;
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #1e5a9e;
+      color: #0a1628;
     }
-    .calc p { margin: 0.2rem 0; }
-    .campamento-calc__line,
-    .campamento-calc__subtotal { margin: 0.2rem 0; }
-    .campamento-calc__subtotal { margin-top: 0.35rem; font-weight: 700; }
+    .calc p { margin: 0.4rem 0; color: #0f172a; }
+    .campamento-calc__subtotal { margin-top: 0.65rem; font-weight: 700; }
     .total {
       display: flex;
       justify-content: space-between;
-      margin-top: 0.65rem;
-      padding-top: 0.55rem;
-      border-top: 1px solid #c5d9ef;
-      font-size: 1rem;
+      align-items: baseline;
+      gap: 1rem;
+      margin-top: 0.95rem;
+      padding-top: 0.8rem;
+      border-top: 1.5px solid #0a1628;
+      font-size: 1.05rem;
       font-weight: 800;
+      color: #0a1628;
+    }
+    .doc-legal {
+      margin-top: 1.5rem;
+      padding-top: 0.7rem;
+      border-top: 1px solid #94a3b8;
+      text-align: center;
+    }
+    .doc-legal__mark {
+      margin: 0 0 0.25rem;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #0a1628;
+    }
+    .doc-legal__text {
+      margin: 0 auto;
+      max-width: 34rem;
+      font-size: 0.58rem;
+      line-height: 1.4;
+      color: #475569;
+    }
+    /* En el modal va en flujo normal (evita solaparse con Total). En impresión va al pie. */
+    .page-foot {
+      position: static;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1.35rem;
+      padding-top: 0.55rem;
+      border-top: 1px solid #cbd5e1;
+      font-size: 0.68rem;
+      color: #64748b;
     }
     @media print {
-      body { padding: 0.5rem 0; }
-      @page { margin: 12mm; }
+      body { padding: 0.4rem 0 16mm; }
+      @page { margin: 12mm 12mm 16mm; }
+      .page-foot {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 4mm;
+        margin-top: 0;
+        padding: 0.35rem 0 0;
+      }
+      .doc-legal { break-inside: avoid; page-break-inside: avoid; }
+      .calc { break-inside: avoid; page-break-inside: avoid; }
     }
   </style>
 </head>
 <body>
   <div class="brand">
     <h1>${escapeHtml(camp.nombre)}</h1>
-    <span>Mantilla · Gestión de Flota</span>
+    <span>Mantilla - Gestion de Flota</span>
   </div>
-  <p class="meta">${formatDate(camp.fecha)} · ${rows.length} camión${rows.length !== 1 ? 'es' : ''}</p>
+  <p class="meta">${formatDate(camp.fecha)} - ${rows.length} camion${rows.length !== 1 ? 'es' : ''}</p>
   ${saldoRow}
   <table>
     <thead>
       <tr>
         <th>Fecha</th>
-        <th class="num">TM</th>
-        <th class="num">Guía</th>
+        <th>TM</th>
+        <th>Guia</th>
         <th>Placa</th>
-        <th class="num">Pesaje</th>
+        <th>Pesaje</th>
       </tr>
     </thead>
     <tbody>${tableRows}</tbody>
   </table>
   <div class="calc">
-    <h2>Cálculos</h2>
-    ${campamentoCalcHtml(totals, camp.tarifa)}
+    <h2>Calculos</h2>
+    ${calcLines}
     <div class="total">
       <span>${camp.saldoAnterior > 0 ? 'Total con saldo' : 'Total'}</span>
       <strong>${formatMoney(totals.totalConSaldo)}</strong>
     </div>
+  </div>
+  <footer class="doc-legal">
+    <p class="doc-legal__mark">Documento empresarial - Mantilla</p>
+    <p class="doc-legal__text">Solo para visualizacion, impresion o exportacion. Prohibida su edicion o alteracion. Copia modificada sin validez oficial.</p>
+  </footer>
+  <div class="page-foot">
+    <span>Generado ${escapeHtml(genFecha)} ${escapeHtml(genHora)}</span>
+    <span>Mantilla</span>
   </div>
 </body>
 </html>`;
@@ -1762,26 +1830,88 @@ function getCampamentoPdfFilename(camp) {
 
 function loadPdfPreviewFrame(camp) {
   const frame = $('#pdfPreviewFrame');
-  if (!frame) return;
-  const doc = frame.contentDocument || frame.contentWindow.document;
-  doc.open();
-  doc.write(buildCampamentoPrintHtml(camp));
-  doc.close();
+  if (!frame) return Promise.reject(new Error('Sin marco PDF'));
+
+  const html = buildCampamentoPrintHtml(camp);
+  if (frame._mantillaBlobUrl) {
+    try { URL.revokeObjectURL(frame._mantillaBlobUrl); } catch (_) { /* ignore */ }
+    frame._mantillaBlobUrl = null;
+  }
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      resolve(frame);
+    };
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      reject(err || new Error('Vista previa PDF falló'));
+    };
+
+    frame.onload = () => done();
+    frame.onerror = () => fail();
+
+    try {
+      frame.removeAttribute('src');
+      frame.srcdoc = html;
+      setTimeout(() => {
+        if (frame.contentDocument?.body?.childNodes?.length) done();
+      }, 120);
+    } catch (err) {
+      try {
+        const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+        frame._mantillaBlobUrl = url;
+        frame.removeAttribute('srcdoc');
+        frame.src = url;
+      } catch (err2) {
+        fail(err2);
+      }
+    }
+  });
 }
 
 function openCampamentoPdfModal(idOrCamp) {
   const camp = typeof idOrCamp === 'object' && idOrCamp
     ? idOrCamp
     : (getCampamentoById(idOrCamp) || historialCampById.get(idOrCamp));
-  if (!camp) return;
+  if (!camp) {
+    showToast?.({
+      title: 'No se encontró el viaje',
+      type: 'warning',
+      detail: 'Recarga e intenta de nuevo'
+    });
+    return;
+  }
 
   historialCampById.set(camp.id, camp);
   pdfPreviewCampId = camp.id;
   const title = $('#pdfPreviewTitle');
   if (title) title.textContent = `${camp.nombre} · ${formatDate(camp.fecha)}`;
-  loadPdfPreviewFrame(camp);
+
+  const modal = $('#modalPdfPreview');
+  if (!modal) {
+    showToast?.({
+      title: 'PDF no disponible',
+      type: 'warning',
+      detail: 'Abre la app desde Netlify o localhost (no file://)'
+    });
+    return;
+  }
+
   openModal('modalPdfPreview');
   refreshLucideIcons();
+
+  loadPdfPreviewFrame(camp).catch((err) => {
+    console.error('PDF preview error:', err);
+    showToast?.({
+      title: 'No se pudo mostrar el PDF',
+      type: 'warning',
+      detail: 'Usa localhost o la web publicada. Evita abrir el HTML directo (file://).'
+    });
+  });
 }
 
 function getPdfPreviewCamp() {
@@ -1794,12 +1924,327 @@ function getPdfPreviewDocumentBody() {
   return frame?.contentDocument?.body || null;
 }
 
+/** Texto seguro para jsPDF (Helvetica / WinAnsi). Evita flechas y símbolos que rompen el PDF. */
+function pdfSafeText(value) {
+  return String(value ?? '')
+    .replace(/[→⟶➜➢]/g, '>')
+    .replace(/[×✕✖]/g, 'x')
+    .replace(/[·•∙]/g, '-')
+    .replace(/[—–―]/g, '-')
+    .replace(/[\u00A0\u202F\u2007\u2009\u200A]/g, ' ')
+    .replace(/[^\x09\x0A\x0D\x20-\x7E\xA0-\xFF]/g, '');
+}
+
+function formatMoneyPdf(n) {
+  const num = Number(n);
+  const safe = Number.isFinite(num) ? num : 0;
+  const fixed = (typeof roundMoney === 'function' ? roundMoney(safe) : safe).toFixed(2);
+  const [intPart, dec] = fixed.split('.');
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return `S/ ${grouped}.${dec}`;
+}
+
+/** Dibuja el PDF del viaje con jsPDF (sin html2canvas → evita página en blanco). */
+function buildCampamentoPdfDoc(camp) {
+  const JsPDF = getJsPdfConstructor();
+  if (!JsPDF) throw new Error('jsPDF no disponible');
+
+  const filas = camp.filas || [];
+  const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0);
+  const rows = filas.filter((f) => f.placa && Number(f.toneladas) > 0);
+  const doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 14;
+  const contentW = pageW - marginX * 2;
+  const footerH = 28;
+  const rowH = 10.5;
+  const headerH = 10;
+  let y = 18;
+
+  // Paleta corporativa seria
+  const navy = [10, 22, 40];
+  const ink = [15, 23, 42];
+  const muted = [71, 85, 105];
+  const line = [148, 163, 184];
+  const fill = [248, 250, 252];
+  const headerFill = [226, 232, 240];
+
+  const now = new Date();
+  const genFecha = formatDate(todayISO());
+  const genHora = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const genLabel = pdfSafeText(`Generado ${genFecha} ${genHora}`);
+
+  const put = (text, x, yy, opts) => {
+    doc.text(pdfSafeText(text), x, yy, opts);
+  };
+
+  // Marca / titulo
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...navy);
+  put(String(camp.nombre || 'Viaje').toUpperCase(), marginX, y);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...muted);
+  put('Mantilla - Gestion de Flota', pageW - marginX, y, { align: 'right' });
+  y += 5;
+
+  doc.setDrawColor(...navy);
+  doc.setLineWidth(0.7);
+  doc.line(marginX, y, pageW - marginX, y);
+  y += 9;
+
+  doc.setFontSize(10);
+  doc.setTextColor(...muted);
+  put(
+    `${formatDate(camp.fecha)} - ${rows.length} camion${rows.length !== 1 ? 'es' : ''}`,
+    marginX,
+    y
+  );
+  y += 7;
+
+  if (Number(camp.saldoAnterior) > 0) {
+    doc.setTextColor(...muted);
+    put(`Saldo anterior: ${formatMoneyPdf(camp.saldoAnterior)}`, marginX, y);
+    y += 7;
+  }
+
+  const cols = [
+    { label: 'FECHA', w: contentW * 0.18 },
+    { label: 'TM', w: contentW * 0.16 },
+    { label: 'GUIA', w: contentW * 0.16 },
+    { label: 'PLACA', w: contentW * 0.28 },
+    { label: 'PESAJE', w: contentW * 0.22 }
+  ];
+
+  // Misma grilla que el HTML del modal: borde fino #94a3b8 en cada celda
+  const drawTableGrid = (topY, rowCount) => {
+    const totalH = headerH + rowCount * rowH;
+    doc.setDrawColor(...line);
+    doc.setLineWidth(0.25);
+    doc.rect(marginX, topY, contentW, totalH, 'S');
+
+    let x = marginX;
+    for (let c = 0; c < cols.length - 1; c += 1) {
+      x += cols[c].w;
+      doc.line(x, topY, x, topY + totalH);
+    }
+    doc.line(marginX, topY + headerH, marginX + contentW, topY + headerH);
+    for (let r = 1; r < rowCount; r += 1) {
+      const hy = topY + headerH + r * rowH;
+      doc.line(marginX, hy, marginX + contentW, hy);
+    }
+  };
+
+  const drawHeaderCells = (tableTopY) => {
+    doc.setFillColor(...headerFill);
+    doc.rect(marginX, tableTopY, contentW, headerH, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...navy);
+    let x = marginX;
+    cols.forEach((c) => {
+      put(c.label, x + c.w / 2, tableTopY + headerH / 2 + 1.2, { align: 'center' });
+      x += c.w;
+    });
+  };
+
+  const ensureSpace = (need) => {
+    if (y + need < pageH - footerH) return false;
+    doc.addPage();
+    y = 18;
+    return true;
+  };
+
+  const drawRowsChunk = (chunk, startIdx) => {
+    const tableTop = y;
+    drawHeaderCells(tableTop);
+    y = tableTop + headerH;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...ink);
+
+    chunk.forEach((f, localIdx) => {
+      const idx = startIdx + localIdx;
+      if (idx % 2 === 1) {
+        doc.setFillColor(...fill);
+        doc.rect(marginX, y, contentW, rowH, 'F');
+      }
+      const vals = [
+        formatDateDM(f.fecha || camp.fecha),
+        Number(f.toneladas).toFixed(2),
+        Number(f.guia).toFixed(0),
+        String(f.placa || ''),
+        Number(f.pesaje).toFixed(1)
+      ];
+      let x = marginX;
+      cols.forEach((c, ci) => {
+        put(vals[ci], x + c.w / 2, y + rowH / 2 + 1.3, { align: 'center' });
+        x += c.w;
+      });
+      y += rowH;
+    });
+
+    drawTableGrid(tableTop, chunk.length);
+  };
+
+  if (!rows.length) {
+    ensureSpace(headerH + rowH + 2);
+    const tableTop = y;
+    drawHeaderCells(tableTop);
+    y = tableTop + headerH;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...muted);
+    put('Sin filas de viaje', marginX + contentW / 2, y + rowH / 2 + 1.2, { align: 'center' });
+    y += rowH;
+    drawTableGrid(tableTop, 1);
+  } else {
+    let i = 0;
+    while (i < rows.length) {
+      const available = pageH - footerH - y;
+      let fit = Math.floor((available - headerH) / rowH);
+      if (fit < 1) {
+        doc.addPage();
+        y = 18;
+        fit = Math.max(1, Math.floor((pageH - footerH - y - headerH) / rowH));
+      }
+      const chunk = rows.slice(i, i + fit);
+      drawRowsChunk(chunk, i);
+      i += chunk.length;
+      if (i < rows.length) {
+        doc.addPage();
+        y = 18;
+      }
+    }
+  }
+
+  y += 10;
+  ensureSpace(56);
+
+  // Caja CALCULOS: mismo borde fino y radio suave que el modal
+  const boxH = 50;
+  doc.setFillColor(...fill);
+  doc.setDrawColor(...line);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(marginX, y, contentW, boxH, 1.6, 1.6, 'FD');
+
+  let cy = y + 8;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...navy);
+  put('CALCULOS', marginX + 5, cy);
+  cy += 7.5;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...ink);
+  const calcRows = [
+    `> ${totals.toneladas.toFixed(2)} x ${camp.tarifa} = ${formatMoneyPdf(totals.producto)} +`,
+    `> ${totals.count} Guia${totals.count !== 1 ? 's' : ''} = ${formatMoneyPdf(totals.guiaTotal)}`,
+    `> ${totals.count} Pesaje${totals.count !== 1 ? 's' : ''} = ${formatMoneyPdf(totals.pesajeTotal)}`,
+    `Subtotal = ${formatMoneyPdf(totals.subtotal)}`
+  ];
+  calcRows.forEach((t) => {
+    put(t, marginX + 5, cy);
+    cy += 6;
+  });
+
+  doc.setDrawColor(...navy);
+  doc.setLineWidth(0.4);
+  doc.line(marginX + 5, cy, pageW - marginX - 5, cy);
+  cy += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...navy);
+  const totalLabel = Number(camp.saldoAnterior) > 0 ? 'Total con saldo' : 'Total';
+  put(totalLabel, marginX + 5, cy);
+  put(formatMoneyPdf(totals.totalConSaldo), pageW - marginX - 5, cy, { align: 'right' });
+
+  y = y + boxH + 12;
+
+  // Aviso legal (cuerpo)
+  ensureSpace(16);
+  doc.setDrawColor(...line);
+  doc.setLineWidth(0.25);
+  doc.line(marginX, y, pageW - marginX, y);
+  y += 6;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(...navy);
+  put('DOCUMENTO EMPRESARIAL - MANTILLA', pageW / 2, y, { align: 'center' });
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(...muted);
+  put(
+    'Solo para visualizacion, impresion o exportacion. Prohibida su edicion o alteracion. Copia modificada sin validez oficial.',
+    pageW / 2,
+    y,
+    { align: 'center', maxWidth: contentW }
+  );
+
+  // Pie de pagina en todas las hojas: fecha/hora de generacion
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p += 1) {
+    doc.setPage(p);
+    const footY = pageH - 10;
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.25);
+    doc.line(marginX, footY - 4, pageW - marginX, footY - 4);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...muted);
+    put(genLabel, marginX, footY);
+    put(`Pagina ${p} de ${pageCount}`, pageW - marginX, footY, { align: 'right' });
+  }
+
+  return doc;
+}
+
 function printCampamentoPreview() {
   const frame = $('#pdfPreviewFrame');
-  if (!frame?.contentWindow) return;
+  if (frame?.contentWindow) {
+    try {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+      return;
+    } catch (err) {
+      console.warn('Print via iframe failed:', err);
+    }
+  }
+
+  const camp = getPdfPreviewCamp();
+  if (!camp) return;
   try {
-    frame.contentWindow.focus();
-    frame.contentWindow.print();
+    const html = buildCampamentoPrintHtml(camp);
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    const win = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!win) {
+      showToast({
+        title: 'Popup bloqueado',
+        type: 'warning',
+        detail: 'Permite ventanas emergentes para imprimir'
+      });
+      URL.revokeObjectURL(url);
+      return;
+    }
+    const revoke = () => {
+      try { URL.revokeObjectURL(url); } catch (_) { /* ignore */ }
+    };
+    win.addEventListener('load', () => {
+      try {
+        win.focus();
+        win.print();
+      } catch (_) { /* ignore */ }
+      setTimeout(revoke, 2000);
+    });
+    setTimeout(revoke, 15000);
   } catch (err) {
     console.error('Print error:', err);
     showToast({
@@ -1810,36 +2255,53 @@ function printCampamentoPreview() {
   }
 }
 
-function ensureHtml2Pdf() {
-  if (window.html2pdf) return Promise.resolve(window.html2pdf);
+function getJsPdfConstructor() {
+  if (window.jspdf?.jsPDF) return window.jspdf.jsPDF;
+  if (typeof window.jsPDF === 'function') return window.jsPDF;
+  if (typeof window.jsPDF === 'object' && typeof window.jsPDF.jsPDF === 'function') {
+    return window.jsPDF.jsPDF;
+  }
+  return null;
+}
+
+function ensureJsPdf() {
+  const ready = getJsPdfConstructor();
+  if (ready) return Promise.resolve(ready);
+
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-mantilla-html2pdf]');
+    const existing = document.querySelector('script[data-mantilla-jspdf]');
     if (existing) {
-      existing.addEventListener('load', () => resolve(window.html2pdf));
-      existing.addEventListener('error', reject);
+      const wait = () => {
+        const ctor = getJsPdfConstructor();
+        if (ctor) resolve(ctor);
+        else reject(new Error('jsPDF no disponible'));
+      };
+      if (existing.dataset.loaded === '1') wait();
+      else {
+        existing.addEventListener('load', wait);
+        existing.addEventListener('error', () => reject(new Error('jsPDF load failed')));
+      }
       return;
     }
+
     const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    script.dataset.mantillaHtml2pdf = '1';
-    script.onload = () => resolve(window.html2pdf);
-    script.onerror = () => reject(new Error('html2pdf load failed'));
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.dataset.mantillaJspdf = '1';
+    script.onload = () => {
+      script.dataset.loaded = '1';
+      const ctor = getJsPdfConstructor();
+      if (ctor) resolve(ctor);
+      else reject(new Error('jsPDF no disponible tras cargar'));
+    };
+    script.onerror = () => reject(new Error('jsPDF load failed'));
     document.head.appendChild(script);
   });
 }
 
 async function generateCampamentoPdfBlob(camp) {
-  const body = getPdfPreviewDocumentBody();
-  if (!body) throw new Error('Sin vista previa');
-  const html2pdf = await ensureHtml2Pdf();
-  const opt = {
-    margin: [12, 10, 12, 10],
-    filename: getCampamentoPdfFilename(camp),
-    image: { type: 'jpeg', quality: 0.95 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-  return html2pdf().set(opt).from(body).outputPdf('blob');
+  await ensureJsPdf();
+  const doc = buildCampamentoPdfDoc(camp);
+  return doc.output('blob');
 }
 
 async function downloadCampamentoPdf() {
@@ -1848,20 +2310,16 @@ async function downloadCampamentoPdf() {
   const btn = $('#btnPdfDownload');
   btn?.setAttribute('disabled', 'disabled');
   try {
-    const blob = await generateCampamentoPdfBlob(camp);
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = getCampamentoPdfFilename(camp);
-    link.click();
-    URL.revokeObjectURL(url);
+    await ensureJsPdf();
+    const doc = buildCampamentoPdfDoc(camp);
+    doc.save(getCampamentoPdfFilename(camp));
     showToast({ title: 'PDF descargado', detail: getCampamentoPdfFilename(camp) });
   } catch (err) {
     console.error('PDF download error:', err);
     showToast({
       title: 'No se pudo descargar',
       type: 'warning',
-      detail: 'Usa Imprimir y guarda como PDF'
+      detail: 'Revisa tu conexión (se carga jsPDF) o usa Imprimir → Guardar como PDF'
     });
   } finally {
     btn?.removeAttribute('disabled');
@@ -1869,8 +2327,9 @@ async function downloadCampamentoPdf() {
 }
 
 function buildCampamentoShareText(camp) {
-  const totals = calcCampamentoTotals(camp.filas, camp.tarifa, camp.saldoAnterior || 0);
-  const rows = camp.filas.filter((f) => f.placa && Number(f.toneladas) > 0);
+  const filas = camp.filas || [];
+  const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0);
+  const rows = filas.filter((f) => f.placa && Number(f.toneladas) > 0);
   return [
     `*${camp.nombre}*`,
     `Fecha: ${formatDate(camp.fecha)}`,
@@ -1915,12 +2374,24 @@ async function shareCampamentoWhatsApp() {
 }
 
 function wirePdfPreviewModal() {
-  const modal = $('#modalPdfPreview');
-  if (!modal || modal.dataset.wired) return;
-  modal.dataset.wired = '1';
-  $('#btnPdfPrint')?.addEventListener('click', printCampamentoPreview);
-  $('#btnPdfDownload')?.addEventListener('click', downloadCampamentoPdf);
-  $('#btnPdfWhatsApp')?.addEventListener('click', shareCampamentoWhatsApp);
+  if (wirePdfPreviewModal._wired) return;
+  wirePdfPreviewModal._wired = true;
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#btnPdfPrint')) {
+      e.preventDefault();
+      printCampamentoPreview();
+      return;
+    }
+    if (e.target.closest('#btnPdfDownload')) {
+      e.preventDefault();
+      downloadCampamentoPdf();
+      return;
+    }
+    if (e.target.closest('#btnPdfWhatsApp')) {
+      e.preventDefault();
+      shareCampamentoWhatsApp();
+    }
+  });
 }
 
 function openViajeTutorial() {

@@ -215,7 +215,17 @@ function initViajesPage() {
   });
 
   $('#btnCancelViaje')?.addEventListener('click', () => resetViajeForm());
-  $('#btnAddMain')?.addEventListener('click', () => openCamionModal());
+  const openNewViaje = (e) => {
+    e?.preventDefault?.();
+    if (getPage() !== 'viajes') return;
+    if (typeof openViajeForm === 'function') openViajeForm();
+    else if (typeof resetViajeForm === 'function') {
+      resetViajeForm();
+      focusViajeForm?.();
+    }
+  };
+  $('#btnAddMain')?.addEventListener('click', openNewViaje);
+  $('#fabAdd')?.addEventListener('click', openNewViaje);
   $('#btnAddCampFila')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();

@@ -534,16 +534,16 @@
 .maint-item-row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1.55fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1.45fr) 2.1rem;
   grid-template-areas:
-    "un cost total"
-    "desc desc desc";
-  gap: 0.4rem 0.5rem;
+    "un cost total side"
+    "desc desc desc desc";
+  gap: 0.4rem 0.45rem;
   align-items: end;
   background: #fff;
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
-  padding: 0.55rem 2.35rem 0.55rem 0.55rem;
+  padding: 0.55rem;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -562,8 +562,8 @@
 
 .maint-item-row__num {
   position: absolute;
-  top: 0.35rem;
-  right: 0.35rem;
+  top: 0.4rem;
+  right: 0.4rem;
   z-index: 1;
   display: flex;
   align-items: center;
@@ -606,15 +606,26 @@
   padding: 0.35rem 0.45rem;
 }
 
+.maint-item-field--un .field-input,
+.maint-item-field--cost .field-input,
+.maint-item-field--total .field-input {
+  text-align: center;
+}
+
 .maint-item-field--desc {
   grid-area: desc;
+  width: 100%;
+  min-width: 0;
+}
+
+.maint-item-field--desc .field-input {
+  width: 100%;
 }
 
 .maint-item-field--total .field-input {
   font-size: 0.75rem;
   padding: 0.35rem 0.35rem;
-  text-align: right;
-  min-width: 4.5rem;
+  min-width: 0;
 }
 
 .maint-item-row__remove {

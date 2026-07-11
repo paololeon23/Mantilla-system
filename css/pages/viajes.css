@@ -2124,8 +2124,15 @@
 }
 
 .camp-list-clear {
-  margin-top: 0.15rem;
-  align-self: flex-start;
+  flex-shrink: 0;
+  align-self: center;
+  min-height: 2.5rem;
+  height: 2.5rem;
+  white-space: nowrap;
+}
+
+.camp-list-fecha-bar .camp-list-clear {
+  margin-top: 0;
 }
 
 .camp-list-controls {
@@ -2183,7 +2190,7 @@
 .camp-list-fecha-bar {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   min-width: 0;
 }
 
@@ -2192,9 +2199,56 @@
   min-width: 0;
 }
 
-.camp-list-fecha-picker-mount .dp__trigger {
-  min-height: 2.45rem;
+.camp-list-fecha-picker-mount .dp {
   width: 100%;
+}
+
+.camp-list-fecha-picker-mount .dp__trigger,
+.camp-list-fecha-picker-mount .dp__trigger--compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
+  padding: 0 0.85rem;
+  border-radius: 10px;
+  border-color: #cddced;
+  background: #fbfdff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: left;
+}
+
+.camp-list-fecha-picker-mount .dp__trigger:focus,
+.camp-list-fecha-picker-mount .dp__trigger--open {
+  border-color: #7eb0e8;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(30, 90, 158, 0.1);
+}
+
+.camp-list-fecha-picker-mount .dp__icon {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.camp-list-fecha-picker-mount .dp__text {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .camp-list-fecha-btn {
@@ -2203,7 +2257,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.3rem;
-  min-height: 2.45rem;
+  min-height: 2.5rem;
+  height: 2.5rem;
   padding: 0.45rem 0.85rem;
 }
 
@@ -2235,28 +2290,52 @@
 
 .camp-historial-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.55rem 0.65rem;
   width: 100%;
-  padding: 0.75rem 0.85rem;
-  border: none;
+  padding: 0.55rem 0.65rem 0.55rem 0.35rem;
   border-bottom: 1px solid #eef2f7;
   background: #fff;
-  text-align: left;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.12s ease;
 }
 
 .camp-historial-row:last-child {
   border-bottom: none;
 }
 
-.camp-historial-row:hover,
-.camp-historial-row:focus-visible {
+.camp-historial-row__open {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem 0.65rem;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.35rem 0.45rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+  transition: background 0.12s ease;
+}
+
+.camp-historial-row__open:hover,
+.camp-historial-row__open:focus-visible {
   background: #f0f7ff;
   outline: none;
+}
+
+.camp-historial-row__pdf {
+  flex-shrink: 0;
+  min-height: 2.35rem;
+  padding: 0.35rem 0.7rem;
+}
+
+.camp-historial-row__pdf .btn-print-label {
+  display: inline;
 }
 
 .camp-historial-row__main {
@@ -2551,7 +2630,30 @@
     display: none;
   }
 
+  .camp-list-fecha-btn {
+    width: 2.5rem;
+    min-width: 2.5rem;
+    padding: 0;
+    border-radius: 999px;
+  }
+
+  .camp-list-clear {
+    min-height: 2.5rem;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.78rem;
+  }
+
   .camp-historial-row {
-    padding: 0.7rem 0.75rem;
+    padding: 0.45rem 0.5rem 0.45rem 0.25rem;
+    gap: 0.4rem;
+  }
+
+  .camp-historial-row__pdf {
+    min-height: 2.25rem;
+    padding: 0.3rem 0.55rem;
+  }
+
+  .camp-historial-row__pdf .btn-print-label {
+    display: none;
   }
 }

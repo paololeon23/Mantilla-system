@@ -107,6 +107,18 @@
     const bottomNav = document.getElementById('bottomNav');
     const parent = bottomNav?.parentNode || document.body;
 
+    // Sincronizar FAB móvil (está entre main y bottom-nav; si no se reemplaza queda huérfano)
+    const oldFab = document.getElementById('fabAdd');
+    const newFab = doc.getElementById('fabAdd');
+    if (newFab) {
+      const fabClone = newFab.cloneNode(true);
+      if (oldFab) oldFab.replaceWith(fabClone);
+      else if (bottomNav) parent.insertBefore(fabClone, bottomNav);
+      else parent.appendChild(fabClone);
+    } else if (oldFab) {
+      oldFab.remove();
+    }
+
     // Quitar modales de la página anterior (después del bottom-nav)
     let sibling = bottomNav?.nextElementSibling;
     while (sibling && sibling.tagName !== 'SCRIPT') {

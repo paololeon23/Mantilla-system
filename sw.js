@@ -1,8 +1,11 @@
 /**
  * Mantilla — Service Worker (PWA offline)
  * Requiere http://localhost o https:// (no file://)
+ *
+ * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
+ * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.10';
+const CACHE_NAME = 'mantilla-v1.3.20';
 
 const PRECACHE_URLS = [
   './',
@@ -73,6 +76,17 @@ function cachePut(request, response) {
   caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
 }
 
+function isFreshAsset(url) {
+  const path = url.pathname;
+  return (
+    path.endsWith('.html')
+    || path.endsWith('.js')
+    || path.endsWith('.css')
+    || path.endsWith('/')
+    || path.endsWith('/sw.js')
+  );
+}
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
@@ -82,36 +96,53 @@ self.addEventListener('fetch', (event) => {
   const sameOrigin = url.origin === self.location.origin;
   const isNavigate = event.request.mode === 'navigate';
 
-  if (sameOrigin || isNavigate) {
+  if (!sameOrigin && !isNavigate) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        const network = fetch(event.request)
-          .then((response) => {
-            cachePut(event.request, response);
-            return response;
-          })
-          .catch(() => null);
-
-        return cached || network.then((response) => {
-          if (response) return response;
-          if (isNavigate) {
-            return caches.match('./viajes.html')
-              || caches.match('./index.html')
-              || Response.error();
-          }
-          return Response.error();
-        });
-      })
+      fetch(event.request)
+        .then((response) => {
+          cachePut(event.request, response);
+          return response;
+        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
+  // HTML / JS / CSS / navegación: red primero para no servir código viejo
+  if (isNavigate || isFreshAsset(url)) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          cachePut(event.request, response);
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+          if (isNavigate) {
+            return (
+              (await caches.match('./viajes.html'))
+              || (await caches.match('./index.html'))
+              || Response.error()
+            );
+          }
+          return Response.error();
+        })
+    );
+    return;
+  }
+
+  // Imágenes y demás: cache primero
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        cachePut(event.request, response);
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(event.request).then((cached) => {
+      const network = fetch(event.request)
+        .then((response) => {
+          cachePut(event.request, response);
+          return response;
+        })
+        .catch(() => null);
+
+      return cached || network.then((response) => response || Response.error());
+    })
   );
 });

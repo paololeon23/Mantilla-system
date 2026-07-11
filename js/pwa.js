@@ -22,7 +22,20 @@
     if (!('serviceWorker' in navigator)) return;
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .then((reg) => {
+          // Forzar toma de control de la versión nueva del SW
+          if (reg.waiting) reg.waiting.postMessage?.({ type: 'SKIP_WAITING' });
+          reg.update?.();
+        })
         .catch((err) => console.warn('[Mantilla] Service worker:', err));
+
+      // Si hay un SW nuevo tomando control, recargar una vez para scripts frescos
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        location.reload();
+      });
     });
   }
 
