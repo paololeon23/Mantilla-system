@@ -200,6 +200,11 @@ function saveCamion(e) {
   Mantilla.sync?.syncCamion?.(record);
   closeModal('modalCamion');
   renderCamionesList();
+  Mantilla.activity?.log?.({
+    title: idx >= 0 ? `Camión actualizado · ${placa}` : `Camión registrado · ${placa}`,
+    path: `camiones/${chofer || 'sin chofer'}`,
+    type: 'camion'
+  });
   showToast({
     title: idx >= 0 ? 'Camión actualizado' : 'Camión registrado',
     detail: alertDetailHtml([
@@ -222,6 +227,11 @@ async function deleteCamionById(id) {
   syncCatalogosFromCamiones();
   saveData();
   renderCamionesList();
+  Mantilla.activity?.log?.({
+    title: `Camión eliminado · ${cam.placa || '—'}`,
+    path: `camiones/${cam.chofer || 'sin chofer'}`,
+    type: 'camion'
+  });
   showToast({ title: 'Camión eliminado', type: 'info', detail: 'Quitado del historial' });
 }
 

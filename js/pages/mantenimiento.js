@@ -256,6 +256,11 @@ function saveMantenimiento(e) {
     });
 
     const grand = synced.reduce((s, r) => s + (Number(r.monto) || 0), 0);
+    Mantilla.activity?.log?.({
+      title: `Gastos actualizados · ${placa}`,
+      path: `gastos/${fecha} · ${synced.length} producto${synced.length !== 1 ? 's' : ''}`,
+      type: 'gasto'
+    });
     showToast({
       title: 'Gastos actualizados',
       detail: alertDetailHtml([
@@ -281,6 +286,11 @@ function saveMantenimiento(e) {
       };
       state.mantenimiento.push(record);
       synced.push(record);
+    });
+    Mantilla.activity?.log?.({
+      title: `Gastos guardados · ${placa}`,
+      path: `gastos/${fecha} · ${items.length} producto${items.length !== 1 ? 's' : ''}`,
+      type: 'gasto'
     });
     showToast({
       title: 'Gastos guardados',
@@ -356,11 +366,17 @@ window.deleteMantenimiento = async (id) => {
     message: 'Se eliminará este gasto. Esta acción no se puede deshacer.'
   });
   if (!ok) return;
+  const gasto = state.mantenimiento.find((m) => m.id === id);
   Mantilla.sync?.syncDelete?.('gastos', id);
   state.mantenimiento = state.mantenimiento.filter((m) => m.id !== id);
   saveData();
   renderMantenimiento();
   updateKPIs(filterOperaciones(), filterMantenimiento());
+  Mantilla.activity?.log?.({
+    title: `Gasto eliminado · ${gasto?.placa || '—'}`,
+    path: `gastos/${gasto?.descripcion || gasto?.fecha || '—'}`,
+    type: 'gasto'
+  });
   showToast({
     title: 'Gasto eliminado',
     type: 'info',

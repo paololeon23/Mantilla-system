@@ -360,9 +360,9 @@ function campViajeCardHtml(f, index, fechaDefault) {
       <div class="camp-viaje-row__top">
         <span class="camp-viaje-row__num" aria-hidden="true">${num}</span>
         <div class="camp-viaje-row__placa">
-          <label class="camp-viaje-field__lbl">Placa del camión</label>
           <div class="camp-viaje-row__placa-wrap">
             <div class="camp-viaje-row__placa-picker">
+              <label class="camp-viaje-field__lbl">Placa del camión</label>
               ${campPlacaPickerHtml(f.placa || '')}
             </div>
             <div class="camp-viaje-row__fecha">
@@ -1555,6 +1555,11 @@ function saveCampamento(e) {
 
   const activas = filas.length;
   Mantilla.drafts?.clearViaje?.();
+  Mantilla.activity?.log?.({
+    title: isEdit ? `Viaje actualizado · ${nombre || 'Sin nombre'}` : `Viaje guardado · ${nombre || 'Sin nombre'}`,
+    path: `viajes/${savedFecha || '—'} · ${activas} camión${activas !== 1 ? 'es' : ''}`,
+    type: 'viaje'
+  });
   showToast({
     title: isEdit ? 'Viajes actualizados' : 'Viajes guardados',
     detail: alertDetailHtml([
@@ -1578,6 +1583,9 @@ async function deleteCampamentoById(id) {
     message: 'Se eliminarán estos viajes guardados. Esta acción no se puede deshacer.'
   });
   if (!ok) return;
+  const camp = (state.campamentos || []).find((c) => c.id === id);
+  const campNombre = camp?.nombre || 'Viaje';
+  const campFecha = camp?.fecha || '—';
   const ops = (state.operaciones || []).filter((op) => op.campamentoId === id);
   ops.forEach((op) => Mantilla.sync?.syncDelete?.('viajes', op.id));
   state.campamentos = state.campamentos.filter((c) => c.id !== id);
@@ -1585,6 +1593,11 @@ async function deleteCampamentoById(id) {
   saveData();
   renderCampamentoList();
   renderOperaciones();
+  Mantilla.activity?.log?.({
+    title: `Viaje eliminado · ${campNombre}`,
+    path: `viajes/${campFecha}`,
+    type: 'viaje'
+  });
   showToast({
     title: 'Registro eliminado',
     type: 'info',

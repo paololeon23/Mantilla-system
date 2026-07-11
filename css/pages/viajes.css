@@ -892,7 +892,15 @@
   gap: 0.4rem;
 }
 
+.camp-viaje-row__placa-picker {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .camp-viaje-row__fecha {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   flex-shrink: 0;
 }
@@ -949,10 +957,6 @@
 .dp--compact .dp__trigger--open {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(79, 156, 249, 0.12);
-}
-
-.camp-viaje-row__placa-picker {
-  min-width: 0;
 }
 
 .camp-viaje-row__placa-picker .ms,
@@ -1099,6 +1103,35 @@
 
 .camp-viaje-card__remove:hover {
   background: #fecaca;
+}
+
+.camp-viaje-card__remove .lucide-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  stroke-width: 2.35;
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.camp-viaje-card__remove:hover .lucide-icon,
+.camp-viaje-card__remove:focus-visible .lucide-icon {
+  transform: scale(1.1) rotate(90deg);
+}
+
+.camp-viaje-card__remove:active .lucide-icon {
+  transform: scale(0.94) rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camp-viaje-card__remove .lucide-icon {
+    transition: none;
+  }
+
+  .camp-viaje-card__remove:hover .lucide-icon,
+  .camp-viaje-card__remove:focus-visible .lucide-icon,
+  .camp-viaje-card__remove:active .lucide-icon {
+    transform: none;
+  }
 }
 
 /* ---- Gastos de chofer por viaje ---- */
@@ -1809,10 +1842,14 @@
   }
 
   .camp-chofer-gastos-btn .lucide-icon,
-  .camp-viaje-card__remove .lucide-icon,
   .camp-fecha-picker-mount .dp__icon {
     width: 1.05rem;
     height: 1.05rem;
+  }
+
+  .camp-viaje-card__remove .lucide-icon {
+    width: 1.15rem;
+    height: 1.15rem;
   }
 
   .camp-viajes-section__hint {

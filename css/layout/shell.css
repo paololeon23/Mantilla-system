@@ -315,6 +315,11 @@ body.sidebar-open {
   margin-top: auto;
 }
 
+/* Actividad: oculto en móvil */
+.sidebar-activity {
+  display: none;
+}
+
 .sidebar__install-btn {
   display: flex;
   align-items: center;

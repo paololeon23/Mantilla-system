@@ -60,27 +60,36 @@ function closeTopbarProfileMenu() {
   menu.hidden = true;
 }
 
-function initTopbarProfile() {
+function openTopbarProfileMenu() {
   const root = $('#topbarProfile');
   const btn = $('#topbarProfileBtn');
   const menu = $('#topbarProfileMenu');
   if (!root || !btn || !menu) return;
+  root.classList.add('is-open');
+  btn.setAttribute('aria-expanded', 'true');
+  menu.hidden = false;
+  if (typeof refreshLucideIcons === 'function') refreshLucideIcons();
+}
 
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const willOpen = menu.hidden;
-    if (willOpen) {
-      root.classList.add('is-open');
-      btn.setAttribute('aria-expanded', 'true');
-      menu.hidden = false;
-      refreshLucideIcons();
-    } else {
-      closeTopbarProfileMenu();
-    }
-  });
+function initTopbarProfile() {
+  // Delegación en document: el SPA reemplaza #mainWrapper (y el perfil) al navegar
+  if (initTopbarProfile._wired) return;
+  initTopbarProfile._wired = true;
 
   document.addEventListener('click', (e) => {
-    if (!root.contains(e.target)) closeTopbarProfileMenu();
+    const btn = e.target.closest('#topbarProfileBtn');
+    const root = $('#topbarProfile');
+    const menu = $('#topbarProfileMenu');
+
+    if (btn && root && menu) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (menu.hidden) openTopbarProfileMenu();
+      else closeTopbarProfileMenu();
+      return;
+    }
+
+    if (root && !root.contains(e.target)) closeTopbarProfileMenu();
   });
 
   document.addEventListener('keydown', (e) => {

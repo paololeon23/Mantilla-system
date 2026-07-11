@@ -319,6 +319,7 @@ function refreshCurrentPage() {
 function init() {
   initShared();
   initPageForCurrentRoute();
+  if (window.Mantilla?.activity?.init) Mantilla.activity.init();
   if (window.Mantilla?.drafts?.wire) Mantilla.drafts.wire();
   if (window.Mantilla?.drafts?.restore) {
     setTimeout(() => Mantilla.drafts.restore(), 200);
@@ -329,6 +330,7 @@ function init() {
       if (typeof Mantilla.updateOfflineBadge === 'function') {
         Mantilla.updateOfflineBadge();
       }
+      if (window.Mantilla?.activity?.init) Mantilla.activity.init();
     }).catch(() => {});
   }
 }
