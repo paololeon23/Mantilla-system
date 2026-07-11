@@ -238,7 +238,6 @@
   border-radius: var(--radius-md);
   padding: 0.85rem 0.95rem;
   box-shadow: var(--shadow-sm);
-  animation: fadeSlideUp 0.3s ease both;
 }
 
 .maint-expense-card__head {
@@ -765,6 +764,15 @@
   padding: 1rem;
   box-shadow: var(--shadow-sm);
   animation: fadeSlideUp 0.35s ease both;
+}
+
+@media (max-width: 899px) {
+  .campamento-sheet,
+  .maint-expense-card,
+  .maint-plate-card,
+  .camion-card {
+    animation: none;
+  }
 }
 
 .campamento-sheet__nombre {

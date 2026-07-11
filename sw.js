@@ -2,7 +2,7 @@
  * Mantilla — Service Worker (PWA offline)
  * Requiere http://localhost o https:// (no file://)
  */
-const CACHE_NAME = 'mantilla-v1.3.2';
+const CACHE_NAME = 'mantilla-v1.3.3';
 
 const PRECACHE_URLS = [
   './',

@@ -331,10 +331,16 @@ function wireCamionesResize() {
   if (wireCamionesResize._wired) return;
   wireCamionesResize._wired = true;
   let timer;
+  let lastPageSize = typeof getListPageSize === 'function' ? getListPageSize() : 4;
   window.addEventListener('resize', () => {
     if (getPage() !== 'camiones') return;
     clearTimeout(timer);
-    timer = setTimeout(renderCamionesList, 150);
+    timer = setTimeout(() => {
+      const next = typeof getListPageSize === 'function' ? getListPageSize() : 4;
+      if (next === lastPageSize) return;
+      lastPageSize = next;
+      renderCamionesList();
+    }, 200);
   });
 }
 

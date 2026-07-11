@@ -1403,10 +1403,17 @@ function wireCampListResize() {
   if (wireCampListResize._wired) return;
   wireCampListResize._wired = true;
   let timer;
+  let lastPageSize = typeof getListPageSize === 'function' ? getListPageSize() : 4;
   window.addEventListener('resize', () => {
     if (getPage() !== 'viajes') return;
     clearTimeout(timer);
-    timer = setTimeout(renderCampamentoList, 150);
+    timer = setTimeout(() => {
+      // Solo re-render si cambia desktop/móvil (no al mostrar/ocultar barra del browser)
+      const next = typeof getListPageSize === 'function' ? getListPageSize() : 4;
+      if (next === lastPageSize) return;
+      lastPageSize = next;
+      renderCampamentoList();
+    }, 200);
   });
 }
 

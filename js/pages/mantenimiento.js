@@ -494,9 +494,15 @@ function wireMaintListResize() {
   if (wireMaintListResize._wired) return;
   wireMaintListResize._wired = true;
   let timer;
+  let lastPageSize = typeof getListPageSize === 'function' ? getListPageSize() : 4;
   window.addEventListener('resize', () => {
     if (getPage() !== 'mantenimiento') return;
     clearTimeout(timer);
-    timer = setTimeout(renderMantenimiento, 150);
+    timer = setTimeout(() => {
+      const next = typeof getListPageSize === 'function' ? getListPageSize() : 4;
+      if (next === lastPageSize) return;
+      lastPageSize = next;
+      renderMantenimiento();
+    }, 200);
   });
 }
