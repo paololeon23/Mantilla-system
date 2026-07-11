@@ -1798,8 +1798,7 @@ function buildCampamentoPrintHtml(camp) {
     </div>
   </div>
   <footer class="doc-legal">
-    <p class="doc-legal__mark">Documento empresarial - Mantilla</p>
-    <p class="doc-legal__text">Solo para visualizacion, impresion o exportacion. Prohibida su edicion o alteracion. Copia modificada sin validez oficial.</p>
+    <p class="doc-legal__text">Documento Oficial. Cualquier alteracion o manipulacion invalida su contenido.</p>
   </footer>
   <div class="page-foot">
     <span>Generado ${escapeHtml(genFecha)} ${escapeHtml(genHora)}</span>
@@ -2168,21 +2167,16 @@ function buildCampamentoPdfDoc(camp) {
   y = y + boxH + 12;
 
   // Aviso legal (cuerpo)
-  ensureSpace(16);
+  ensureSpace(12);
   doc.setDrawColor(...line);
   doc.setLineWidth(0.25);
   doc.line(marginX, y, pageW - marginX, y);
-  y += 6;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(...navy);
-  put('DOCUMENTO EMPRESARIAL - MANTILLA', pageW / 2, y, { align: 'center' });
   y += 5;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(...muted);
   put(
-    'Solo para visualizacion, impresion o exportacion. Prohibida su edicion o alteracion. Copia modificada sin validez oficial.',
+    'Documento Oficial. Cualquier alteracion o manipulacion invalida su contenido.',
     pageW / 2,
     y,
     { align: 'center', maxWidth: contentW }
