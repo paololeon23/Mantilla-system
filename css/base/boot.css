@@ -1,11 +1,11 @@
 /* Pintado inmediato — evita flash blanco entre páginas */
 html {
-  background: #eef2f7;
+  background: #fff;
   color: #0b1220;
 }
 
 body {
-  background: #eef2f7;
+  background: #fff;
 }
 
 /* Sin re-animar KPI en cada cambio de sección */

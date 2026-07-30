@@ -98,7 +98,7 @@ body {
   body {
     width: 100%;
     min-width: 100%;
-    background: var(--color-bg);
+    background: #fff;
   }
 
   input,

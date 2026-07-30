@@ -382,6 +382,9 @@ body.sidebar-open {
   .main-wrapper--ingresos,
   .main-wrapper--camiones {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
   }
 
   .app-hero {
@@ -412,6 +415,7 @@ body.sidebar-open {
   }
 
   .app-content {
+    flex: 1 0 auto;
     background: #ffffff;
     border-radius: 1.35rem 1.35rem 0 0;
     margin-top: 0;

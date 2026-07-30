@@ -312,6 +312,10 @@ function initShared() {
     const liveBtn = e.target.closest('#btnLiveViaje');
     if (!liveBtn) return;
     e.preventDefault();
+    if (window.innerWidth < 900 && typeof Mantilla?.openMobileAppTools === 'function') {
+      Mantilla.openMobileAppTools();
+      return;
+    }
     goToLiveViaje();
   });
 

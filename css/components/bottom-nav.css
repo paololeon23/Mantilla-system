@@ -5,7 +5,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: var(--bottom-nav-height);
+  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
@@ -16,17 +16,6 @@
   z-index: 150;
   padding-bottom: 0;
   box-shadow: 0 -8px 32px rgba(11, 18, 32, 0.06);
-}
-
-.bottom-nav::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-bottom, 0px);
-  background: #fff;
-  pointer-events: none;
 }
 
 .bottom-nav__tab {

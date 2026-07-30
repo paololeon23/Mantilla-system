@@ -7,7 +7,7 @@
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "browser"],
-  "background_color": "#0c1f3d",
+  "background_color": "#ffffff",
   "theme_color": "#0c1f3d",
   "orientation": "any",
   "lang": "es",

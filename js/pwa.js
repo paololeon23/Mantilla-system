@@ -157,6 +157,75 @@
     }
   }
 
+  async function clearTemporaryDataAndUpdate() {
+    if (!navigator.onLine) {
+      if (typeof showToast === 'function') {
+        showToast({
+          title: 'Sin conexión',
+          type: 'warning',
+          detail: 'Conéctate a internet para descargar la versión nueva.'
+        });
+      }
+      return;
+    }
+
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: 'Actualizando Mantilla…',
+        text: 'Eliminando versiones anteriores y descargando la versión actual.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading()
+      });
+    }
+
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((key) => caches.delete(key)));
+      }
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration('./');
+        if (reg?.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        await reg?.update?.();
+      }
+      location.reload();
+    } catch (_) {
+      if (typeof Swal !== 'undefined') Swal.close();
+      if (typeof showToast === 'function') {
+        showToast({
+          title: 'No se pudo actualizar',
+          type: 'warning',
+          detail: 'Comprueba tu conexión e inténtalo nuevamente.'
+        });
+      }
+    }
+  }
+
+  async function openMobileAppTools() {
+    if (window.innerWidth >= 900) return;
+
+    if (typeof Swal === 'undefined') {
+      if (window.confirm('¿Borrar archivos temporales y actualizar Mantilla? Tus registros no se eliminarán.')) {
+        clearTemporaryDataAndUpdate();
+      }
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: 'Actualizar aplicación',
+      html: '<p>Elimina la caché y las versiones anteriores para cargar Mantilla nuevamente.</p><p><strong>No borra viajes, gastos, ingresos ni cambios pendientes.</strong></p>',
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonText: 'Borrar datos y actualizar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1e5a9e',
+      reverseButtons: true
+    });
+    if (result.isConfirmed) clearTemporaryDataAndUpdate();
+  }
+
   async function onInstallClick() {
     if (deferredInstall) {
       deferredInstall.prompt();
@@ -227,4 +296,5 @@
   window.Mantilla = window.Mantilla || {};
   Mantilla.promptInstall = onInstallClick;
   Mantilla.updateApp = onUpdateClick;
+  Mantilla.openMobileAppTools = openMobileAppTools;
 })();

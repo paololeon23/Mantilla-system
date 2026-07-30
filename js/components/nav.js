@@ -57,7 +57,7 @@
     const key = new URL(url, location.href).href;
     if (cache.has(key)) return cache.get(key);
 
-    const pending = (async () => {
+    try {
       if ('caches' in window) {
         try {
           const cached = await caches.match(key);
@@ -67,7 +67,9 @@
               credentials: 'same-origin',
               headers: { 'X-Mantilla-SPA': '1' }
             }).catch(() => {});
-            return new DOMParser().parseFromString(html, 'text/html');
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            cache.set(key, doc);
+            return doc;
           }
         } catch (_) { /* continuar con red */ }
       }
@@ -78,12 +80,9 @@
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const html = await res.text();
-      return new DOMParser().parseFromString(html, 'text/html');
-    })();
-
-    cache.set(key, pending);
-    try {
-      return await pending;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      cache.set(key, doc);
+      return doc;
     } catch (err) {
       cache.delete(key);
       throw err;
@@ -206,18 +205,13 @@
     const page = pageFromHref(link.href);
     if (page) syncNavActive(page);
 
-    // Pintar primero el botón activo y cambiar contenido en la tarea siguiente.
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        navigate(link.href, true).then((ok) => {
-          if (!ok) {
-            const currentPage = pageFromHref(location.href);
-            if (currentPage) syncNavActive(currentPage);
-          }
-        }).finally(() => {
-          navigationScheduled = false;
-        });
-      }, 0);
+    navigate(link.href, true).then((ok) => {
+      if (!ok) {
+        const currentPage = pageFromHref(location.href);
+        if (currentPage) syncNavActive(currentPage);
+      }
+    }).finally(() => {
+      navigationScheduled = false;
     });
   }
 
@@ -265,12 +259,18 @@
       });
     });
 
-    Promise.resolve().then(() => {
+    const warmPageCache = () => {
       Object.keys(PAGE_FILES).forEach((file) => {
         const url = new URL(file, location.href).href;
         if (url !== location.href) prefetch(url);
       });
-    });
+    };
+
+    if (navigator.serviceWorker?.controller) {
+      warmPageCache();
+    } else if (navigator.serviceWorker?.ready) {
+      navigator.serviceWorker.ready.then(warmPageCache).catch(() => {});
+    }
 
     document.querySelectorAll('.nav-btn[href], .bottom-nav__tab[href]').forEach((link) => {
       link.addEventListener('mouseenter', () => prefetch(link.href), { passive: true });
