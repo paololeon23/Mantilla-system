@@ -12,6 +12,7 @@
 
   const cache = new Map();
   let navigating = false;
+  let navigationScheduled = false;
 
   function spaNavAvailable() {
     return location.protocol === 'http:' || location.protocol === 'https:';
@@ -199,13 +200,9 @@
     fetchPageDoc(key).catch(() => {});
   }
 
-  function onLinkClick(e) {
-    const link = e.target.closest('.nav-btn[href], .bottom-nav__tab[href]');
-    if (!link || link.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if (!isAppPage(link.href)) return;
-
-    e.preventDefault();
-
+  function startLinkNavigation(link) {
+    if (navigationScheduled || navigating) return;
+    navigationScheduled = true;
     const page = pageFromHref(link.href);
     if (page) syncNavActive(page);
 
@@ -217,9 +214,27 @@
             const currentPage = pageFromHref(location.href);
             if (currentPage) syncNavActive(currentPage);
           }
+        }).finally(() => {
+          navigationScheduled = false;
         });
       }, 0);
     });
+  }
+
+  function onLinkClick(e) {
+    const link = e.target.closest('.nav-btn[href], .bottom-nav__tab[href]');
+    if (!link || link.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (!isAppPage(link.href)) return;
+
+    e.preventDefault();
+    startLinkNavigation(link);
+  }
+
+  function onLinkTouchEnd(e) {
+    const link = e.target.closest('.nav-btn[href], .bottom-nav__tab[href]');
+    if (!link || !isAppPage(link.href)) return;
+    e.preventDefault();
+    startLinkNavigation(link);
   }
 
   function onLinkPointerDown(e) {
@@ -240,6 +255,7 @@
     }
 
     document.addEventListener('pointerdown', onLinkPointerDown, { passive: true });
+    document.addEventListener('touchend', onLinkTouchEnd, { passive: false });
     document.addEventListener('click', onLinkClick);
 
     window.addEventListener('popstate', () => {
