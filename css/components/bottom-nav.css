@@ -2,17 +2,17 @@
 
 .bottom-nav {
   position: fixed;
-  bottom: 0;
+  bottom: calc(0px - env(safe-area-inset-bottom, 0px));
   left: 0;
   right: 0;
-  height: calc(var(--bottom-nav-height) + var(--bottom-safe-area, 0px));
+  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   background: #fff;
   border-top: 1px solid rgba(213, 222, 233, 0.8);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
   z-index: 150;
-  padding-bottom: var(--bottom-safe-area, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   box-shadow: 0 -8px 32px rgba(11, 18, 32, 0.06);
 }
 
