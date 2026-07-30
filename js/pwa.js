@@ -60,8 +60,8 @@
     btn.className = 'sidebar__install-btn';
     btn.setAttribute('data-tooltip', 'Instalar app');
     btn.hidden = true;
-    btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="download" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i><span>Preparando instalación…</span>';
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="download" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i><span>Instalar app</span>';
     btn.addEventListener('click', onInstallClick);
 
     const version = footer.querySelector('.sidebar__version');
@@ -170,11 +170,10 @@
   function showInstallButton() {
     const btn = document.getElementById('pwaInstallBtn');
     if (!btn || isStandalone()) return;
-    const ready = Boolean(deferredInstall) || isIos();
     const label = btn.querySelector('span');
     btn.hidden = false;
-    btn.disabled = !ready;
-    if (label) label.textContent = ready ? 'Instalar app' : 'Preparando instalación…';
+    btn.disabled = false;
+    if (label) label.textContent = 'Instalar app';
   }
 
   function hideInstallButton() {
