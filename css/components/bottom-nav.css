@@ -18,14 +18,6 @@
   box-shadow: 0 -8px 32px rgba(11, 18, 32, 0.06);
 }
 
-/* iOS incluye el indicador de inicio dentro del viewport. */
-@supports (-webkit-touch-callout: none) {
-  .bottom-nav {
-    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-}
-
 .bottom-nav__tab {
   display: flex;
   flex-direction: column;
@@ -135,12 +127,6 @@ body.swal2-shown .bottom-nav {
     --bottom-nav-height: 44px;
     --bottom-safe-area: 0px;
     --bottom-nav-content-shift: 0px;
-  }
-
-  @supports (-webkit-touch-callout: none) {
-    :root {
-      --bottom-safe-area: env(safe-area-inset-bottom, 0px);
-    }
   }
 
   .bottom-nav__tab {
