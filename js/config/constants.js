@@ -21,6 +21,11 @@ function renderLucideIconsNow() {
   if (typeof lucide === 'undefined') return;
   try {
     lucide.createIcons({ attrs: { 'stroke-width': 1.75 } });
+    // Lucide conserva data-lucide en los SVG generados. Quitarlo evita que
+    // llamadas posteriores vuelvan a reemplazar iconos que ya están listos.
+    document.querySelectorAll('svg[data-lucide]').forEach((icon) => {
+      icon.removeAttribute('data-lucide');
+    });
   } catch (err) {
     console.warn('[Mantilla] No se pudieron renderizar los iconos:', err);
   }

@@ -112,9 +112,11 @@
 
 @media (max-width: 899px) {
   :root {
-    --bottom-nav-height: 56px;
-    --bottom-safe-area: min(env(safe-area-inset-bottom, 0px), 16px);
-    --bottom-nav-content-shift: min(var(--bottom-safe-area), 10px);
+    /* Barra compacta: la zona del indicador no debe duplicar el espacio
+       que iOS ya reserva para la app instalada. */
+    --bottom-nav-height: 50px;
+    --bottom-safe-area: min(env(safe-area-inset-bottom, 0px), 8px);
+    --bottom-nav-content-shift: 0px;
   }
 
   .bottom-nav__tab {
@@ -170,15 +172,6 @@
   .mobile-fab:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
-  }
-}
-
-/* iPhone/iPad: altura nativa de tab bar, aparte del área segura inferior. */
-@supports (-webkit-touch-callout: none) {
-  @media (max-width: 899px) {
-    :root {
-      --bottom-nav-height: 49px;
-    }
   }
 }
 

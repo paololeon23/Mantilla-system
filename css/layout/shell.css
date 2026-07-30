@@ -35,12 +35,16 @@
 
 @media (max-width: 899px) {
   .sidebar {
-    height: auto;
-    bottom: calc(0px - env(safe-area-inset-bottom, 0px));
+    height: 100dvh;
+    bottom: auto;
   }
 
   .sidebar__inner {
-    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0.65rem;
+  }
+
+  body.sidebar-open {
+    background: #123a66;
   }
 }
 

@@ -12,6 +12,7 @@
 
   const cache = new Map();
   const viewCache = new Map();
+  const staleViews = new Set();
   let navigating = false;
   let navigationScheduled = false;
   let pressedLink = null;
@@ -215,6 +216,10 @@
       rememberCurrentView();
       if (targetPage && restoreView(targetPage)) {
         if (push) history.pushState({ mantilla: targetPage }, '', target);
+        if (staleViews.delete(targetPage) && typeof Mantilla?.refreshCurrentPage === 'function') {
+          Mantilla.refreshCurrentPage();
+          if (typeof renderLucideIconsNow === 'function') renderLucideIconsNow();
+        }
         if (typeof Mantilla?.updateOfflineBadge === 'function') Mantilla.updateOfflineBadge();
         scrollCurrentViewToTop();
         return true;
@@ -332,7 +337,7 @@
     document.addEventListener('mantilla:data-changed', () => {
       const currentPage = document.body.dataset.page;
       viewCache.forEach((_, cachedPage) => {
-        if (cachedPage !== currentPage) viewCache.delete(cachedPage);
+        if (cachedPage !== currentPage) staleViews.add(cachedPage);
       });
     });
 
@@ -347,6 +352,17 @@
       link.addEventListener('mouseenter', () => prefetch(link.href), { passive: true });
       link.addEventListener('focus', () => prefetch(link.href), { passive: true });
     });
+
+    // En móvil no existe hover: preparar todas las secciones cuando el
+    // navegador esté libre para que el primer cambio también sea inmediato.
+    const prefetchAppPages = () => {
+      document.querySelectorAll('.bottom-nav__tab[href]').forEach((link) => prefetch(link.href));
+    };
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(prefetchAppPages, { timeout: 1500 });
+    } else {
+      setTimeout(prefetchAppPages, 250);
+    }
   }
 
   window.Mantilla = window.Mantilla || {};
