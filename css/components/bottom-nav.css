@@ -5,8 +5,8 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: calc(var(--bottom-nav-height) + var(--bottom-safe-area, 0px));
-  padding: 0 0 var(--bottom-safe-area, 0px);
+  height: var(--bottom-nav-height);
+  padding: 0;
   box-sizing: border-box;
   background: #fff;
   border-top: 1px solid rgba(213, 222, 233, 0.8);
@@ -14,7 +14,7 @@
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: var(--bottom-nav-height);
   align-items: stretch;
-  z-index: 150;
+  z-index: 1000;
   box-shadow: 0 -8px 32px rgba(11, 18, 32, 0.06);
 }
 
@@ -138,9 +138,9 @@ body:has(.modal-overlay--open) .bottom-nav {
 
 @media (max-width: 899px) {
   :root {
-    --bottom-nav-height: 56px;
-    --bottom-safe-area: min(env(safe-area-inset-bottom, 0px), 16px);
-    --bottom-nav-content-shift: min(var(--bottom-safe-area), 10px);
+    --bottom-nav-height: 48px;
+    --bottom-safe-area: 0px;
+    --bottom-nav-content-shift: 0px;
   }
 
   .bottom-nav__tab {
@@ -196,15 +196,6 @@ body:has(.modal-overlay--open) .bottom-nav {
   .mobile-fab:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
-  }
-}
-
-/* iPhone/iPad: altura nativa de tab bar, aparte del área segura inferior. */
-@supports (-webkit-touch-callout: none) {
-  @media (max-width: 899px) {
-    :root {
-      --bottom-nav-height: 49px;
-    }
   }
 }
 
