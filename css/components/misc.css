@@ -89,6 +89,12 @@
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
+@media (max-width: 899px) {
+  .sidebar-backdrop {
+    bottom: calc(0px - env(safe-area-inset-bottom, 0px));
+  }
+}
+
 .sidebar-backdrop--open {
   opacity: 1;
   visibility: visible;

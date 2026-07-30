@@ -240,11 +240,9 @@
           try { Mantilla.refreshCurrentPage?.(); } catch (_) { /* mantener la pestaña visible */ }
         }
       }
-      requestAnimationFrame(() => {
-        if (document.querySelector('i[data-lucide]') && typeof refreshLucideIcons === 'function') {
-          refreshLucideIcons();
-        }
-      });
+      if (document.querySelector('i[data-lucide]') && typeof renderLucideIconsNow === 'function') {
+        renderLucideIconsNow();
+      }
       if (typeof Mantilla?.updateOfflineBadge === 'function') {
         Mantilla.updateOfflineBadge();
       }
