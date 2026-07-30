@@ -1663,6 +1663,8 @@ function renderCampamentoList() {
 
   renderCampHistoryMini();
   updateCampListCount(allRetained.length);
+  document.querySelector('.main-wrapper--viajes')
+    ?.classList.toggle('main-wrapper--empty', allRetained.length === 0);
 
   const clearBtn = $('#campListClear');
   const placaVal = $('#campListPlaca')?.value?.trim() || '';

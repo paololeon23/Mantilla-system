@@ -241,6 +241,8 @@ function focusMaintPlacaPage(placa) {
 
 function renderMantenimiento() {
   const items = filterMantenimiento();
+  document.querySelector('.main-wrapper--mantenimiento')
+    ?.classList.toggle('main-wrapper--empty', items.length === 0);
   // Tarjetas: todas las placas del periodo (fecha); la tabla sí respeta placa
   const itemsForCards = filterMantenimiento({ ignorePlaca: true });
   const groups = groupMantenimientoByPlaca(itemsForCards);
@@ -492,6 +494,8 @@ function focusIngresoPlacaPage(placa) {
 
 function renderIngresosExtras() {
   const items = filterIngresosExtras();
+  document.querySelector('.main-wrapper--ingresos')
+    ?.classList.toggle('main-wrapper--empty', items.length === 0);
   const itemsForCards = filterIngresosExtras({ ignorePlaca: true });
   const groups = groupMantenimientoByPlaca(itemsForCards);
   const history = $('#ingresoHistory');

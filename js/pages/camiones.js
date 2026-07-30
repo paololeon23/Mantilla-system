@@ -376,6 +376,9 @@ function renderCamionesList() {
       : 'Sin vehículos';
   }
 
+  document.querySelector('.main-wrapper--camiones')
+    ?.classList.toggle('main-wrapper--empty', items.length === 0);
+
   if (!items.length) {
     list.innerHTML = `
       <div class="camiones-empty">

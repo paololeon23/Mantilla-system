@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.116';
+const CACHE_NAME = 'mantilla-v1.3.121';
 
 const PRECACHE_URLS = [
   './',
@@ -25,10 +25,10 @@ const PRECACHE_URLS = [
   './assets/vendor/sweetalert2.min.css',
   './assets/vendor/jspdf.umd.min.js',
   './css/base/boot.css?v=3',
-  './css/main.css?v=271',
+  './css/main.css?v=275',
   './css/base/view-transitions.css',
-  './css/base/variables.css',
-  './css/layout/shell.css?v=3',
+  './css/base/variables.css?v=2',
+  './css/layout/shell.css?v=6',
   './css/components/topbar.css',
   './css/components/buttons.css',
   './css/components/kpi.css',
@@ -46,26 +46,26 @@ const PRECACHE_URLS = [
   './css/responsive/desktop.css',
   './js/config/api-config.js?v=3',
   './js/core.js?v=4',
-  './js/config/constants.js?v=10',
+  './js/config/constants.js?v=11',
   './js/core/utils.js?v=13',
   './js/core/placas.js?v=5',
   './js/core/calculations.js?v=25',
   './js/services/sync.js?v=23',
   './js/services/drafts.js?v=4',
   './js/services/activity.js?v=2',
-  './js/services/render.js?v=20',
+  './js/services/render.js?v=21',
   './js/components/pickers.js?v=17',
   './js/components/modals.js?v=23',
   './js/components/welcome.js?v=3',
   './js/components/alerts.js?v=10',
   './js/components/shell.js?v=10',
-  './js/components/nav.js?v=21',
-  './js/pages/camiones.js?v=24',
+  './js/components/nav.js?v=23',
+  './js/pages/camiones.js?v=25',
   './js/pages/mantenimiento.js?v=26',
   './js/pages/ingresos-extras.js?v=3',
-  './js/pages/viajes.js?v=92',
+  './js/pages/viajes.js?v=93',
   './js/offline.js?v=3',
-  './js/app.js?v=36',
+  './js/app.js?v=37',
   './js/pwa.js?v=13'
 ];
 

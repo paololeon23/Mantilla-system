@@ -16,6 +16,16 @@ function panelCountIcon(name = 'circle') {
 
 let lucideRefreshQueued = false;
 
+function renderLucideIconsNow() {
+  lucideRefreshQueued = false;
+  if (typeof lucide === 'undefined') return;
+  try {
+    lucide.createIcons({ attrs: { 'stroke-width': 1.75 } });
+  } catch (err) {
+    console.warn('[Mantilla] No se pudieron renderizar los iconos:', err);
+  }
+}
+
 function refreshLucideIcons() {
   if (typeof lucide === 'undefined' || lucideRefreshQueued) return;
   lucideRefreshQueued = true;
@@ -23,13 +33,8 @@ function refreshLucideIcons() {
   // Varias partes de una página solicitan iconos durante el mismo render.
   // Agruparlas evita recorrer todo el DOM repetidamente en teléfonos.
   const renderIcons = () => {
-    try {
-      lucide.createIcons({ attrs: { 'stroke-width': 1.75 } });
-    } catch (err) {
-      console.warn('[Mantilla] No se pudieron renderizar los iconos:', err);
-    } finally {
-      lucideRefreshQueued = false;
-    }
+    if (!lucideRefreshQueued) return;
+    renderLucideIconsNow();
   };
 
   if (typeof queueMicrotask === 'function') {

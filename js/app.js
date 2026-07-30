@@ -521,6 +521,9 @@ function initPageForCurrentRoute(options = {}) {
   } else {
     initViajesPage();
   }
+
+  // La vista no se pinta hasta que todos sus iconos locales sean SVG.
+  if (typeof renderLucideIconsNow === 'function') renderLucideIconsNow();
 }
 
 function refreshCurrentPage() {

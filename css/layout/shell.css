@@ -384,6 +384,14 @@ body.sidebar-open {
     position: relative;
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding-bottom: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
     background: var(--color-bg);
   }
 
@@ -422,6 +430,7 @@ body.sidebar-open {
     position: relative;
     z-index: 2;
     padding-top: 0.85rem;
+    padding-bottom: calc(var(--bottom-nav-height) + var(--bottom-safe-area, 0px));
     min-height: unset;
     box-shadow: none;
     border-top: 1px solid rgba(255, 255, 255, 0.8);
@@ -446,6 +455,21 @@ body.sidebar-open {
     padding-top: 0.75rem;
     box-shadow: none;
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 120px, var(--color-bg) 240px);
+  }
+
+  .main-wrapper--viajes.main-wrapper--empty,
+  .main-wrapper--camiones.main-wrapper--empty,
+  .main-wrapper--mantenimiento.main-wrapper--empty,
+  .main-wrapper--ingresos.main-wrapper--empty {
+    background: #fff;
+  }
+
+  .main-wrapper--viajes.main-wrapper--empty .app-content,
+  .main-wrapper--camiones.main-wrapper--empty .app-content,
+  .main-wrapper--mantenimiento.main-wrapper--empty .app-content,
+  .main-wrapper--ingresos.main-wrapper--empty .app-content {
+    background: #fff;
+    flex: 0 0 auto;
   }
 
   .main-wrapper--camiones .app-content {

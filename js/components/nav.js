@@ -15,6 +15,7 @@
   let navigating = false;
   let navigationScheduled = false;
   let pressedLink = null;
+  let queuedNavigationHref = null;
 
   /** Cede el hilo para que el navegador pinte el feedback y la vista nueva. */
   function nextPaint() {
@@ -32,6 +33,12 @@
   function clearPressedLink() {
     pressedLink?.classList.remove('bottom-nav__tab--pressed');
     pressedLink = null;
+  }
+
+  function scrollCurrentViewToTop() {
+    const main = document.getElementById('mainWrapper');
+    if (window.innerWidth < 900 && main) main.scrollTo(0, 0);
+    else window.scrollTo(0, 0);
   }
 
   function spaNavAvailable() {
@@ -209,7 +216,7 @@
       if (targetPage && restoreView(targetPage)) {
         if (push) history.pushState({ mantilla: targetPage }, '', target);
         if (typeof Mantilla?.updateOfflineBadge === 'function') Mantilla.updateOfflineBadge();
-        window.scrollTo(0, 0);
+        scrollCurrentViewToTop();
         return true;
       }
 
@@ -241,7 +248,7 @@
       if (typeof Mantilla?.updateOfflineBadge === 'function') {
         Mantilla.updateOfflineBadge();
       }
-      window.scrollTo(0, 0);
+      scrollCurrentViewToTop();
       return true;
     } catch (err) {
       console.warn('[Mantilla] Navegación rápida no disponible:', err);
@@ -259,7 +266,12 @@
   }
 
   function startLinkNavigation(link) {
-    if (navigationScheduled || navigating) return;
+    if (navigationScheduled || navigating) {
+      queuedNavigationHref = link.href;
+      const queuedPage = pageFromHref(link.href);
+      if (queuedPage) syncNavActive(queuedPage);
+      return;
+    }
     navigationScheduled = true;
     const page = pageFromHref(link.href);
     if (page) syncNavActive(page);
@@ -272,6 +284,11 @@
     }).finally(() => {
       clearPressedLink();
       navigationScheduled = false;
+      const queuedHref = queuedNavigationHref;
+      queuedNavigationHref = null;
+      if (queuedHref && pageFromHref(queuedHref) !== document.body.dataset.page) {
+        startLinkNavigation({ href: queuedHref });
+      }
     });
   }
 
@@ -292,6 +309,14 @@
     if (page) syncNavActive(page);
   }
 
+  function onLinkPointerUp(e) {
+    const link = e.target.closest('.bottom-nav__tab[href]');
+    clearPressedLink();
+    if (!link || !isAppPage(link.href) || (e.button !== undefined && e.button !== 0)) return;
+    e.preventDefault();
+    startLinkNavigation(link);
+  }
+
   function initNav() {
     const page = pageFromHref(location.href);
     if (page) syncNavActive(page);
@@ -303,7 +328,7 @@
     }
 
     document.addEventListener('pointerdown', onLinkPointerDown, { passive: true });
-    document.addEventListener('pointerup', clearPressedLink, { passive: true });
+    document.addEventListener('pointerup', onLinkPointerUp);
     document.addEventListener('pointercancel', clearPressedLink, { passive: true });
     document.addEventListener('click', onLinkClick);
     document.addEventListener('mantilla:data-changed', () => {
