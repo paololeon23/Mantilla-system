@@ -77,22 +77,6 @@
     if (cache.has(key)) return cache.get(key);
 
     try {
-      if ('caches' in window) {
-        try {
-          const cached = await caches.match(key);
-          if (cached) {
-            const html = await cached.text();
-            fetch(key, {
-              credentials: 'same-origin',
-              headers: { 'X-Mantilla-SPA': '1' }
-            }).catch(() => {});
-            const doc = new DOMParser().parseFromString(html, 'text/html');
-            cache.set(key, doc);
-            return doc;
-          }
-        } catch (_) { /* continuar con red */ }
-      }
-
       const res = await fetch(key, {
         credentials: 'same-origin',
         headers: { 'X-Mantilla-SPA': '1' }
@@ -250,13 +234,6 @@
     startLinkNavigation(link);
   }
 
-  function onLinkTouchEnd(e) {
-    const link = e.target.closest('.nav-btn[href], .bottom-nav__tab[href]');
-    if (!link || !isAppPage(link.href)) return;
-    e.preventDefault();
-    startLinkNavigation(link);
-  }
-
   function onLinkPointerDown(e) {
     const link = e.target.closest('.nav-btn[href], .bottom-nav__tab[href]');
     if (!link || !isAppPage(link.href)) return;
@@ -278,7 +255,6 @@
     document.addEventListener('pointerdown', onLinkPointerDown, { passive: true });
     document.addEventListener('pointerup', clearPressedLink, { passive: true });
     document.addEventListener('pointercancel', clearPressedLink, { passive: true });
-    document.addEventListener('touchend', onLinkTouchEnd, { passive: false });
     document.addEventListener('click', onLinkClick);
 
     window.addEventListener('popstate', () => {
@@ -287,19 +263,6 @@
         if (!ok) location.reload();
       });
     });
-
-    const warmPageCache = () => {
-      Object.keys(PAGE_FILES).forEach((file) => {
-        const url = new URL(file, location.href).href;
-        if (url !== location.href) prefetch(url);
-      });
-    };
-
-    if (navigator.serviceWorker?.controller) {
-      warmPageCache();
-    } else if (navigator.serviceWorker?.ready) {
-      navigator.serviceWorker.ready.then(warmPageCache).catch(() => {});
-    }
 
     document.querySelectorAll('.nav-btn[href], .bottom-nav__tab[href]').forEach((link) => {
       link.addEventListener('mouseenter', () => prefetch(link.href), { passive: true });

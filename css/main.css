@@ -1,7 +1,7 @@
 /* Mantilla — hoja de estilos principal (importa módulos) */
 @import url('base/view-transitions.css');
 @import url('base/variables.css');
-@import url('layout/shell.css');
+@import url('layout/shell.css?v=2');
 @import url('components/topbar.css');
 @import url('components/buttons.css');
 @import url('components/kpi.css');
@@ -11,7 +11,7 @@
 @import url('pages/viajes.css');
 @import url('pages/camiones.css');
 @import url('components/alerts.css');
-@import url('components/bottom-nav.css?v=3');
+@import url('components/bottom-nav.css?v=4');
 @import url('components/modals-forms.css');
 @import url('components/welcome.css');
 @import url('components/misc.css');

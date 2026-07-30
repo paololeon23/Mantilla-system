@@ -291,27 +291,36 @@ function renderMantenimiento() {
   const groupedItems = groupMantenimientoByFechaPlaca(items);
   const meta = paginateItems(groupedItems, maintPage, pageSize);
   maintPage = meta.page;
+  const isMobile = window.innerWidth < 900;
 
   if (items.length === 0) {
     const emptyMsg = filteredEmpty
       ? '<p>Sin gastos en este periodo</p><button type="button" class="btn btn--ghost btn--sm" id="maintEmptyClear">Limpiar filtros</button>'
       : '<p>Sin gastos registrados</p>';
-    if (history) {
+    if (history && !isMobile) {
       history.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
+    } else if (history) {
+      history.replaceChildren();
     }
-    if (cards) {
+    if (cards && isMobile) {
       cards.innerHTML = `<div class="empty-state empty-state--compact">${emptyMsg}</div>`;
+    } else if (cards) {
+      cards.replaceChildren();
     }
     $('#maintEmptyClear')?.addEventListener('click', () => {
       if (typeof clearMaintFilters === 'function') clearMaintFilters();
     });
     renderPagination($('#maintPagination'), { total: 0, page: 1, totalPages: 1, start: 0, end: 0 }, () => {}, pageSize);
   } else {
-    if (history) {
+    if (history && !isMobile) {
       history.innerHTML = renderMaintDesktopPage(meta.slice);
+    } else if (history) {
+      history.replaceChildren();
     }
-    if (cards) {
+    if (cards && isMobile) {
       cards.innerHTML = renderMaintMobilePage(meta.slice);
+    } else if (cards) {
+      cards.replaceChildren();
     }
     renderPagination($('#maintPagination'), meta, (page) => {
       maintPage = page;
@@ -534,20 +543,25 @@ function renderIngresosExtras() {
   const groupedItems = groupMantenimientoByFechaPlaca(items);
   const meta = paginateItems(groupedItems, ingresoPage, pageSize);
   ingresoPage = meta.page;
+  const isMobile = window.innerWidth < 900;
 
   if (items.length === 0) {
     const emptyMsg = filteredEmpty
       ? '<p>Sin ingresos en este periodo</p><button type="button" class="btn btn--ghost btn--sm" id="ingresoEmptyClear">Limpiar filtros</button>'
       : '<p>Sin ingresos extras registrados</p>';
-    if (history) history.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
-    if (cards) cards.innerHTML = `<div class="empty-state empty-state--compact">${emptyMsg}</div>`;
+    if (history && !isMobile) history.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
+    else if (history) history.replaceChildren();
+    if (cards && isMobile) cards.innerHTML = `<div class="empty-state empty-state--compact">${emptyMsg}</div>`;
+    else if (cards) cards.replaceChildren();
     $('#ingresoEmptyClear')?.addEventListener('click', () => {
       if (typeof clearIngresoFilters === 'function') clearIngresoFilters();
     });
     renderPagination($('#ingresoPagination'), { total: 0, page: 1, totalPages: 1, start: 0, end: 0 }, () => {}, pageSize);
   } else {
-    if (history) history.innerHTML = renderIngresoDesktopPage(meta.slice);
-    if (cards) cards.innerHTML = renderIngresoMobilePage(meta.slice);
+    if (history && !isMobile) history.innerHTML = renderIngresoDesktopPage(meta.slice);
+    else if (history) history.replaceChildren();
+    if (cards && isMobile) cards.innerHTML = renderIngresoMobilePage(meta.slice);
+    else if (cards) cards.replaceChildren();
     renderPagination($('#ingresoPagination'), meta, (page) => {
       ingresoPage = page;
       renderIngresosExtras();

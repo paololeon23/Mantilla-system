@@ -25,7 +25,6 @@
         .then((reg) => {
           // Forzar toma de control de la versión nueva del SW
           if (reg.waiting) reg.waiting.postMessage?.({ type: 'SKIP_WAITING' });
-          reg.update?.();
 
           let lastCheck = Date.now();
           const checkForUpdate = () => {

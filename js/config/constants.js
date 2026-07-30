@@ -14,10 +14,18 @@ function panelCountIcon(name = 'circle') {
   return lucideIcon(name, 'lucide-icon--count');
 }
 
+let lucideRefreshQueued = false;
+
 function refreshLucideIcons() {
-  if (typeof lucide !== 'undefined') {
+  if (typeof lucide === 'undefined' || lucideRefreshQueued) return;
+  lucideRefreshQueued = true;
+
+  // Varias partes de una página solicitan iconos durante el mismo render.
+  // Agruparlas evita recorrer todo el DOM repetidamente en teléfonos.
+  queueMicrotask(() => {
+    lucideRefreshQueued = false;
     lucide.createIcons({ attrs: { 'stroke-width': 1.75 } });
-  }
+  });
 }
 
 function mantillaPdfIcon(extraClass = '') {

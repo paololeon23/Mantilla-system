@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.107';
+const CACHE_NAME = 'mantilla-v1.3.110';
 
 const PRECACHE_URLS = [
   './',
@@ -24,33 +24,49 @@ const PRECACHE_URLS = [
   './assets/vendor/sweetalert2.all.min.js',
   './assets/vendor/sweetalert2.min.css',
   './assets/vendor/jspdf.umd.min.js',
-  './css/base/boot.css',
-  './css/main.css?v=266',
-  './css/components/bottom-nav.css?v=3',
-  './js/config/api-config.js',
-  './js/core.js',
-  './js/config/constants.js',
-  './js/core/utils.js',
-  './js/core/placas.js',
-  './js/core/calculations.js',
-  './js/services/sync.js',
-  './js/services/drafts.js',
-  './js/services/activity.js',
-  './js/services/render.js',
-  './js/components/pickers.js',
-  './js/components/modals.js',
-  './js/components/welcome.js',
+  './css/base/boot.css?v=3',
+  './css/main.css?v=267',
+  './css/base/view-transitions.css',
+  './css/base/variables.css',
+  './css/layout/shell.css?v=2',
+  './css/components/topbar.css',
+  './css/components/buttons.css',
+  './css/components/kpi.css',
+  './css/components/filters.css',
+  './css/components/panels-tables.css',
+  './css/pages/mantenimiento.css',
+  './css/pages/viajes.css',
+  './css/pages/camiones.css',
+  './css/components/alerts.css',
+  './css/components/bottom-nav.css?v=4',
+  './css/components/modals-forms.css',
   './css/components/welcome.css',
-  './js/components/alerts.js',
-  './js/components/shell.js',
-  './js/components/nav.js?v=18',
-  './js/pages/camiones.js',
-  './js/pages/mantenimiento.js',
-  './js/pages/ingresos-extras.js',
-  './js/pages/viajes.js',
-  './js/offline.js',
-  './js/app.js',
-  './js/pwa.js?v=12'
+  './css/components/misc.css',
+  './css/responsive/tablet.css',
+  './css/responsive/desktop.css',
+  './js/config/api-config.js?v=3',
+  './js/core.js?v=4',
+  './js/config/constants.js?v=9',
+  './js/core/utils.js?v=13',
+  './js/core/placas.js?v=5',
+  './js/core/calculations.js?v=24',
+  './js/services/sync.js?v=23',
+  './js/services/drafts.js?v=4',
+  './js/services/activity.js?v=2',
+  './js/services/render.js?v=20',
+  './js/components/pickers.js?v=17',
+  './js/components/modals.js?v=23',
+  './js/components/welcome.js?v=3',
+  './js/components/alerts.js?v=10',
+  './js/components/shell.js?v=10',
+  './js/components/nav.js?v=19',
+  './js/pages/camiones.js?v=24',
+  './js/pages/mantenimiento.js?v=26',
+  './js/pages/ingresos-extras.js?v=3',
+  './js/pages/viajes.js?v=92',
+  './js/offline.js?v=3',
+  './js/app.js?v=36',
+  './js/pwa.js?v=13'
 ];
 
 const OFFLINE_NAV = ['./viajes.html', './camiones.html', './mantenimiento.html', './ingresos-extras.html', './index.html'];
@@ -81,10 +97,10 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-function cachePut(request, response) {
+async function cachePut(request, response) {
   if (!response || response.status !== 200) return;
-  const copy = response.clone();
-  caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+  const cache = await caches.open(CACHE_NAME);
+  await cache.put(request, response.clone());
 }
 
 function isFreshAsset(url) {
@@ -111,8 +127,8 @@ self.addEventListener('fetch', (event) => {
   // Navegación interna: responder desde caché al instante y actualizar en segundo plano.
   if (isSpaPage) {
     const network = fetch(event.request)
-      .then((response) => {
-        cachePut(event.request, response);
+      .then(async (response) => {
+        await cachePut(event.request, response);
         return response;
       });
     event.waitUntil(network.catch(() => null));
@@ -125,8 +141,8 @@ self.addEventListener('fetch', (event) => {
   if (!sameOrigin && !isNavigate) {
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
-          cachePut(event.request, response);
+        .then(async (response) => {
+          await cachePut(event.request, response);
           return response;
         })
         .catch(() => caches.match(event.request))
@@ -134,17 +150,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML / JS / CSS / navegación: red primero para no servir código viejo
+  // App instalada: abrir desde caché al instante y actualizar en segundo plano.
   if (isNavigate || isFreshAsset(url)) {
+    const network = fetch(event.request)
+      .then(async (response) => {
+        await cachePut(event.request, response);
+        return response;
+      });
+    event.waitUntil(network.catch(() => null));
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          cachePut(event.request, response);
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(event.request);
-          if (cached) return cached;
+      caches.match(event.request).then(async (cached) => {
+        if (cached) return cached;
+        try {
+          return await network;
+        } catch (_) {
           if (isNavigate) {
             return (
               (await caches.match('./viajes.html'))
@@ -153,7 +172,8 @@ self.addEventListener('fetch', (event) => {
             );
           }
           return Response.error();
-        })
+        }
+      })
     );
     return;
   }
@@ -162,8 +182,8 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const network = fetch(event.request)
-        .then((response) => {
-          cachePut(event.request, response);
+        .then(async (response) => {
+          await cachePut(event.request, response);
           return response;
         })
         .catch(() => null);

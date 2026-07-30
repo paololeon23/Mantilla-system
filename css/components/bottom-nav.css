@@ -14,7 +14,7 @@
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
   z-index: 150;
-  padding-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   box-shadow: 0 -8px 32px rgba(11, 18, 32, 0.06);
 }
 
@@ -113,7 +113,7 @@
 
 @media (max-width: 899px) {
   :root {
-    --bottom-nav-height: 68px;
+    --bottom-nav-height: 56px;
   }
 
   html {
