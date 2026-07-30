@@ -1,18 +1,18 @@
 const KPI_INFO_CONTENT = {
   utilidad: {
-    title: 'Utilidad total',
-    detail: 'Muestra la ganancia real del período filtrado después de considerar todos los ingresos y gastos registrados.',
-    formula: 'Viajes + ingresos extras − gastos de viajes − gastos de camión'
+    title: 'Utilidad de viajes',
+    detail: 'Es la ganancia obtenida únicamente por los viajes de camiones y excavadoras que coinciden con los filtros. No incluye ingresos extras ni gastos generales de los vehículos.',
+    formula: 'Ingresos de viajes − combustible y viáticos de esos viajes'
   },
   gastos: {
     title: 'Gastos totales',
-    detail: 'Incluye combustible y viáticos de los viajes, además de llantas, reparaciones, servicios y demás gastos de los vehículos.',
-    formula: 'Gastos de viajes + gastos de todos los vehículos'
+    detail: 'Es todo lo gastado en los camiones y excavadoras del período: combustible, viáticos, llantas, reparaciones, servicios y otros gastos registrados.',
+    formula: 'Gastos de viajes + gastos generales de todos los vehículos'
   },
   ingresos: {
-    title: 'Ingresos extras',
-    detail: 'Suma los transportes adicionales registrados para camiones o excavadoras, por ejemplo ladrillos o un flete extra.',
-    formula: 'Suma de todos los ingresos extras del período'
+    title: 'Ingresos totales',
+    detail: 'Es todo el dinero ingresado por los camiones y excavadoras durante el período, antes de descontar cualquier gasto.',
+    formula: 'Ingresos de todos los viajes + todos los ingresos extras'
   },
   viajes: {
     title: 'Viajes registrados',

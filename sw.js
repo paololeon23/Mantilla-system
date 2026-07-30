@@ -5,7 +5,7 @@
  * HTML/JS/CSS: cache-first con actualización en segundo plano.
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.146';
+const CACHE_NAME = 'mantilla-v1.3.147';
 
 const PRECACHE_URLS = [
   './',
@@ -54,7 +54,7 @@ const PRECACHE_URLS = [
   './js/services/sync.js?v=23',
   './js/services/drafts.js?v=4',
   './js/services/activity.js?v=2',
-  './js/services/render.js?v=21',
+  './js/services/render.js?v=22',
   './js/components/pickers.js?v=17',
   './js/components/modals.js?v=23',
   './js/components/welcome.js?v=3',
@@ -64,7 +64,7 @@ const PRECACHE_URLS = [
   './js/pages/camiones.js?v=25',
   './js/pages/mantenimiento.js?v=26',
   './js/pages/ingresos-extras.js?v=3',
-  './js/pages/viajes.js?v=93',
+  './js/pages/viajes.js?v=94',
   './js/offline.js?v=3',
   './js/app.js?v=37',
   './js/pwa.js?v=14'
