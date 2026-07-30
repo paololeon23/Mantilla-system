@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.139';
+const CACHE_NAME = 'mantilla-v1.3.141';
 
 const PRECACHE_URLS = [
   './',
@@ -25,7 +25,7 @@ const PRECACHE_URLS = [
   './assets/vendor/sweetalert2.min.css',
   './assets/vendor/jspdf.umd.min.js',
   './css/base/boot.css?v=3',
-  './css/main.css?v=286',
+  './css/main.css?v=287',
   './css/base/view-transitions.css',
   './css/base/variables.css?v=2',
   './css/layout/shell.css?v=8',
@@ -38,7 +38,7 @@ const PRECACHE_URLS = [
   './css/pages/viajes.css',
   './css/pages/camiones.css',
   './css/components/alerts.css',
-  './css/components/bottom-nav.css?v=25',
+  './css/components/bottom-nav.css?v=26',
   './css/components/modals-forms.css?v=2',
   './css/components/welcome.css',
   './css/components/misc.css?v=2',
@@ -125,15 +125,16 @@ self.addEventListener('fetch', (event) => {
   const isNavigate = event.request.mode === 'navigate';
   const isSpaPage = sameOrigin && event.request.headers.get('X-Mantilla-SPA') === '1';
 
-  // Navegación interna: usar la versión de red y recurrir a caché sin conexión.
+  // Navegación interna: mostrar caché al instante y actualizar en segundo plano.
   if (isSpaPage) {
+    const network = fetch(event.request)
+      .then(async (response) => {
+        await cachePut(event.request, response);
+        return response;
+      });
+    event.waitUntil(network.catch(() => null));
     event.respondWith(
-      fetch(event.request)
-        .then(async (response) => {
-          await cachePut(event.request, response);
-          return response;
-        })
-        .catch(async () => (await caches.match(event.request)) || Response.error())
+      caches.match(event.request).then((cached) => cached || network)
     );
     return;
   }

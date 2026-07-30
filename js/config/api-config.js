@@ -8,3 +8,4 @@ window.APPS_SCRIPT_TOKEN = '';
 
 /** true = consulta servidor (GET) al abrir y cada ~45s; refleja borrados y ediciones del Sheet */
 window.APPS_SCRIPT_PULL_ON_LOAD = true;
+    

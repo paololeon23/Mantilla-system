@@ -89,6 +89,20 @@ body.swal2-shown .bottom-nav {
   pointer-events: none;
 }
 
+/*
+ * Mantener barra y zona de gestos con el mismo blanco cuando haya backdrops.
+ * La navegación queda visible pero desactivada mientras la capa esté abierta.
+ */
+body.sidebar-open .bottom-nav {
+  z-index: 241;
+  pointer-events: none;
+}
+
+body:has(.modal-overlay--open) .bottom-nav {
+  z-index: 351;
+  pointer-events: none;
+}
+
 .bottom-nav__fab {
   width: 48px;
   height: 48px;
