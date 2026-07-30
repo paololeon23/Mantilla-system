@@ -189,7 +189,7 @@ function applyCamionFormTipo(tipo) {
   if (choferLabel) choferLabel.textContent = excavadora ? 'Operador *' : 'Chofer *';
 }
 
-function openCamionModal(editId) {
+function openCamionModal(editId, options = {}) {
   if (typeof closeOverlayPickers === 'function') closeOverlayPickers();
 
   const form = $('#formCamion');
@@ -228,11 +228,13 @@ function openCamionModal(editId) {
   openModal('modalCamion');
   refreshLucideIcons();
   updateInputWrapStates(form);
-  requestAnimationFrame(() => {
-    const focusEl = editId ? $('#camionChofer') : $('#camionPlaca');
-    focusEl?.focus();
-    focusEl?.select?.();
-  });
+  if (options.autoFocus !== false && window.innerWidth >= 900) {
+    requestAnimationFrame(() => {
+      const focusEl = editId ? $('#camionChofer') : $('#camionPlaca');
+      focusEl?.focus();
+      focusEl?.select?.();
+    });
+  }
 }
 
 function saveCamion(e) {
@@ -501,7 +503,7 @@ function initCamionesPage() {
   wireCamionForm();
   wireCamionesResize();
   $('#btnAddMain')?.addEventListener('click', () => openCamionModal());
-  $('#fabAdd')?.addEventListener('click', () => openCamionModal());
+  $('#fabAdd')?.addEventListener('click', () => openCamionModal(undefined, { autoFocus: false }));
   $('#camionesList')?.addEventListener('click', (e) => {
     const editBtn = e.target.closest('[data-edit-camion]');
     if (editBtn) {

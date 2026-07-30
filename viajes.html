@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="Registro y gesti&oacute;n de viajes de flota &mdash; Mantilla">
   <meta name="theme-color" content="#0c1f3d">
   <meta name="mobile-web-app-capable" content="yes">
@@ -11,13 +11,14 @@
   <meta name="apple-mobile-web-app-title" content="Mantilla">
   <meta name="application-name" content="Mantilla">
   <title>Mantilla &mdash; Viajes</title>
-  <script src="js/pwa.js?v=4"></script>
+  <link rel="manifest" href="manifest.json">
+  <script src="js/pwa.js?v=6"></script>
   <link rel="stylesheet" href="css/base/boot.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css?v=253">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="css/main.css?v=255">
+  <link rel="stylesheet" href="assets/vendor/sweetalert2.min.css">
   <link rel="icon" href="assets/icon-192.png?v=1" type="image/png" sizes="192x192">
   <link rel="icon" href="assets/logo-truck.svg?v=3" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1" sizes="180x180">
@@ -415,10 +416,6 @@
     </main>
   </div>
 
-  <button type="button" class="mobile-fab" id="fabAdd" aria-label="Agregar viaje">
-    <i data-lucide="plus" class="lucide-icon" aria-hidden="true"></i>
-  </button>
-
   <nav class="bottom-nav" id="bottomNav" aria-label="Navegaci&oacute;n inferior">
     <a href="viajes.html" class="bottom-nav__tab bottom-nav__tab--active" aria-current="page">
       <i data-lucide="route" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
@@ -680,18 +677,18 @@
   <script src="js/components/pickers.js?v=17"></script>
   <script src="js/core/calculations.js?v=24"></script>
   <script src="js/services/render.js?v=19"></script>
-  <script src="js/components/modals.js?v=21"></script>
-  <script src="js/pages/camiones.js?v=22"></script>
+  <script src="js/components/modals.js?v=23"></script>
+  <script src="js/pages/camiones.js?v=24"></script>
   <script src="js/pages/mantenimiento.js?v=26"></script>
   <script src="js/pages/ingresos-extras.js?v=3"></script>
-  <script src="js/pages/viajes.js?v=91"></script>
-  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="js/pages/viajes.js?v=92"></script>
+  <script src="assets/vendor/lucide.min.js"></script>
+  <script src="assets/vendor/sweetalert2.all.min.js"></script>
   <script src="js/components/alerts.js?v=10"></script>
   <script src="js/components/shell.js?v=10"></script>
-  <script src="js/components/nav.js?v=9"></script>
+  <script src="js/components/nav.js?v=10"></script>
   <script src="js/offline.js?v=3"></script>
-  <script src="js/app.js?v=33"></script>
+  <script src="js/app.js?v=34"></script>
   <script src="js/components/welcome.js?v=3"></script>
 </body>
 </html>

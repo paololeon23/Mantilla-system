@@ -528,7 +528,7 @@ function openChoferGastosModal(card) {
   updateChoferGastosModal();
   openModal('modalChoferGastos');
   refreshLucideIcons();
-  combEl?.focus();
+  if (window.innerWidth >= 900) combEl?.focus();
 }
 
 function saveChoferGastos() {

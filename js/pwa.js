@@ -21,7 +21,7 @@
   function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js', { scope: './' })
+      navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' })
         .then((reg) => {
           // Forzar toma de control de la versión nueva del SW
           if (reg.waiting) reg.waiting.postMessage?.({ type: 'SKIP_WAITING' });
@@ -68,6 +68,80 @@
     else footer.appendChild(btn);
 
     if (typeof refreshLucideIcons === 'function') refreshLucideIcons();
+  }
+
+  function ensureUpdateButton() {
+    const footer = document.querySelector('.sidebar__footer');
+    if (!footer || document.getElementById('pwaUpdateBtn')) return;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'pwaUpdateBtn';
+    btn.className = 'sidebar__install-btn sidebar__update-btn';
+    btn.setAttribute('data-tooltip', 'Actualizar app');
+    btn.hidden = true;
+    btn.innerHTML = '<i data-lucide="refresh-cw" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i><span>Actualizar app</span>';
+    btn.addEventListener('click', onUpdateClick);
+
+    const version = footer.querySelector('.sidebar__version');
+    if (version) footer.insertBefore(btn, version);
+    else footer.appendChild(btn);
+
+    if (typeof refreshLucideIcons === 'function') refreshLucideIcons();
+  }
+
+  function setUpdateButtonState(text, disabled = false) {
+    const btn = document.getElementById('pwaUpdateBtn');
+    if (!btn) return;
+    const label = btn.querySelector('span');
+    if (label) label.textContent = text;
+    btn.disabled = disabled;
+  }
+
+  function resetUpdateButtonSoon() {
+    setTimeout(() => setUpdateButtonState('Actualizar app', false), 1800);
+  }
+
+  async function onUpdateClick() {
+    if (!('serviceWorker' in navigator)) return;
+    setUpdateButtonState('Buscando actualización…', true);
+
+    try {
+      const reg = await navigator.serviceWorker.getRegistration('./')
+        || await navigator.serviceWorker.ready;
+      let foundUpdate = false;
+      reg.addEventListener('updatefound', () => {
+        foundUpdate = true;
+        setUpdateButtonState('Actualizando…', true);
+        const worker = reg.installing;
+        worker?.addEventListener('statechange', () => {
+          if (worker.state === 'installed' && reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          } else if (worker.state === 'redundant') {
+            setUpdateButtonState('No se pudo actualizar', true);
+            resetUpdateButtonSoon();
+          }
+        });
+      }, { once: true });
+
+      await reg.update();
+
+      if (reg.waiting) {
+        setUpdateButtonState('Actualizando…', true);
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        return;
+      }
+      if (reg.installing || foundUpdate) {
+        setUpdateButtonState('Actualizando…', true);
+        return;
+      }
+
+      setUpdateButtonState('La app está actualizada', true);
+      resetUpdateButtonSoon();
+    } catch (_) {
+      setUpdateButtonState(navigator.onLine ? 'No se pudo actualizar' : 'Sin conexión', true);
+      resetUpdateButtonSoon();
+    }
   }
 
   async function onInstallClick() {
@@ -122,10 +196,16 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     ensureInstallButton();
+    ensureUpdateButton();
     if (isStandalone()) hideInstallButton();
-    else showInstallButton();
+    else if (deferredInstall || isIos()) showInstallButton();
+    else hideInstallButton();
+
+    const updateBtn = document.getElementById('pwaUpdateBtn');
+    if (updateBtn) updateBtn.hidden = !isStandalone();
   });
 
   window.Mantilla = window.Mantilla || {};
   Mantilla.promptInstall = onInstallClick;
+  Mantilla.updateApp = onUpdateClick;
 })();

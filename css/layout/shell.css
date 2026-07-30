@@ -360,7 +360,7 @@ body.sidebar-open {
 
 .main-wrapper {
   min-height: 100dvh;
-  padding-bottom: calc(var(--bottom-nav-height) + 0.5rem);
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 0.5rem);
 }
 
 /* ---- App Hero (móvil) ---- */

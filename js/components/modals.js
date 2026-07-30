@@ -142,7 +142,6 @@ function mountViajeFormInModal() {
   openModal('modalViaje');
   refreshLucideIcons();
   updateInputWrapStates(form);
-  $('#campNombre')?.focus();
 }
 
 function restoreViajeFormInline() {
@@ -212,8 +211,10 @@ function openViajeForm(editId) {
     updateCampCamionesLock();
     requestAnimationFrame(() => {
       updateCampCamionesLock();
-      $('#campNombre')?.focus();
-      $('#campNombre')?.select?.();
+      if (window.innerWidth >= 900) {
+        $('#campNombre')?.focus();
+        $('#campNombre')?.select?.();
+      }
     });
     return;
   }
@@ -231,7 +232,7 @@ function openViajeForm(editId) {
   }
 }
 
-function openMantenimientoModal(editId) {
+function openMantenimientoModal(editId, options = {}) {
   const form = $('#formMantenimiento');
   if (!form) {
     console.warn('[Mantilla] formMantenimiento no está en el DOM');
@@ -297,10 +298,12 @@ function openMantenimientoModal(editId) {
   openModal('modalMantenimiento');
   refreshLucideIcons();
   updateInputWrapStates(form);
-  $('#maintItemsList')?.querySelector('[data-field="descripcion"]')?.focus();
+  if (options.autoFocus !== false && window.innerWidth >= 900) {
+    $('#maintItemsList')?.querySelector('[data-field="descripcion"]')?.focus();
+  }
 }
 
-function openIngresoModal(editId) {
+function openIngresoModal(editId, options = {}) {
   const form = $('#formIngresos');
   if (!form) {
     console.warn('[Mantilla] formIngresos no está en el DOM');
@@ -365,6 +368,8 @@ function openIngresoModal(editId) {
   openModal('modalIngresos');
   refreshLucideIcons();
   updateInputWrapStates(form);
-  $('#ingresoItemsList')?.querySelector('[data-field="descripcion"]')?.focus();
+  if (options.autoFocus !== false && window.innerWidth >= 900) {
+    $('#ingresoItemsList')?.querySelector('[data-field="descripcion"]')?.focus();
+  }
 }
 

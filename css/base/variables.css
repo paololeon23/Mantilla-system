@@ -94,8 +94,17 @@ body {
 }
 
 @media (max-width: 899px) {
+  html,
   body {
+    width: 100%;
+    min-width: 100%;
     background: var(--color-bg);
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
   }
 }
 

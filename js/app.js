@@ -446,9 +446,10 @@ function initMantenimientoPage() {
     page.dataset.maintActionsWired = '1';
     document.addEventListener('click', (e) => {
       if (getPage() !== 'mantenimiento') return;
-      if (e.target.closest('#btnAddMantenimiento, #btnAddMain, #fabAdd')) {
+      const addTrigger = e.target.closest('#btnAddMantenimiento, #btnAddMain, #fabAdd');
+      if (addTrigger) {
         e.preventDefault();
-        openMantenimientoModal();
+        openMantenimientoModal(undefined, { autoFocus: addTrigger.id !== 'fabAdd' });
       }
     });
     document.addEventListener('submit', (e) => {
@@ -488,9 +489,10 @@ function initIngresosExtrasPage() {
     page.dataset.ingresoActionsWired = '1';
     document.addEventListener('click', (e) => {
       if (getPage() !== 'ingresos-extras') return;
-      if (e.target.closest('#btnAddIngreso, #btnAddMain, #fabAdd')) {
+      const addTrigger = e.target.closest('#btnAddIngreso, #btnAddMain, #fabAdd');
+      if (addTrigger) {
         e.preventDefault();
-        openIngresoModal();
+        openIngresoModal(undefined, { autoFocus: addTrigger.id !== 'fabAdd' });
       }
     });
     document.addEventListener('submit', (e) => {

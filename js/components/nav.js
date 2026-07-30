@@ -56,29 +56,23 @@
     const key = new URL(url, location.href).href;
     if (cache.has(key)) return cache.get(key);
 
-    let html = '';
-    try {
-      const res = await fetch(key, { credentials: 'same-origin' });
+    const pending = (async () => {
+      const res = await fetch(key, {
+        credentials: 'same-origin',
+        headers: { 'X-Mantilla-SPA': '1' }
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      html = await res.text();
-    } catch (_) {
-      html = loadPageHtmlSync(key);
-    }
+      const html = await res.text();
+      return new DOMParser().parseFromString(html, 'text/html');
+    })();
 
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    cache.set(key, doc);
-    return doc;
-  }
-
-  function loadPageHtmlSync(url) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, false);
-    xhr.send(null);
-    if (xhr.status !== 0 && (xhr.status < 200 || xhr.status >= 300)) {
-      throw new Error(`XHR ${xhr.status}`);
+    cache.set(key, pending);
+    try {
+      return await pending;
+    } catch (err) {
+      cache.delete(key);
+      throw err;
     }
-    if (!xhr.responseText) throw new Error('XHR vacío');
-    return xhr.responseText;
   }
 
   /** Modales que van después de bottom-nav (hasta los <script>). */
@@ -225,8 +219,7 @@
       });
     });
 
-    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 800));
-    idle(() => {
+    Promise.resolve().then(() => {
       Object.keys(PAGE_FILES).forEach((file) => {
         const url = new URL(file, location.href).href;
         if (url !== location.href) prefetch(url);

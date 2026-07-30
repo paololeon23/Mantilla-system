@@ -5,7 +5,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: var(--bottom-nav-height);
+  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
@@ -100,6 +100,10 @@
 }
 
 @media (max-width: 899px) {
+  html {
+    background: #fff;
+  }
+
   .mobile-fab {
     display: flex;
     align-items: center;
