@@ -191,10 +191,3 @@ body.swal2-shown .bottom-nav {
   }
 }
 
-@media (max-width: 899px) and (display-mode: standalone) {
-  :root {
-    --bottom-nav-height: 36px;
-    --bottom-nav-content-shift: 0px;
-  }
-}
-
