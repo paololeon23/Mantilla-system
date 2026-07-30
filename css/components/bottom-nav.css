@@ -112,7 +112,7 @@
 
 @media (max-width: 899px) {
   :root {
-    --bottom-nav-height: 60px;
+    --bottom-nav-height: 68px;
   }
 
   html {

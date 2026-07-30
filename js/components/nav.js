@@ -153,10 +153,6 @@
     return page;
   }
 
-  function hardNavigate(href) {
-    location.href = href;
-  }
-
   async function navigate(href, push = true) {
     const target = new URL(href, location.href).href;
     if (navigating || !isAppPage(target)) return false;
@@ -176,7 +172,12 @@
         history.pushState({ mantilla: page }, '', target);
       }
       if (typeof Mantilla?.initPageForCurrentRoute === 'function') {
-        Mantilla.initPageForCurrentRoute();
+        try {
+          Mantilla.initPageForCurrentRoute({ reloadData: false });
+        } catch (initErr) {
+          console.error('[Mantilla] Inicialización de pestaña:', initErr);
+          try { Mantilla.refreshCurrentPage?.(); } catch (_) { /* mantener la pestaña visible */ }
+        }
       }
       if (typeof Mantilla?.updateOfflineBadge === 'function') {
         Mantilla.updateOfflineBadge();
@@ -208,12 +209,24 @@
     const page = pageFromHref(link.href);
     if (page) syncNavActive(page);
 
-    // Dar al navegador un frame para pintar el botón activo antes del render.
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      navigate(link.href, true).then((ok) => {
-        if (!ok) hardNavigate(link.href);
-      });
-    }));
+    // Pintar primero el botón activo y cambiar contenido en la tarea siguiente.
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        navigate(link.href, true).then((ok) => {
+          if (!ok) {
+            const currentPage = pageFromHref(location.href);
+            if (currentPage) syncNavActive(currentPage);
+          }
+        });
+      }, 0);
+    });
+  }
+
+  function onLinkPointerDown(e) {
+    const link = e.target.closest('.nav-btn[href], .bottom-nav__tab[href]');
+    if (!link || !isAppPage(link.href)) return;
+    const page = pageFromHref(link.href);
+    if (page) syncNavActive(page);
   }
 
   function initNav() {
@@ -226,6 +239,7 @@
       history.replaceState({ mantilla: page }, '', location.href);
     }
 
+    document.addEventListener('pointerdown', onLinkPointerDown, { passive: true });
     document.addEventListener('click', onLinkClick);
 
     window.addEventListener('popstate', () => {

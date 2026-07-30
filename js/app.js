@@ -504,8 +504,8 @@ function initIngresosExtrasPage() {
   refreshLucideIcons();
 }
 
-function initPageForCurrentRoute() {
-  loadData();
+function initPageForCurrentRoute(options = {}) {
+  if (options.reloadData !== false) loadData();
   populateSelects();
 
   if (getPage() === 'mantenimiento') {
