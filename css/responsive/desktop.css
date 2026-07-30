@@ -1051,7 +1051,8 @@
     overflow-x: hidden;
     overflow-y: auto;
     margin-bottom: 0.25rem;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .sidebar__footer {

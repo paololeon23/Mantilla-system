@@ -118,11 +118,12 @@
 
   ensureManifest();
   registerServiceWorker();
+  wireInstallPrompt();
 
   document.addEventListener('DOMContentLoaded', () => {
     ensureInstallButton();
-    wireInstallPrompt();
     if (isStandalone()) hideInstallButton();
+    else showInstallButton();
   });
 
   window.Mantilla = window.Mantilla || {};
