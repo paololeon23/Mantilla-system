@@ -112,15 +112,20 @@
 
 @media (max-width: 899px) {
   :root {
-    /* Barra compacta: la zona del indicador no debe duplicar el espacio
-       que iOS ya reserva para la app instalada. */
-    --bottom-nav-height: 50px;
-    --bottom-safe-area: min(env(safe-area-inset-bottom, 0px), 8px);
+    /* La PWA instalada ya reserva el área del indicador de inicio. */
+    --bottom-nav-height: 44px;
+    --bottom-safe-area: 0px;
     --bottom-nav-content-shift: 0px;
   }
 
   .bottom-nav__tab {
-    padding: 0.25rem;
+    gap: 0.08rem;
+    padding: 0.1rem 0.25rem;
+  }
+
+  .bottom-nav__tab svg {
+    width: 20px;
+    height: 20px;
   }
 
   html {

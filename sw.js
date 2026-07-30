@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.125';
+const CACHE_NAME = 'mantilla-v1.3.127';
 
 const PRECACHE_URLS = [
   './',
@@ -25,7 +25,7 @@ const PRECACHE_URLS = [
   './assets/vendor/sweetalert2.min.css',
   './assets/vendor/jspdf.umd.min.js',
   './css/base/boot.css?v=3',
-  './css/main.css?v=278',
+  './css/main.css?v=279',
   './css/base/view-transitions.css',
   './css/base/variables.css?v=2',
   './css/layout/shell.css?v=8',
@@ -38,13 +38,14 @@ const PRECACHE_URLS = [
   './css/pages/viajes.css',
   './css/pages/camiones.css',
   './css/components/alerts.css',
-  './css/components/bottom-nav.css?v=10',
+  './css/components/bottom-nav.css?v=11',
   './css/components/modals-forms.css',
   './css/components/welcome.css',
   './css/components/misc.css?v=2',
   './css/responsive/tablet.css',
   './css/responsive/desktop.css',
   './js/config/api-config.js?v=3',
+  './js/icon-boot.js?v=1',
   './js/core.js?v=4',
   './js/config/constants.js?v=12',
   './js/core/utils.js?v=13',
