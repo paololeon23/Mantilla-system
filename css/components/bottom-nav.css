@@ -124,14 +124,21 @@ body.swal2-shown .bottom-nav {
 
 @media (max-width: 899px) {
   :root {
+    --bottom-nav-content-height: 50px;
     --bottom-safe-area: env(safe-area-inset-bottom, 0px);
-    --bottom-nav-height: calc(50px + var(--bottom-safe-area));
+    --bottom-nav-height: calc(var(--bottom-nav-content-height) + var(--bottom-safe-area));
     --bottom-nav-content-shift: min(var(--bottom-safe-area), 10px);
+  }
+
+  .bottom-nav {
+    padding-bottom: var(--bottom-safe-area);
+    grid-template-rows: var(--bottom-nav-content-height);
   }
 
   .bottom-nav__tab {
     gap: 0.08rem;
     padding: 0.1rem 0.25rem;
+    height: var(--bottom-nav-content-height);
   }
 
   .bottom-nav__tab svg {

@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.137';
+const CACHE_NAME = 'mantilla-v1.3.139';
 
 const PRECACHE_URLS = [
   './',
@@ -25,7 +25,7 @@ const PRECACHE_URLS = [
   './assets/vendor/sweetalert2.min.css',
   './assets/vendor/jspdf.umd.min.js',
   './css/base/boot.css?v=3',
-  './css/main.css?v=282',
+  './css/main.css?v=286',
   './css/base/view-transitions.css',
   './css/base/variables.css?v=2',
   './css/layout/shell.css?v=8',
@@ -38,7 +38,7 @@ const PRECACHE_URLS = [
   './css/pages/viajes.css',
   './css/pages/camiones.css',
   './css/components/alerts.css',
-  './css/components/bottom-nav.css?v=21',
+  './css/components/bottom-nav.css?v=25',
   './css/components/modals-forms.css?v=2',
   './css/components/welcome.css',
   './css/components/misc.css?v=2',
@@ -125,16 +125,15 @@ self.addEventListener('fetch', (event) => {
   const isNavigate = event.request.mode === 'navigate';
   const isSpaPage = sameOrigin && event.request.headers.get('X-Mantilla-SPA') === '1';
 
-  // Navegación interna: responder desde caché al instante y actualizar en segundo plano.
+  // Navegación interna: usar la versión de red y recurrir a caché sin conexión.
   if (isSpaPage) {
-    const network = fetch(event.request)
-      .then(async (response) => {
-        await cachePut(event.request, response);
-        return response;
-      });
-    event.waitUntil(network.catch(() => null));
     event.respondWith(
-      caches.match(event.request).then((cached) => cached || network)
+      fetch(event.request)
+        .then(async (response) => {
+          await cachePut(event.request, response);
+          return response;
+        })
+        .catch(async () => (await caches.match(event.request)) || Response.error())
     );
     return;
   }
@@ -151,20 +150,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App instalada: abrir desde caché al instante y actualizar en segundo plano.
+  // HTML, JS y CSS: red primero para que la PWA muestre cambios inmediatamente.
   if (isNavigate || isFreshAsset(url)) {
-    const network = fetch(event.request)
-      .then(async (response) => {
-        await cachePut(event.request, response);
-        return response;
-      });
-    event.waitUntil(network.catch(() => null));
     event.respondWith(
-      caches.match(event.request).then(async (cached) => {
-        if (cached) return cached;
-        try {
-          return await network;
-        } catch (_) {
+      fetch(event.request)
+        .then(async (response) => {
+          await cachePut(event.request, response);
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
           if (isNavigate) {
             return (
               (await caches.match('./viajes.html'))
@@ -173,8 +169,7 @@ self.addEventListener('fetch', (event) => {
             );
           }
           return Response.error();
-        }
-      })
+        })
     );
     return;
   }
