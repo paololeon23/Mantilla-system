@@ -148,7 +148,8 @@
 }
 
 .nav-btn[href*="viajes"] .nav-btn__icon,
-.nav-btn[href*="mantenimiento"] .nav-btn__icon {
+.nav-btn[href*="mantenimiento"] .nav-btn__icon,
+.nav-btn[href*="ingresos-extras"] .nav-btn__icon {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.1);
   box-shadow: none;
@@ -364,6 +365,7 @@ body.sidebar-open {
 @media (max-width: 899px) {
   .main-wrapper--viajes,
   .main-wrapper--mantenimiento,
+  .main-wrapper--ingresos,
   .main-wrapper--camiones {
     position: relative;
   }
@@ -419,7 +421,8 @@ body.sidebar-open {
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 120px, var(--color-bg) 240px);
   }
 
-  .main-wrapper--mantenimiento .app-content {
+  .main-wrapper--mantenimiento .app-content,
+  .main-wrapper--ingresos .app-content {
     margin-top: -0.85rem;
     z-index: 5;
     padding-top: 0.75rem;
@@ -439,11 +442,13 @@ body.sidebar-open {
     padding: 0 1rem 1rem;
   }
 
-  .app-hero--mantenimiento {
+  .app-hero--mantenimiento,
+  .app-hero--ingresos {
     padding-bottom: 0.85rem;
   }
 
-  .app-hero--mantenimiento .kpi-scroll {
+  .app-hero--mantenimiento .kpi-scroll,
+  .app-hero--ingresos .kpi-scroll {
     display: none !important;
   }
 }
@@ -451,6 +456,7 @@ body.sidebar-open {
 @media (min-width: 900px) {
   .main-wrapper--viajes,
   .main-wrapper--mantenimiento,
+  .main-wrapper--ingresos,
   .main-wrapper--camiones {
     display: flex;
     flex-direction: column;
@@ -485,12 +491,14 @@ body.sidebar-open {
 
   .main-wrapper--viajes .app-content,
   .main-wrapper--mantenimiento .app-content,
+  .main-wrapper--ingresos .app-content,
   .main-wrapper--camiones .app-content {
     margin-top: 0;
     background: transparent;
   }
 
-  .main-wrapper--mantenimiento .app-content {
+  .main-wrapper--mantenimiento .app-content,
+  .main-wrapper--ingresos .app-content {
     padding-top: 0.35rem;
     padding-bottom: 0;
   }

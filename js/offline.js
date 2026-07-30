@@ -93,19 +93,8 @@
 
     const refresh = () => updateOfflineBadge();
 
-    window.addEventListener('online', () => {
-      refresh();
-      if (window.Mantilla?.sync?.sincronizarPendientes) {
-        Mantilla.sync.sincronizarPendientes().then(() => {
-          refresh();
-          return Mantilla.sync.pullFromServer?.();
-        }).then(() => {
-          if (typeof refreshCurrentPage === 'function') refreshCurrentPage();
-          refresh();
-        }).catch(() => refresh());
-      }
-    });
-
+    // Sync lo maneja Mantilla.sync.init (un solo dueño); aquí solo UI.
+    window.addEventListener('online', refresh);
     window.addEventListener('offline', refresh);
     document.addEventListener('DOMContentLoaded', refresh);
     document.addEventListener('mantilla:datos-servidor', refresh);

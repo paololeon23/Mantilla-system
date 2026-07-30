@@ -56,8 +56,8 @@
 
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
     width: 100%;
     max-width: none;
     margin: 0;
@@ -227,6 +227,12 @@
     padding: 1.15rem 1.25rem;
     gap: 0.7rem;
     box-sizing: border-box;
+  }
+
+  .camp-summary-left .camp-sum-live {
+    flex: 1;
+    height: auto;
+    min-height: 5rem;
   }
 
   .camp-sum-live__label {
@@ -586,7 +592,7 @@
   }
 
   .maint-summary {
-    grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.85rem;
     margin-bottom: 1.35rem;
   }
@@ -788,7 +794,7 @@
     font-size: 1.2rem;
   }
 
-  #panelMantenimiento .table-wrapper {
+  :is(#panelMantenimiento, #panelIngresos) .table-wrapper {
     display: block;
     border: none;
     border-radius: 0;
@@ -798,11 +804,11 @@
     margin-bottom: 0;
   }
 
-  #panelMantenimiento .data-table {
+  :is(#panelMantenimiento, #panelIngresos) .data-table {
     min-width: 0;
   }
 
-  #panelMantenimiento .data-table th {
+  :is(#panelMantenimiento, #panelIngresos) .data-table th {
     background: linear-gradient(180deg, #0a1830 0%, #0f2744 38%, #123a66 100%);
     border-bottom: none;
     padding: 0.8rem 1.15rem;
@@ -810,21 +816,21 @@
     letter-spacing: 0.09em;
   }
 
-  #panelMantenimiento .data-table td {
+  :is(#panelMantenimiento, #panelIngresos) .data-table td {
     padding: 0.78rem 1.15rem;
     font-size: 0.84rem;
   }
 
-  #panelMantenimiento .data-table tbody tr:hover {
+  :is(#panelMantenimiento, #panelIngresos) .data-table tbody tr:hover {
     transform: none;
     background: #f8fafc !important;
   }
 
-  #panelMantenimiento .data-table tbody tr:nth-child(even) {
+  :is(#panelMantenimiento, #panelIngresos) .data-table tbody tr:nth-child(even) {
     background: #fcfdfe;
   }
 
-  #panelMantenimiento .totals-row td {
+  :is(#panelMantenimiento, #panelIngresos) .totals-row td {
     background: linear-gradient(180deg, #0a1830 0%, #0f2744 38%, #123a66 100%) !important;
     border-top: none;
     padding: 0.85rem 1.15rem;
@@ -832,7 +838,7 @@
     letter-spacing: 0.04em;
   }
 
-  #panelMantenimiento .badge {
+  :is(#panelMantenimiento, #panelIngresos) .badge {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     color: #0f2744;
@@ -844,12 +850,12 @@
     text-transform: uppercase;
   }
 
-  #panelMantenimiento .actions-col {
+  :is(#panelMantenimiento, #panelIngresos) .actions-col {
     width: 7.5rem;
     text-align: right;
   }
 
-  #panelMantenimiento .pagination--desktop {
+  :is(#panelMantenimiento, #panelIngresos) .pagination--desktop {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -864,7 +870,7 @@
     box-shadow: none;
   }
 
-  #panelMantenimiento .pagination__info {
+  :is(#panelMantenimiento, #panelIngresos) .pagination__info {
     width: auto;
     margin-left: 1rem;
     text-align: right;
@@ -873,8 +879,8 @@
     white-space: nowrap;
   }
 
-  #panelMantenimiento .pagination__num,
-  #panelMantenimiento .pagination__arrow {
+  :is(#panelMantenimiento, #panelIngresos) .pagination__num,
+  :is(#panelMantenimiento, #panelIngresos) .pagination__arrow {
     min-width: 2rem;
     height: 2rem;
     font-size: 0.8rem;
@@ -882,7 +888,7 @@
     border-color: #e2e8f0;
   }
 
-  #panelMantenimiento .pagination__num--active {
+  :is(#panelMantenimiento, #panelIngresos) .pagination__num--active {
     background: linear-gradient(180deg, #0a1830 0%, #0f2744 38%, #123a66 100%);
     border-color: transparent;
     box-shadow: none;
@@ -915,6 +921,7 @@
 
   .app-hero--viajes,
   .app-hero--mantenimiento,
+  .app-hero--ingresos,
   .app-hero--camiones {
     padding-bottom: 0;
   }
@@ -955,29 +962,29 @@
     padding-top: var(--desktop-section-gap);
   }
 
-  #panelMantenimiento.panel {
+  :is(#panelMantenimiento, #panelIngresos).panel {
     padding-bottom: 0.25rem;
   }
 
-  #panelMantenimiento .maint-welcome {
+  :is(#panelMantenimiento, #panelIngresos) .maint-welcome {
     margin-bottom: 0.85rem;
     padding: 1rem 1.2rem;
   }
 
-  #panelMantenimiento .maint-summary {
+  :is(#panelMantenimiento, #panelIngresos) .maint-summary {
     margin-bottom: 0.85rem;
   }
 
-  #panelMantenimiento .maint-filters {
+  :is(#panelMantenimiento, #panelIngresos) .maint-filters {
     margin-bottom: 0.75rem;
   }
 
-  #panelMantenimiento .panel__header--actions {
+  :is(#panelMantenimiento, #panelIngresos) .panel__header--actions {
     margin-bottom: 0.6rem;
   }
 
-  #panelMantenimiento .maint-history-block,
-  #panelMantenimiento .maint-table-block {
+  :is(#panelMantenimiento, #panelIngresos) .maint-history-block,
+  :is(#panelMantenimiento, #panelIngresos) .maint-table-block {
     margin-bottom: 0.25rem;
   }
 
@@ -1546,7 +1553,7 @@
     box-shadow: var(--shadow-card);
   }
 
-  #panelMantenimiento .table-wrapper {
+  :is(#panelMantenimiento, #panelIngresos) .table-wrapper {
     border-radius: 0;
     box-shadow: none;
   }
@@ -1560,7 +1567,7 @@
     transform: scale(1.005);
   }
 
-  #panelMantenimiento .data-table tbody tr {
+  :is(#panelMantenimiento, #panelIngresos) .data-table tbody tr {
     transition: background var(--transition);
   }
 
@@ -1582,6 +1589,7 @@
   .cards-total { display: none; }
 
   #maintCards,
+  #ingresoCards,
   .maint-mobile-list { display: none; }
 
   .maint-history-block { display: block; }

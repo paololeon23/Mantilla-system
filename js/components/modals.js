@@ -111,13 +111,15 @@ function resetViajeForm() {
   if (saldo) saldo.value = '0';
   const tarifa = $('#campTarifa');
   if (tarifa) tarifa.value = '110';
+  if ($('#campTipo')) $('#campTipo').value = 'camion';
+  if (typeof applyCampFormTipoLabels === 'function') applyCampFormTipoLabels('camion');
   const title = $('#viajeFormTitle');
   if (title) title.textContent = 'Agregar viajes del d\u00eda';
   $('#btnCancelViaje')?.setAttribute('hidden', '');
   dpCampFecha?.setValue(todayISO());
   if (typeof clearCampFormDetails === 'function') clearCampFormDetails();
   if (typeof renderCampamentoFormFilas === 'function') {
-    renderCampamentoFormFilas(defaultCampamentoFilas('', todayISO()));
+    renderCampamentoFormFilas(defaultCampamentoFilas('', todayISO(), 'camion'));
   }
   if (typeof updateCampCamionesLock === 'function') updateCampCamionesLock();
   if (typeof updateCampBoardHeader === 'function') updateCampBoardHeader();
@@ -174,6 +176,9 @@ function openViajeForm(editId) {
       });
       return;
     }
+    const tipo = typeof normalizeViajeTipo === 'function' ? normalizeViajeTipo(camp.tipo) : (camp.tipo || 'camion');
+    if ($('#campTipo')) $('#campTipo').value = tipo;
+    if (typeof applyCampFormTipoLabels === 'function') applyCampFormTipoLabels(tipo);
     $('#viajeFormTitle').textContent = 'Agregar viajes del d\u00eda';
     $('#modalViajeTitle').textContent = camp.nombre || 'Editar viaje';
     $('#btnCancelViaje')?.removeAttribute('hidden');
@@ -181,24 +186,28 @@ function openViajeForm(editId) {
     $('#campNombre').value = camp.nombre || '';
     $('#campSaldoAnterior').value = camp.saldoAnterior || 0;
     dpCampFecha?.setValue(camp.fecha || todayISO());
-    $('#campTarifa').value = camp.tarifa || 110;
+    $('#campTarifa').value = camp.tarifa || (tipo === 'excavadora' ? 0 : 110);
     const filas = (camp.filas || []).map((f) => {
-      const op = state.operaciones.find((o) =>
-        o.campamentoId === camp.id
-        && (typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(o.placa) : o.placa) === (typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(f.placa) : f.placa)
-        && Number(o.peso) === Number(f.toneladas)
-      );
+      const op = state.operaciones.find((o) => f.opId && o.id === f.opId)
+        || state.operaciones.find((o) =>
+          o.campamentoId === camp.id
+          && (tipo === 'excavadora'
+            || (typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(o.placa) : o.placa)
+              === (typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(f.placa) : f.placa))
+          && Number(o.peso) === Number(f.toneladas)
+        );
       return {
         ...f,
         combustible: f.combustible ?? op?.combustible ?? 0,
         viaticos: f.viaticos ?? op?.viaticos ?? 0
       };
     });
-    renderCampamentoFormFilas(filas.length ? filas : defaultCampamentoFilas(camp.nombre, camp.fecha));
+    renderCampamentoFormFilas(filas.length ? filas : defaultCampamentoFilas(camp.nombre, camp.fecha, tipo));
     loadCampFormDetailsFromCamp(camp);
     updateCampBoardHeader();
     updateCampCamionesLock();
     recalcCampamentoForm();
+    if (typeof markViajeFormClean === 'function') markViajeFormClean();
     mountViajeFormInModal();
     updateCampCamionesLock();
     requestAnimationFrame(() => {
@@ -210,6 +219,7 @@ function openViajeForm(editId) {
   }
 
   resetViajeForm();
+  if (typeof markViajeFormClean === 'function') markViajeFormClean();
   const modalTitle = $('#modalViajeTitle');
   if (modalTitle) modalTitle.textContent = 'Nuevo viaje';
   // En móvil el FAB abre el formulario en modal (mismo patrón que Gastos/Camiones)
@@ -274,7 +284,7 @@ function openMantenimientoModal(editId) {
     renderMaintItems(records.map((r) => maintItemFromRecord(r)));
     setMaintFormMode(true);
   } else {
-    $('#modalMaintEyebrow').textContent = 'Gastos';
+    $('#modalMaintEyebrow').textContent = 'Gastos de camión';
     $('#modalMaintTitle').textContent = 'Nuevo gasto';
     dpMaintFecha?.setValue(todayISO());
     tpMaintHora?.setValue(nowTime());
@@ -283,9 +293,78 @@ function openMantenimientoModal(editId) {
     setMaintFormMode(false);
   }
 
+  if (typeof markMaintFormClean === 'function') markMaintFormClean();
   openModal('modalMantenimiento');
   refreshLucideIcons();
   updateInputWrapStates(form);
   $('#maintItemsList')?.querySelector('[data-field="descripcion"]')?.focus();
+}
+
+function openIngresoModal(editId) {
+  const form = $('#formIngresos');
+  if (!form) {
+    console.warn('[Mantilla] formIngresos no está en el DOM');
+    return;
+  }
+
+  if (typeof initIngresoPlacaPicker === 'function') {
+    if (!ingresoPlacaPicker || !$('#ingresoPlacaPicker')?.querySelector('.ms')) {
+      if (typeof ingresoPlacaPicker !== 'undefined') ingresoPlacaPicker = null;
+      initIngresoPlacaPicker();
+    }
+  }
+  if (!dpIngresoFecha && $('#ingresoFecha') && $('#ingresoFechaPicker')) {
+    dpIngresoFecha = new MantillaDatePicker('#ingresoFecha', '#ingresoFechaPicker', { placeholder: 'dd/mm/aaaa', allowEmpty: false });
+  }
+  if (!tpIngresoHora && $('#ingresoHora') && $('#ingresoHoraPicker')) {
+    tpIngresoHora = new MantillaTimePicker('#ingresoHora', '#ingresoHoraPicker', {
+      placeholder: 'Elegir hora',
+      title: 'Elegir hora'
+    });
+  }
+  if ($('#ingresoItemsList') && !$('#ingresoItemsList').dataset.wired && typeof wireIngresoItemsForm === 'function') {
+    wireIngresoItemsForm();
+  }
+
+  form.reset();
+  $('#ingresoId').value = '';
+  form.dataset.editIds = '';
+
+  if (editId) {
+    const m = (state.ingresosExtras || []).find((x) => x.id === editId);
+    if (!m) return;
+
+    const group = typeof getIngresoGroupByFechaPlaca === 'function'
+      ? getIngresoGroupByFechaPlaca(m.fecha, m.placa)
+      : [m];
+    const records = group.length ? group : [m];
+
+    $('#modalIngresoEyebrow').textContent = 'Editar ingresos';
+    $('#modalIngresoTitle').textContent = records.length > 1
+      ? `${m.placa} · ${records.length} conceptos`
+      : (m.placa || 'Ingreso');
+    $('#ingresoId').value = m.id;
+    form.dataset.editIds = records.map((r) => r.id).join(',');
+    setIngresoPlacaValue(m.placa);
+    dpIngresoFecha?.setValue(m.fecha);
+    const horaShow = (typeof displayGastoHora === 'function' ? displayGastoHora(m) : m.hora) || nowTime();
+    tpIngresoHora?.setValue(horaShow === '\u2014' ? (m.hora || nowTime()) : horaShow);
+    renderIngresoItems(records.map((r) => ingresoItemFromRecord(r)));
+    setIngresoFormMode(true);
+  } else {
+    $('#modalIngresoEyebrow').textContent = 'Ingresos extras';
+    $('#modalIngresoTitle').textContent = 'Nuevo ingreso';
+    dpIngresoFecha?.setValue(todayISO());
+    tpIngresoHora?.setValue(nowTime());
+    setIngresoPlacaValue('');
+    renderIngresoItems([defaultIngresoItem()]);
+    setIngresoFormMode(false);
+  }
+
+  if (typeof markIngresoFormClean === 'function') markIngresoFormClean();
+  openModal('modalIngresos');
+  refreshLucideIcons();
+  updateInputWrapStates(form);
+  $('#ingresoItemsList')?.querySelector('[data-field="descripcion"]')?.focus();
 }
 

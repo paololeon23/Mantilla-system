@@ -25,27 +25,25 @@ function mantillaAlertBodyHtml(title, detailHtml, alertType) {
 }
 
 const MantillaAlert = typeof Swal !== 'undefined' ? Swal.mixin({
-  position: 'center',
+  toast: true,
+  position: 'top-end',
   width: 'auto',
   padding: 0,
   showConfirmButton: false,
-  showCloseButton: false,
-  allowOutsideClick: true,
+  showCloseButton: true,
   allowEscapeKey: true,
-  heightAuto: true,
-  backdrop: 'rgba(15, 23, 42, 0.42)',
   timerProgressBar: true,
   customClass: {
-    container: 'mantilla-swal-container',
-    popup: 'mantilla-swal mantilla-swal--alert',
+    container: 'mantilla-swal-container mantilla-swal-container--toast',
+    popup: 'mantilla-swal mantilla-swal--alert mantilla-swal--toast',
     title: 'mantilla-swal__title mantilla-swal__title--hidden',
     htmlContainer: 'mantilla-swal__detail-wrap',
     timerProgressBarContainer: 'mantilla-swal__timer-track',
     timerProgressBar: 'mantilla-swal__timer-bar'
   },
   buttonsStyling: false,
-  showClass: { popup: 'mantilla-swal-show', backdrop: 'mantilla-swal-backdrop-show' },
-  hideClass: { popup: 'mantilla-swal-hide', backdrop: 'mantilla-swal-backdrop-hide' },
+  showClass: { popup: 'mantilla-swal-toast-show' },
+  hideClass: { popup: 'mantilla-swal-toast-hide' },
   didOpen: (popup) => {
     if (typeof refreshLucideIcons === 'function') refreshLucideIcons();
     popup.addEventListener('mouseenter', Swal.stopTimer);
@@ -54,7 +52,7 @@ const MantillaAlert = typeof Swal !== 'undefined' ? Swal.mixin({
 }) : null;
 
 /**
- * Alerta centrada estilo 2026 — string o { title, detail, type, timer }
+ * Toast no bloqueante arriba-derecha — string o { title, detail, type, timer }
  */
 function showToast(input, type = 'success', detail = '') {
   if (!MantillaAlert) {
@@ -72,7 +70,10 @@ function showToast(input, type = 'success', detail = '') {
   const detailHtml = opts.detail || '';
   const timer = opts.timer ?? ALERT_TIMERS[alertType] ?? ALERT_TIMERS.success;
 
-  closeMantillaAlert();
+  // Nunca reemplazar un diálogo de confirmación que el usuario está resolviendo.
+  if (document.querySelector('.swal2-popup.mantilla-swal--confirm')) {
+    return Promise.resolve();
+  }
 
   const fireOpts = {
     icon: false,
@@ -83,3 +84,18 @@ function showToast(input, type = 'success', detail = '') {
 
   return MantillaAlert.fire(fireOpts);
 }
+
+let syncDeleteToastTimer;
+document.addEventListener('mantilla:sync-item', (event) => {
+  const detail = event.detail || {};
+  if (!detail.ok || detail.action !== 'delete') return;
+  clearTimeout(syncDeleteToastTimer);
+  syncDeleteToastTimer = setTimeout(() => {
+    showToast({
+      title: 'Eliminación sincronizada',
+      type: 'success',
+      detail: 'Google confirmó el cambio',
+      timer: 1800
+    });
+  }, 250);
+});

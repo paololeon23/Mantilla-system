@@ -96,6 +96,7 @@ const MANTILLA_OWNER = {
 const DATOS_INICIALES = {
   operaciones: [],
   mantenimiento: [],
+  ingresosExtras: [],
   campamentos: [],
   camiones: []
 };
@@ -114,6 +115,7 @@ const CAMP_RETENTION_DAYS = 2;
 
 let opsPage = 1;
 let maintPage = 1;
+let ingresoPage = 1;
 let campListPage = 1;
 let camionesPage = 1;
 let campListDayFilter = 'all';

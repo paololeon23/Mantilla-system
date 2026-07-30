@@ -5,7 +5,6 @@
 (function () {
   const DRAFT_VIAJE_KEY = 'mantilla_draft_viaje_v1';
   const DRAFT_GASTO_KEY = 'mantilla_draft_gasto_v1';
-  const DRAFT_INTERRUPTED_KEY = 'mantilla_draft_interrupted';
 
   let saveTimer = null;
   let restoring = false;
@@ -37,9 +36,14 @@
     if (!data) return false;
     if ((data.campId || '').trim()) return true;
     if ((data.nombre || '').trim()) return true;
+    if ((data.dniRuc || '').trim() || (data.producto || '').trim()) return true;
     if (Number(data.saldoAnterior) > 0) return true;
     return (data.filas || []).some((f) =>
-      (f.placa && String(f.placa).trim()) || Number(f.toneladas) > 0
+      (f.placa && String(f.placa).trim())
+      || Number(f.toneladas) > 0
+      || Number(f.precioHora) > 0
+      || Number(f.combustible) > 0
+      || Number(f.viaticos) > 0
     );
   }
 
@@ -59,6 +63,7 @@
     return {
       savedAt: Date.now(),
       campId: $('#campId')?.value || '',
+      tipo: typeof getCampFormTipo === 'function' ? getCampFormTipo() : ($('#campTipo')?.value || 'camion'),
       nombre: $('#campNombre')?.value?.trim() || '',
       saldoAnterior: $('#campSaldoAnterior')?.value || '0',
       fecha: $('#campFecha')?.value || '',
@@ -120,59 +125,15 @@
     clearKey(DRAFT_GASTO_KEY);
   }
 
-  function showRestoredModal() {
-    const title = 'Se cerró la app';
-    const message = 'Restauramos lo que estabas trabajando para que no pierdas los datos.';
-
-    if (typeof Swal !== 'undefined') {
-      return Swal.fire({
-        icon: false,
-        title: ' ',
-        html: `
-          <div class="mantilla-swal__stack mantilla-swal__stack--confirm">
-            ${typeof mantillaAlertIconHtml === 'function' ? mantillaAlertIconHtml('info') : ''}
-            <h2 class="mantilla-swal__title mantilla-swal__title--inline">${title}</h2>
-            <p class="mantilla-swal__detail mantilla-swal__detail--confirm">${message}</p>
-          </div>
-        `,
-        showCancelButton: false,
-        showConfirmButton: true,
-        confirmButtonText: 'Entendido',
-        allowOutsideClick: true,
-        customClass: {
-          container: 'mantilla-swal-container',
-          popup: 'mantilla-swal mantilla-swal--alert',
-          title: 'mantilla-swal__title mantilla-swal__title--hidden',
-          htmlContainer: 'mantilla-swal__detail-wrap',
-          confirmButton: 'btn btn--primary'
-        },
-        buttonsStyling: false,
-        didOpen: () => {
-          if (typeof refreshLucideIcons === 'function') refreshLucideIcons();
-        }
-      });
-    }
-
-    if (typeof showConfirm === 'function') {
-      return showConfirm({
-        title,
-        message,
-        confirmLabel: 'Entendido',
-        cancelLabel: 'OK',
-        danger: false
-      });
-    }
-
-    if (typeof showToast === 'function') {
-      showToast({ title, detail: message, type: 'info', timer: 3200 });
-    }
-    return Promise.resolve();
-  }
-
   function applyViajeDraft(data) {
     if (!data || !hasViajeContent(data)) return false;
     restoring = true;
     try {
+      const tipo = typeof normalizeViajeTipo === 'function'
+        ? normalizeViajeTipo(data.tipo)
+        : (data.tipo || 'camion');
+      if ($('#campTipo')) $('#campTipo').value = tipo;
+      if (typeof applyCampFormTipoLabels === 'function') applyCampFormTipoLabels(tipo);
       if ($('#campId')) $('#campId').value = data.campId || '';
       if ($('#campNombre')) $('#campNombre').value = data.nombre || '';
       if ($('#campSaldoAnterior')) $('#campSaldoAnterior').value = data.saldoAnterior || '0';
@@ -191,7 +152,7 @@
       }
       const filas = (data.filas && data.filas.length)
         ? data.filas
-        : (typeof defaultCampamentoFilas === 'function' ? defaultCampamentoFilas(data.nombre || '', data.fecha) : []);
+        : (typeof defaultCampamentoFilas === 'function' ? defaultCampamentoFilas(data.nombre || '', data.fecha, tipo) : []);
       if (typeof renderCampamentoFormFilas === 'function') renderCampamentoFormFilas(filas);
       if (typeof updateCampBoardHeader === 'function') updateCampBoardHeader();
       if (typeof updateCampCamionesLock === 'function') updateCampCamionesLock();
@@ -263,18 +224,7 @@
       }
     }
 
-    if (restored) {
-      let showNotice = false;
-      try {
-        showNotice = sessionStorage.getItem(DRAFT_INTERRUPTED_KEY) === '1';
-        sessionStorage.removeItem(DRAFT_INTERRUPTED_KEY);
-      } catch (_) {
-        showNotice = true;
-      }
-      if (showNotice) {
-        setTimeout(() => { showRestoredModal(); }, 350);
-      }
-    }
+    // La restauración es silenciosa para no interrumpir ni bloquear al usuario.
   }
 
   function flushDrafts() {
@@ -282,11 +232,6 @@
     const page = typeof getPage === 'function' ? getPage() : '';
     if (page === 'viajes' || $('#viajeFormSection')) saveViajeDraftNow();
     if (page === 'mantenimiento' || $('#formMantenimiento')) saveGastoDraftNow();
-    try {
-      if (readJson(DRAFT_VIAJE_KEY) || readJson(DRAFT_GASTO_KEY)) {
-        sessionStorage.setItem(DRAFT_INTERRUPTED_KEY, '1');
-      }
-    } catch (_) {}
   }
 
   function wireDraftAutosave() {
@@ -320,6 +265,7 @@
     flush: flushDrafts,
     clearViaje: clearViajeDraft,
     clearGasto: clearGastoDraft,
+    clearIngreso: function () {},
     saveViajeNow: saveViajeDraftNow,
     saveGastoNow: saveGastoDraftNow
   };

@@ -6,7 +6,8 @@
   const PAGE_FILES = {
     'viajes.html': 'viajes',
     'camiones.html': 'camiones',
-    'mantenimiento.html': 'mantenimiento'
+    'mantenimiento.html': 'mantenimiento',
+    'ingresos-extras.html': 'ingresos-extras'
   };
 
   const cache = new Map();
@@ -168,6 +169,9 @@
       }
       if (typeof Mantilla?.initPageForCurrentRoute === 'function') {
         Mantilla.initPageForCurrentRoute();
+      }
+      if (typeof Mantilla?.updateOfflineBadge === 'function') {
+        Mantilla.updateOfflineBadge();
       }
       if (typeof refreshLucideIcons === 'function') refreshLucideIcons();
       window.scrollTo(0, 0);

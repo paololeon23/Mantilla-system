@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.24';
+const CACHE_NAME = 'mantilla-v1.3.74';
 
 const PRECACHE_URLS = [
   './',
@@ -13,12 +13,14 @@ const PRECACHE_URLS = [
   './viajes.html',
   './camiones.html',
   './mantenimiento.html',
+  './ingresos-extras.html',
   './manifest.json',
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/icon-512-maskable.png',
   './assets/apple-touch-icon.png',
   './assets/logo-truck.svg',
+  './assets/vendor/jspdf.umd.min.js',
   './css/base/boot.css',
   './css/main.css',
   './js/config/api-config.js',
@@ -40,13 +42,14 @@ const PRECACHE_URLS = [
   './js/components/nav.js',
   './js/pages/camiones.js',
   './js/pages/mantenimiento.js',
+  './js/pages/ingresos-extras.js',
   './js/pages/viajes.js',
   './js/offline.js',
   './js/app.js',
   './js/pwa.js'
 ];
 
-const OFFLINE_NAV = ['./viajes.html', './camiones.html', './mantenimiento.html', './index.html'];
+const OFFLINE_NAV = ['./viajes.html', './camiones.html', './mantenimiento.html', './ingresos-extras.html', './index.html'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

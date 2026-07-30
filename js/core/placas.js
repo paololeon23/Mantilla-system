@@ -37,6 +37,10 @@ function wirePlacaPeruInput(input) {
   input.setAttribute('maxlength', String(PLACA_LEN));
 
   input.addEventListener('input', () => {
+    if (input.id === 'camionPlaca' && document.getElementById('camionTipo')?.value === 'excavadora') {
+      input.setCustomValidity('');
+      return;
+    }
     const pos = input.selectionStart ?? input.value.length;
     const before = input.value.slice(0, pos);
     const formatted = formatPlacaPeruLive(input.value);
@@ -48,6 +52,11 @@ function wirePlacaPeruInput(input) {
   });
 
   input.addEventListener('blur', () => {
+    if (input.id === 'camionPlaca' && document.getElementById('camionTipo')?.value === 'excavadora') {
+      input.value = input.value.trim();
+      input.setCustomValidity('');
+      return;
+    }
     const n = normalizePlacaPeru(input.value);
     if (n) input.value = n;
     if (input.value && !isValidPlacaPeru(input.value)) {

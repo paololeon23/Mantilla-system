@@ -1,11 +1,100 @@
 // ---- Init ----
+function viajeFormSnapshot() {
+  let filas = [];
+  try {
+    filas = typeof getCampamentoFilasFromDom === 'function' ? getCampamentoFilasFromDom() : [];
+  } catch (_) { /* formulario aún no inicializado */ }
+  return JSON.stringify({
+    id: $('#campId')?.value || '',
+    tipo: $('#campTipo')?.value || 'camion',
+    nombre: $('#campNombre')?.value || '',
+    dniRuc: $('#campDniRuc')?.value || '',
+    producto: $('#campProducto')?.value || '',
+    fecha: $('#campFecha')?.value || '',
+    saldo: $('#campSaldoAnterior')?.value || '',
+    tarifa: $('#campTarifa')?.value || '',
+    filas
+  });
+}
+
+function maintFormSnapshot() {
+  let items = [];
+  try {
+    items = typeof getMaintItemsFromDom === 'function' ? getMaintItemsFromDom() : [];
+  } catch (_) { /* formulario aún no inicializado */ }
+  return JSON.stringify({
+    id: $('#maintId')?.value || '',
+    editIds: $('#formMantenimiento')?.dataset.editIds || '',
+    placa: $('#maintPlaca')?.value || '',
+    fecha: $('#maintFecha')?.value || '',
+    hora: $('#maintHora')?.value || '',
+    items
+  });
+}
+
+function camionFormSnapshot() {
+  return JSON.stringify({
+    id: $('#camionId')?.value || '',
+    tipo: $('#camionTipo')?.value || 'camion',
+    placa: $('#camionPlaca')?.value || '',
+    chofer: $('#camionChofer')?.value || '',
+    telefono: $('#camionTelefono')?.value || '',
+    brevete: $('#camionBrevete')?.value || ''
+  });
+}
+
+function markViajeFormClean() {
+  const form = $('#formCampamento');
+  if (form) form.dataset.initialSnapshot = viajeFormSnapshot();
+}
+
+function markMaintFormClean() {
+  const form = $('#formMantenimiento');
+  if (form) form.dataset.initialSnapshot = maintFormSnapshot();
+}
+
+function ingresoFormSnapshot() {
+  let items = [];
+  try {
+    items = typeof getIngresoItemsFromDom === 'function' ? getIngresoItemsFromDom() : [];
+  } catch (_) { /* formulario aún no inicializado */ }
+  return JSON.stringify({
+    id: $('#ingresoId')?.value || '',
+    editIds: $('#formIngresos')?.dataset.editIds || '',
+    placa: $('#ingresoPlaca')?.value || '',
+    fecha: $('#ingresoFecha')?.value || '',
+    hora: $('#ingresoHora')?.value || '',
+    items
+  });
+}
+
+function markIngresoFormClean() {
+  const form = $('#formIngresos');
+  if (form) form.dataset.initialSnapshot = ingresoFormSnapshot();
+}
+
+function markCamionFormClean() {
+  const form = $('#formCamion');
+  if (form) form.dataset.initialSnapshot = camionFormSnapshot();
+}
+
 function isViajeFormDirty() {
+  const initial = $('#formCampamento')?.dataset.initialSnapshot;
+  if (initial != null) return initial !== viajeFormSnapshot();
   if ($('#campId')?.value) return true;
   if (($('#campNombre')?.value || '').trim()) return true;
+  if (($('#campDniRuc')?.value || '').trim()) return true;
+  if (($('#campProducto')?.value || '').trim()) return true;
   if (Number($('#campSaldoAnterior')?.value) > 0) return true;
   try {
     const filas = typeof getCampamentoFilasFromDom === 'function' ? getCampamentoFilasFromDom() : [];
-    return filas.some((f) => (f.placa && String(f.placa).trim()) || Number(f.toneladas) > 0);
+    return filas.some((f) =>
+      (f.placa && String(f.placa).trim())
+      || Number(f.toneladas) > 0
+      || Number(f.precioHora) > 0
+      || Number(f.combustible) > 0
+      || Number(f.viaticos) > 0
+    );
   } catch (_) {
     return false;
   }
@@ -14,6 +103,9 @@ function isViajeFormDirty() {
 function isMaintFormDirty() {
   const form = $('#formMantenimiento');
   if (!form) return false;
+  if (form.dataset.initialSnapshot != null) {
+    return form.dataset.initialSnapshot !== maintFormSnapshot();
+  }
   if ($('#maintId')?.value || form.dataset.editIds) return true;
   if (($('#maintPlaca')?.value || '').trim()) return true;
   try {
@@ -24,12 +116,30 @@ function isMaintFormDirty() {
   }
 }
 
+function isIngresoFormDirty() {
+  const form = $('#formIngresos');
+  if (!form) return false;
+  if (form.dataset.initialSnapshot != null) {
+    return form.dataset.initialSnapshot !== ingresoFormSnapshot();
+  }
+  if ($('#ingresoId')?.value || form.dataset.editIds) return true;
+  if (($('#ingresoPlaca')?.value || '').trim()) return true;
+  try {
+    const items = typeof getIngresoItemsFromDom === 'function' ? getIngresoItemsFromDom() : [];
+    return items.some((i) => (i.descripcion && String(i.descripcion).trim()) || Number(i.costoUnit) > 0);
+  } catch (_) {
+    return false;
+  }
+}
+
 function isCamionFormDirty() {
+  const initial = $('#formCamion')?.dataset.initialSnapshot;
+  if (initial != null) return initial !== camionFormSnapshot();
   if ($('#camionId')?.value) return true;
   if (($('#camionPlaca')?.value || '').trim()) return true;
   if (($('#camionChofer')?.value || '').trim()) return true;
   if (($('#camionTelefono')?.value || '').trim()) return true;
-  if (($('#camionMarca')?.value || '').trim()) return true;
+  if (($('#camionBrevete')?.value || '').trim()) return true;
   return false;
 }
 
@@ -66,6 +176,21 @@ async function handleModalClose(id) {
       $('#maintId').value = '';
     }
     Mantilla.drafts?.clearGasto?.();
+    closeModal(id);
+    return;
+  }
+  if (id === 'modalIngresos') {
+    if (isIngresoFormDirty()) {
+      const ok = await confirmDiscardModalData();
+      if (!ok) return;
+    }
+    const form = $('#formIngresos');
+    if (form) {
+      form.reset();
+      form.dataset.editIds = '';
+      $('#ingresoId').value = '';
+    }
+    Mantilla.drafts?.clearIngreso?.();
     closeModal(id);
     return;
   }
@@ -157,12 +282,31 @@ function consumeLiveViajeParam() {
 function initShared() {
   $('#dpBackdrop')?.addEventListener('click', () => closeOverlayPickers());
 
-  $('#confirmCancel')?.addEventListener('click', () => finishConfirm(false));
-  $('#confirmOk')?.addEventListener('click', () => finishConfirm(true));
+  // Menú, cierre de sidebar y confirm: delegación (SPA reemplaza esos nodos).
+  document.addEventListener('click', (e) => {
+    const menuButton = e.target.closest('#menuToggle');
+    if (menuButton) {
+      e.preventDefault();
+      toggleSidebar();
+      return;
+    }
 
-  $('#menuToggle')?.addEventListener('click', toggleSidebar);
-  $('#sidebarClose')?.addEventListener('click', closeSidebar);
-  $('#sidebarBackdrop')?.addEventListener('click', closeSidebar);
+    if (e.target.closest('#sidebarClose') || e.target.closest('#sidebarBackdrop')) {
+      e.preventDefault();
+      closeSidebar();
+      return;
+    }
+
+    if (e.target.closest('#confirmCancel')) {
+      e.preventDefault();
+      finishConfirm(false);
+      return;
+    }
+    if (e.target.closest('#confirmOk')) {
+      e.preventDefault();
+      finishConfirm(true);
+    }
+  });
 
   document.addEventListener('click', (e) => {
     const liveBtn = e.target.closest('#btnLiveViaje');
@@ -179,6 +323,21 @@ function initShared() {
 
 function initViajesPage() {
   if (typeof wireCamionForm === 'function') wireCamionForm();
+  // Tras SPA el DOM es nuevo: recrear pickers (evita lag / filtros muertos).
+  dpCampFecha = null;
+  dpFilterFecha = null;
+  campListPlacaPicker = null;
+  dpCampListFecha = null;
+  const kpiGrid = $('#kpiGrid');
+  if (kpiGrid && !kpiGrid.dataset.infoWired) {
+    kpiGrid.dataset.infoWired = '1';
+    kpiGrid.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-kpi-info]');
+      if (!button) return;
+      event.preventDefault();
+      showKpiInfoModal(button.dataset.kpiInfo);
+    });
+  }
   if ($('#campFecha') && $('#campFechaPicker')) {
     dpCampFecha = new MantillaDatePicker('#campFecha', '#campFechaPicker', { placeholder: 'dd/mm/aaaa', allowEmpty: false });
     $('#campFecha').addEventListener('change', () => {
@@ -232,6 +391,7 @@ function initViajesPage() {
     addCampamentoFila();
   });
   $('#campSaldoAnterior')?.addEventListener('input', scheduleRecalcCampamentoForm);
+  $('#campTarifa')?.addEventListener('input', scheduleRecalcCampamentoForm);
   wireCampViajesList();
   wireChoferGastosModal();
   wireCampFormDetails();
@@ -300,12 +460,56 @@ function initMantenimientoPage() {
   refreshLucideIcons();
 }
 
+function initIngresosExtrasPage() {
+  dpIngresoFecha = null;
+  tpIngresoHora = null;
+  ingresoPlacaPicker = null;
+
+  if (typeof initIngresoPlacaPicker === 'function') initIngresoPlacaPicker();
+  if (typeof wireIngresoItemsForm === 'function') wireIngresoItemsForm();
+  if ($('#ingresoFecha') && $('#ingresoFechaPicker')) {
+    dpIngresoFecha = new MantillaDatePicker('#ingresoFecha', '#ingresoFechaPicker', { placeholder: 'dd/mm/aaaa', allowEmpty: false });
+  }
+  if ($('#ingresoHora') && $('#ingresoHoraPicker')) {
+    tpIngresoHora = new MantillaTimePicker('#ingresoHora', '#ingresoHoraPicker', {
+      placeholder: 'Elegir hora',
+      title: 'Elegir hora'
+    });
+  }
+
+  if (typeof initIngresoFilters === 'function') {
+    initIngresoFilters();
+  } else if (typeof renderIngresosExtras === 'function') {
+    renderIngresosExtras();
+  }
+
+  const page = document.body;
+  if (!page.dataset.ingresoActionsWired) {
+    page.dataset.ingresoActionsWired = '1';
+    document.addEventListener('click', (e) => {
+      if (getPage() !== 'ingresos-extras') return;
+      if (e.target.closest('#btnAddIngreso, #btnAddMain, #fabAdd')) {
+        e.preventDefault();
+        openIngresoModal();
+      }
+    });
+    document.addEventListener('submit', (e) => {
+      if (e.target?.id === 'formIngresos') {
+        saveIngreso(e);
+      }
+    });
+  }
+  refreshLucideIcons();
+}
+
 function initPageForCurrentRoute() {
   loadData();
   populateSelects();
 
   if (getPage() === 'mantenimiento') {
     initMantenimientoPage();
+  } else if (getPage() === 'ingresos-extras') {
+    initIngresosExtrasPage();
   } else if (getPage() === 'camiones') {
     initCamionesPage();
   } else {
@@ -317,6 +521,8 @@ function refreshCurrentPage() {
   populateSelects();
   if (getPage() === 'mantenimiento') {
     if (typeof renderMantenimiento === 'function') renderMantenimiento();
+  } else if (getPage() === 'ingresos-extras') {
+    if (typeof renderIngresosExtras === 'function') renderIngresosExtras();
   } else if (getPage() === 'camiones') {
     if (typeof renderCamionesList === 'function') renderCamionesList();
   } else {

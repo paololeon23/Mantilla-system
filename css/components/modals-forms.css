@@ -576,11 +576,25 @@
   line-height: 1.2;
 }
 
+.ms__trigger--has-chofer .ms__text {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 .ms__trigger-placa {
   font-size: 0.92rem;
   font-weight: 800;
   text-transform: uppercase;
   color: inherit;
+}
+
+.ms__trigger-separator {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-weight: 600;
 }
 
 .ms__trigger-chofer {
@@ -589,6 +603,7 @@
   letter-spacing: 0;
   text-transform: none;
   color: var(--color-text-muted);
+  min-width: 0;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -787,19 +802,32 @@
   text-align: left;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.18rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  overflow: hidden;
   transition: background var(--transition), border-color var(--transition), color var(--transition);
 }
 
 .ms__option-placa {
+  flex: 0 0 auto;
   font-size: 0.95rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 
+.ms__option-separator {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
 .ms__option-chofer {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--color-text-muted);
@@ -819,7 +847,8 @@
   color: #fff !important;
 }
 
-.ms__option--selected .ms__option-chofer {
+.ms__option--selected .ms__option-chofer,
+.ms__option--selected .ms__option-separator {
   color: rgba(255, 255, 255, 0.88);
 }
 

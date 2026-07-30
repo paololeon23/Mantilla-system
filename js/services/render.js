@@ -10,7 +10,7 @@ function renderOperaciones() {
 function groupMantenimientoByPlaca(items) {
   const map = new Map();
   items.forEach((m) => {
-    const placa = (typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(m.placa) : m.placa) || m.placa;
+    const placa = (typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(m.placa) : m.placa) || m.placa;
     if (!map.has(placa)) map.set(placa, []);
     map.get(placa).push({ ...m, placa });
   });
@@ -33,7 +33,7 @@ function groupMantenimientoByPlaca(items) {
 function groupMantenimientoByFechaPlaca(items) {
   const map = new Map();
   (items || []).forEach((m) => {
-    const placa = (typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(m.placa) : m.placa) || m.placa || '';
+    const placa = (typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(m.placa) : m.placa) || m.placa || '';
     const fecha = (typeof normalizeDateISO === 'function' ? normalizeDateISO(m.fecha) : m.fecha) || '';
     const key = `${fecha}|${placa}`;
     if (!map.has(key)) {
@@ -74,10 +74,11 @@ function renderMaintActionButtons(id) {
 }
 
 function maintTableRowHtml(m, options = {}) {
-  const placa = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(m.placa) : m.placa;
+  const placa = typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(m.placa) : m.placa;
   const hideMeta = !!options.hideMeta;
+  const collapsed = !!options.collapsed;
   return `
-    <tr data-maint-id="${m.id}" data-maint-placa="${escapeHtml(placa)}">
+    <tr data-maint-id="${m.id}" data-maint-placa="${escapeHtml(placa)}"${collapsed ? ' data-maint-collapsible hidden' : ''}>
       <td class="maint-col-fecha">${hideMeta ? '' : formatDate(m.fecha)}</td>
       <td class="maint-col-hora"><time datetime="${m.fecha}T${m.hora || '00:00'}">${typeof displayGastoHora === 'function' ? displayGastoHora(m) : formatTime(m.hora)}</time></td>
       <td class="maint-col-placa">${hideMeta ? '' : escapeHtml(placa)}</td>
@@ -91,8 +92,9 @@ function maintTableRowHtml(m, options = {}) {
 
 function maintExpenseGroupCardHtml(group, i = 0) {
   const placa = group.placa || '';
-  const productos = (group.gastos || []).map((m) => `
-    <li class="maint-expense-group__item" data-maint-id="${m.id}">
+  const collapsedCount = Math.max(0, (group.gastos || []).length - 5);
+  const productos = (group.gastos || []).map((m, idx) => `
+    <li class="maint-expense-group__item" data-maint-id="${m.id}"${idx >= 5 ? ' data-maint-collapsible hidden' : ''}>
       <div class="maint-expense-group__item-main">
         <span class="maint-expense-group__item-name">${escapeHtml(m.descripcion || 'Sin descripción')}</span>
         <span class="maint-expense-group__item-meta">Un. ${formatMaintUnidad(m.unidad)} · ${formatMoney(m.costoUnit != null ? m.costoUnit : m.monto)}</span>
@@ -121,6 +123,10 @@ function maintExpenseGroupCardHtml(group, i = 0) {
       <ul class="maint-expense-group__list" role="list">
         ${productos}
       </ul>
+      ${collapsedCount ? `
+        <button type="button" class="maint-group-toggle" aria-expanded="false" data-collapsed-count="${collapsedCount}" onclick="toggleMaintGroup(this)">
+          Ver ${collapsedCount} más
+        </button>` : ''}
     </article>`;
 }
 
@@ -137,13 +143,23 @@ function renderMaintDesktopPage(slice) {
     : groupMantenimientoByFechaPlaca(slice);
 
   const body = groups.map((g) => {
-    const rows = (g.gastos || []).map((m, idx) => maintTableRowHtml(m, { hideMeta: idx > 0 })).join('');
+    const collapsedCount = Math.max(0, (g.gastos || []).length - 5);
+    const rows = (g.gastos || []).map((m, idx) => maintTableRowHtml(m, {
+      hideMeta: idx > 0,
+      collapsed: idx >= 5
+    })).join('');
     return `
       <tr class="maint-group-head" data-maint-fecha="${escapeHtml(g.fecha)}" data-maint-placa="${escapeHtml(g.placa)}">
         <td colspan="8">
           <div class="maint-group-head__inner">
             <span><strong>${formatDate(g.fecha)}</strong> · ${escapeHtml(g.placa)} · ${g.count} producto${g.count !== 1 ? 's' : ''}</span>
-            <strong>${formatMoney(g.total)}</strong>
+            <span class="maint-group-head__aside">
+              <strong>${formatMoney(g.total)}</strong>
+              ${collapsedCount ? `
+                <button type="button" class="maint-group-toggle maint-group-toggle--table" aria-expanded="false" data-collapsed-count="${collapsedCount}" onclick="toggleMaintGroup(this)">
+                  Ver ${collapsedCount} más
+                </button>` : ''}
+            </span>
           </div>
         </td>
       </tr>
@@ -174,8 +190,34 @@ function renderMaintDesktopPage(slice) {
     </section>`;
 }
 
+function toggleMaintGroup(button) {
+  if (!button) return;
+  const willExpand = button.getAttribute('aria-expanded') !== 'true';
+  const card = button.closest('.maint-expense-card--group');
+  let collapsible = [];
+
+  if (card) {
+    collapsible = [...card.querySelectorAll('[data-maint-collapsible]')];
+  } else {
+    const head = button.closest('.maint-group-head');
+    let row = head?.nextElementSibling;
+    while (row && !row.classList.contains('maint-group-head')) {
+      if (row.hasAttribute('data-maint-collapsible')) collapsible.push(row);
+      row = row.nextElementSibling;
+    }
+  }
+
+  collapsible.forEach((item) => {
+    item.hidden = !willExpand;
+  });
+  button.setAttribute('aria-expanded', String(willExpand));
+  button.textContent = willExpand
+    ? 'Ver menos'
+    : `Ver ${button.dataset.collapsedCount || collapsible.length} más`;
+}
+
 function focusMaintPlacaPage(placa) {
-  const placaKey = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(placa) : placa;
+  const placaKey = typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(placa) : placa;
   const input = $('#maintFilterPlaca');
   if (!input) return;
 
@@ -214,17 +256,31 @@ function renderMantenimiento() {
   if (!itemsForCards.length) {
     summary.innerHTML = `<p class="maint-summary-empty">${filteredEmpty ? 'Sin gastos en este periodo' : 'Sin gastos registrados por vehículo'}</p>`;
   } else {
-    summary.innerHTML = [...groups]
-      .sort((a, b) => b.total - a.total)
-      .map((g) => {
-        const isActive = activePlaca && g.placa === activePlaca;
-        return `
+    const sortedGroups = [...groups].sort((a, b) => b.total - a.total);
+    let requestedPage = renderMantenimiento._summaryPage || 1;
+    const activeIndex = activePlaca ? sortedGroups.findIndex((g) => g.placa === activePlaca) : -1;
+    if (activeIndex >= 0) requestedPage = Math.floor(activeIndex / 4) + 1;
+    const summaryMeta = paginateItems(sortedGroups, requestedPage, 4);
+    renderMantenimiento._summaryPage = summaryMeta.page;
+
+    summary.innerHTML = summaryMeta.slice.map((g) => {
+      const isActive = activePlaca && g.placa === activePlaca;
+      return `
       <button type="button" class="maint-plate-card${isActive ? ' maint-plate-card--active' : ''}" data-scroll-placa="${escapeHtml(g.placa)}" aria-pressed="${isActive ? 'true' : 'false'}">
         <div class="maint-plate-card__placa">${escapeHtml(g.placa)}</div>
         <div class="maint-plate-card__total">${formatMoney(g.total)}</div>
         <div class="maint-plate-card__count">${g.count} gasto${g.count !== 1 ? 's' : ''}</div>
       </button>`;
-      }).join('');
+    }).join('');
+
+    const summaryPagination = document.createElement('div');
+    summaryPagination.className = 'pagination maint-summary-pagination';
+    summaryPagination.setAttribute('aria-label', 'Paginacion de vehiculos');
+    summary.appendChild(summaryPagination);
+    renderPagination(summaryPagination, summaryMeta, (page) => {
+      renderMantenimiento._summaryPage = page;
+      renderMantenimiento();
+    }, 4);
 
     summary.querySelectorAll('[data-scroll-placa]').forEach((btn) => {
       btn.addEventListener('click', () => focusMaintPlacaPage(btn.dataset.scrollPlaca));
@@ -281,24 +337,270 @@ function renderMantenimiento() {
   refreshLucideIcons();
 }
 
+function ingresoTableRowHtml(m, options = {}) {
+  const placa = typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(m.placa) : m.placa;
+  const hideMeta = !!options.hideMeta;
+  const collapsed = !!options.collapsed;
+  return `
+    <tr data-ingreso-id="${m.id}" data-ingreso-placa="${escapeHtml(placa)}"${collapsed ? ' data-maint-collapsible hidden' : ''}>
+      <td class="maint-col-fecha">${hideMeta ? '' : formatDate(m.fecha)}</td>
+      <td class="maint-col-hora"><time datetime="${m.fecha}T${m.hora || '00:00'}">${typeof displayGastoHora === 'function' ? displayGastoHora(m) : formatTime(m.hora)}</time></td>
+      <td class="maint-col-placa">${hideMeta ? '' : escapeHtml(placa)}</td>
+      <td class="num maint-col-un">${formatMaintUnidad(m.unidad)}</td>
+      <td class="maint-col-desc">${escapeHtml(m.descripcion)}</td>
+      <td class="num">${formatMoney(m.costoUnit != null ? m.costoUnit : m.monto)}</td>
+      <td class="num"><strong>${formatMoney(m.monto)}</strong></td>
+      <td class="actions-col">
+        <div class="actions-group">
+          <button type="button" class="btn btn--action btn--action-edit btn--sm btn--action-icon" title="Editar" aria-label="Editar" onclick="editIngreso('${m.id}')">${lucideIcon('square-pen', 'lucide-icon--btn')}</button>
+          <button type="button" class="btn btn--action btn--action-delete btn--sm btn--action-icon" title="Eliminar" aria-label="Eliminar" onclick="deleteIngreso('${m.id}')">${lucideIcon('trash-2', 'lucide-icon--btn')}</button>
+        </div>
+      </td>
+    </tr>`;
+}
+
+function ingresoExpenseGroupCardHtml(group, i = 0) {
+  const placa = group.placa || '';
+  const collapsedCount = Math.max(0, (group.gastos || []).length - 5);
+  const productos = (group.gastos || []).map((m, idx) => `
+    <li class="maint-expense-group__item" data-ingreso-id="${m.id}"${idx >= 5 ? ' data-maint-collapsible hidden' : ''}>
+      <div class="maint-expense-group__item-main">
+        <span class="maint-expense-group__item-name">${escapeHtml(m.descripcion || 'Sin descripción')}</span>
+        <span class="maint-expense-group__item-meta">Un. ${formatMaintUnidad(m.unidad)} · ${formatMoney(m.costoUnit != null ? m.costoUnit : m.monto)}</span>
+      </div>
+      <strong class="maint-expense-group__item-total">${formatMoney(m.monto)}</strong>
+      <div class="maint-expense-group__item-actions">
+        <button type="button" class="btn btn--action btn--action-edit btn--sm btn--action-icon" title="Editar" aria-label="Editar" onclick="editIngreso('${m.id}')">${lucideIcon('square-pen', 'lucide-icon--btn')}</button>
+        <button type="button" class="btn btn--action btn--action-delete btn--sm btn--action-icon" title="Eliminar" aria-label="Eliminar" onclick="deleteIngreso('${m.id}')">${lucideIcon('trash-2', 'lucide-icon--btn')}</button>
+      </div>
+    </li>
+  `).join('');
+
+  return `
+    <article class="maint-expense-card maint-expense-card--group" data-ingreso-fecha="${escapeHtml(group.fecha)}" data-ingreso-placa="${escapeHtml(placa)}" style="animation-delay:${i * 0.04}s">
+      <div class="maint-expense-card__head">
+        <time class="maint-expense-card__when" datetime="${group.fecha}">
+          <span class="maint-expense-card__fecha">${formatDate(group.fecha)}</span>
+          <span class="maint-expense-card__hora">${escapeHtml(group.horaLabel || '\u2014')}</span>
+        </time>
+        <span class="maint-expense-card__monto">${formatMoney(group.total)}</span>
+      </div>
+      <div class="maint-expense-card__meta maint-expense-card__meta--group">
+        <span>Placa <strong>${escapeHtml(placa)}</strong></span>
+        <span><strong>${group.count}</strong> concepto${group.count !== 1 ? 's' : ''}</span>
+      </div>
+      <ul class="maint-expense-group__list" role="list">
+        ${productos}
+      </ul>
+      ${collapsedCount ? `
+        <button type="button" class="maint-group-toggle" aria-expanded="false" data-collapsed-count="${collapsedCount}" onclick="toggleMaintGroup(this)">
+          Ver ${collapsedCount} más
+        </button>` : ''}
+    </article>`;
+}
+
+function renderIngresoMobilePage(slice) {
+  const groups = Array.isArray(slice) && slice[0]?.gastos
+    ? slice
+    : groupMantenimientoByFechaPlaca(slice);
+  return `<div class="maint-vehicle__cards">${groups.map((g, i) => ingresoExpenseGroupCardHtml(g, i)).join('')}</div>`;
+}
+
+function renderIngresoDesktopPage(slice) {
+  const groups = Array.isArray(slice) && slice[0]?.gastos
+    ? slice
+    : groupMantenimientoByFechaPlaca(slice);
+
+  const body = groups.map((g) => {
+    const collapsedCount = Math.max(0, (g.gastos || []).length - 5);
+    const rows = (g.gastos || []).map((m, idx) => ingresoTableRowHtml(m, {
+      hideMeta: idx > 0,
+      collapsed: idx >= 5
+    })).join('');
+    return `
+      <tr class="maint-group-head" data-ingreso-fecha="${escapeHtml(g.fecha)}" data-ingreso-placa="${escapeHtml(g.placa)}">
+        <td colspan="8">
+          <div class="maint-group-head__inner">
+            <span><strong>${formatDate(g.fecha)}</strong> · ${escapeHtml(g.placa)} · ${g.count} concepto${g.count !== 1 ? 's' : ''}</span>
+            <span class="maint-group-head__aside">
+              <strong>${formatMoney(g.total)}</strong>
+              ${collapsedCount ? `
+                <button type="button" class="maint-group-toggle maint-group-toggle--table" aria-expanded="false" data-collapsed-count="${collapsedCount}" onclick="toggleMaintGroup(this)">
+                  Ver ${collapsedCount} más
+                </button>` : ''}
+            </span>
+          </div>
+        </td>
+      </tr>
+      ${rows}`;
+  }).join('');
+
+  return `
+    <section class="maint-vehicle maint-vehicle--paged">
+      <div class="table-wrapper maint-vehicle__table-wrap">
+        <table class="data-table maint-vehicle__table">
+          <thead>
+            <tr>
+              <th>FECHA</th>
+              <th>HORA</th>
+              <th>PLACA</th>
+              <th class="num maint-col-un">UN.</th>
+              <th>DESCRIPCIÓN</th>
+              <th class="num">IMPORTE UNIT.</th>
+              <th class="num">TOTAL</th>
+              <th class="actions-col">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${body}
+          </tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
+function focusIngresoPlacaPage(placa) {
+  const placaKey = typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(placa) : placa;
+  const input = $('#ingresoFilterPlaca');
+  if (!input) return;
+
+  const next = input.value === placaKey ? '' : placaKey;
+  if (typeof setIngresoFilterPlacaValue === 'function') {
+    setIngresoFilterPlacaValue(next);
+  } else {
+    input.value = next;
+  }
+
+  if (typeof updateIngresoFilterHint === 'function') updateIngresoFilterHint();
+  ingresoPage = 1;
+  renderIngresosExtras();
+
+  requestAnimationFrame(() => {
+    const block = $('#ingresoHistoryBlock') || $('#ingresoHistory') || $('#ingresoCards');
+    block?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+function renderIngresosExtras() {
+  const items = filterIngresosExtras();
+  const itemsForCards = filterIngresosExtras({ ignorePlaca: true });
+  const groups = groupMantenimientoByPlaca(itemsForCards);
+  const history = $('#ingresoHistory');
+  const cards = $('#ingresoCards');
+  const summary = $('#ingresoSummary');
+  const activePlaca = $('#ingresoFilterPlaca')?.value || '';
+
+  const totalMonto = items.reduce((s, m) => s + m.monto, 0);
+  const filteredEmpty = !items.length && (state.ingresosExtras || []).length > 0
+    && ($('#ingresoFilterDesde')?.value || $('#ingresoFilterHasta')?.value || $('#ingresoFilterPlaca')?.value);
+
+  if (!summary) return;
+
+  if (!itemsForCards.length) {
+    summary.innerHTML = `<p class="maint-summary-empty">${filteredEmpty ? 'Sin ingresos en este periodo' : 'Sin ingresos extras registrados por vehículo'}</p>`;
+  } else {
+    const sortedGroups = [...groups].sort((a, b) => b.total - a.total);
+    let requestedPage = renderIngresosExtras._summaryPage || 1;
+    const activeIndex = activePlaca ? sortedGroups.findIndex((g) => g.placa === activePlaca) : -1;
+    if (activeIndex >= 0) requestedPage = Math.floor(activeIndex / 4) + 1;
+    const summaryMeta = paginateItems(sortedGroups, requestedPage, 4);
+    renderIngresosExtras._summaryPage = summaryMeta.page;
+
+    summary.innerHTML = summaryMeta.slice.map((g) => {
+      const isActive = activePlaca && g.placa === activePlaca;
+      return `
+      <button type="button" class="maint-plate-card${isActive ? ' maint-plate-card--active' : ''}" data-scroll-placa="${escapeHtml(g.placa)}" aria-pressed="${isActive ? 'true' : 'false'}">
+        <div class="maint-plate-card__placa">${escapeHtml(g.placa)}</div>
+        <div class="maint-plate-card__total">${formatMoney(g.total)}</div>
+        <div class="maint-plate-card__count">${g.count} ingreso${g.count !== 1 ? 's' : ''}</div>
+      </button>`;
+    }).join('');
+
+    const summaryPagination = document.createElement('div');
+    summaryPagination.className = 'pagination maint-summary-pagination';
+    summaryPagination.setAttribute('aria-label', 'Paginacion de vehiculos');
+    summary.appendChild(summaryPagination);
+    renderPagination(summaryPagination, summaryMeta, (page) => {
+      renderIngresosExtras._summaryPage = page;
+      renderIngresosExtras();
+    }, 4);
+
+    summary.querySelectorAll('[data-scroll-placa]').forEach((btn) => {
+      btn.addEventListener('click', () => focusIngresoPlacaPage(btn.dataset.scrollPlaca));
+    });
+  }
+
+  const pageSize = getListPageSize();
+  const groupedItems = groupMantenimientoByFechaPlaca(items);
+  const meta = paginateItems(groupedItems, ingresoPage, pageSize);
+  ingresoPage = meta.page;
+
+  if (items.length === 0) {
+    const emptyMsg = filteredEmpty
+      ? '<p>Sin ingresos en este periodo</p><button type="button" class="btn btn--ghost btn--sm" id="ingresoEmptyClear">Limpiar filtros</button>'
+      : '<p>Sin ingresos extras registrados</p>';
+    if (history) history.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
+    if (cards) cards.innerHTML = `<div class="empty-state empty-state--compact">${emptyMsg}</div>`;
+    $('#ingresoEmptyClear')?.addEventListener('click', () => {
+      if (typeof clearIngresoFilters === 'function') clearIngresoFilters();
+    });
+    renderPagination($('#ingresoPagination'), { total: 0, page: 1, totalPages: 1, start: 0, end: 0 }, () => {}, pageSize);
+  } else {
+    if (history) history.innerHTML = renderIngresoDesktopPage(meta.slice);
+    if (cards) cards.innerHTML = renderIngresoMobilePage(meta.slice);
+    renderPagination($('#ingresoPagination'), meta, (page) => {
+      ingresoPage = page;
+      renderIngresosExtras();
+      $('#ingresoPagination')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, pageSize);
+  }
+
+  const totalEl = $('#ingresoTotalMonto');
+  if (totalEl) totalEl.textContent = formatMoney(totalMonto);
+  const ingresoCount = $('#ingresoCount');
+  if (ingresoCount) {
+    const textEl = ingresoCount.querySelector('.panel__count__text') || ingresoCount;
+    textEl.textContent = `${items.length} ingreso${items.length !== 1 ? 's' : ''} · ${groupedItems.length} día${groupedItems.length !== 1 ? 's' : ''}`;
+  }
+  const ingresoWelcomeCount = $('#ingresoWelcomeCount');
+  if (ingresoWelcomeCount) {
+    const period = $('#ingresoFilterHint')?.textContent;
+    const base = items.length
+      ? `${items.length} ingreso${items.length !== 1 ? 's' : ''} · ${groups.length} vehículo${groups.length !== 1 ? 's' : ''}`
+      : 'Sin ingresos';
+    ingresoWelcomeCount.textContent = period && items.length ? `${base} · ${period.split(' · ')[0]}` : base;
+  }
+  refreshLucideIcons();
+}
+
 function updateKPIs(ops, maint) {
-  const kpiFletes = $('#kpiFletes');
+  const kpiUtilidad = $('#kpiUtilidad');
   const kpiGastos = $('#kpiGastos');
+  const kpiIngresosExtras = $('#kpiIngresosExtras');
   const kpiViajes = $('#kpiViajes');
-  if (!kpiFletes && !kpiGastos && !kpiViajes) return;
+  if (!kpiUtilidad && !kpiGastos && !kpiIngresosExtras && !kpiViajes) return;
 
-  const totalFlete = ops.reduce((s, o) => s + o.flete, 0);
-  const totalGastosOp = ops.reduce((s, o) => s + o.gastos, 0);
-  const totalMaint = maint.reduce((s, m) => s + m.monto, 0);
+  const totalViajes = ops.reduce((s, o) => s + (Number(o.flete) || 0), 0);
+  const totalGastosOp = ops.reduce((s, o) => s + (Number(o.gastos) || 0), 0);
+  const totalMaint = maint.reduce((s, m) => s + (Number(m.monto) || 0), 0);
   const totalGastos = totalGastosOp + totalMaint;
+  const ingresosExtras = typeof filterIngresosExtras === 'function'
+    ? filterIngresosExtras()
+    : (state.ingresosExtras || []);
+  const totalIngresosExtras = ingresosExtras.reduce((s, ingreso) => s + (Number(ingreso.monto) || 0), 0);
+  const utilidadTotal = totalViajes + totalIngresosExtras - totalGastos;
 
-  if (kpiFletes) {
-    kpiFletes.textContent = formatMoney(totalFlete);
-    animatePop(kpiFletes);
+  if (kpiUtilidad) {
+    kpiUtilidad.textContent = formatMoney(utilidadTotal);
+    animatePop(kpiUtilidad);
   }
   if (kpiGastos) {
     kpiGastos.textContent = formatMoney(totalGastos);
     animatePop(kpiGastos);
+  }
+  if (kpiIngresosExtras) {
+    kpiIngresosExtras.textContent = formatMoney(totalIngresosExtras);
+    animatePop(kpiIngresosExtras);
   }
   if (kpiViajes) {
     kpiViajes.textContent = ops.length;

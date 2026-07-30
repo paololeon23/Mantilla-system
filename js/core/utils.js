@@ -1,5 +1,5 @@
 // ---- Estado ----
-let state = { operaciones: [], mantenimiento: [], campamentos: [], camiones: [], catalogos: null };
+let state = { operaciones: [], mantenimiento: [], ingresosExtras: [], campamentos: [], camiones: [], catalogos: null };
 
 function getPage() {
   return window.Mantilla?.getPage?.() || document.body?.dataset?.page || 'viajes';
@@ -8,6 +8,21 @@ function getPage() {
 // ---- Utilidades ----
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
+
+function markElementDeleting(element) {
+  if (!element) return;
+  element.classList.add('is-deleting');
+  element.setAttribute('aria-busy', 'true');
+  element.querySelectorAll('button, input, select, textarea, a').forEach((control) => {
+    if ('disabled' in control) control.disabled = true;
+    control.setAttribute('aria-disabled', 'true');
+    if (control.tagName === 'A') control.setAttribute('tabindex', '-1');
+  });
+}
+
+function deletingTransition(ms = 180) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;

@@ -22,11 +22,11 @@
 .viaje-form-card__head {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.65rem;
+  justify-content: space-between;
+  gap: 1rem;
   position: relative;
   margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
+  padding: 0 2.7rem 0.75rem 0;
   border-bottom: 1px solid #e8f0fa;
   text-align: left;
 }
@@ -40,7 +40,7 @@
   letter-spacing: -0.02em;
   text-transform: none;
   flex: 1;
-  padding-inline: 0 2.4rem;
+  padding: 0;
 }
 
 .viaje-form-help {
@@ -542,6 +542,54 @@
   max-width: none;
 }
 
+.viaje-tipo-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  width: min(100%, 22rem);
+  flex: 0 1 22rem;
+  padding: 0.3rem;
+  border: 1px solid #d8e2ee;
+  border-radius: 12px;
+  background: #f1f5f9;
+}
+
+.viaje-tipo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.55rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.viaje-tipo-btn:hover {
+  color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.viaje-tipo-btn--active,
+.viaje-tipo-btn--active:hover {
+  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 3px 9px rgba(12, 31, 61, 0.2);
+}
+
+.viaje-tipo-btn:focus-visible {
+  outline: 3px solid rgba(79, 156, 249, 0.25);
+  outline-offset: 2px;
+}
+
 .camp-form-meta,
 .camp-form-secondary {
   display: grid;
@@ -613,6 +661,80 @@
   border: 1px solid #93c5fd;
   border-radius: var(--radius-md);
   box-sizing: border-box;
+}
+
+.camp-summary-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.camp-tarifa-live {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 0.75fr);
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #93c5fd;
+  border-radius: var(--radius-md);
+  background: linear-gradient(145deg, #eff6ff 0%, #f8fbff 100%);
+  box-shadow: var(--shadow-xs);
+}
+
+.camp-tarifa-live[hidden] {
+  display: none;
+}
+
+.camp-tarifa-live > label {
+  color: var(--color-primary-dark);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.camp-tarifa-live__input-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.camp-tarifa-live__currency {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.viaje-form-card__body .camp-tarifa-live__input {
+  width: 100%;
+  min-height: 2.55rem;
+  padding-left: 2.25rem;
+  text-align: right;
+  color: var(--color-primary-dark);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  border-color: #60a5fa;
+}
+
+.camp-tarifa-live > small {
+  grid-column: 1 / -1;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  text-align: right;
+}
+
+@media (max-width: 520px) {
+  .camp-tarifa-live {
+    grid-template-columns: 1fr;
+  }
+
+  .camp-tarifa-live > small {
+    text-align: left;
+  }
 }
 
 .camp-sum-live__label {
@@ -970,6 +1092,23 @@
   gap: 0.5rem;
 }
 
+.camp-viaje-row--excavadora .camp-viaje-row__placa-wrap {
+  grid-template-columns: minmax(8rem, 1fr) minmax(4.8rem, auto) auto;
+}
+
+.camp-viaje-row--excavadora .camp-viaje-row__bottom {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.camp-viaje-row--excavadora .camp-viaje-field--horas,
+.camp-viaje-row--excavadora .camp-viaje-field--precio {
+  min-width: 0;
+}
+
+.viaje-form-card--excavadora .camp-viajes-totals {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .camp-viaje-row__num {
   display: flex;
   align-items: center;
@@ -1016,9 +1155,9 @@
 }
 
 .camp-viaje-row__placa .ms__trigger--has-chofer {
-  min-height: 2.85rem;
-  padding-top: 0.42rem;
-  padding-bottom: 0.42rem;
+  min-height: 2.55rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
 }
 
 .camp-viaje-row__placa .camp-viaje-card__placa:focus,
@@ -1376,6 +1515,13 @@
 .campamento-detail-table .col-placa { width: 25%; }
 .campamento-detail-table .col-pesaje { width: 19%; }
 
+.campamento-detail-table--excavadora .col-equipo { width: 20%; }
+.campamento-detail-table--excavadora .col-fecha { width: 14%; }
+.campamento-detail-table--excavadora .col-tm { width: 12%; }
+.campamento-detail-table--excavadora .col-precio { width: 17%; }
+.campamento-detail-table--excavadora .col-gastos { width: 18%; }
+.campamento-detail-table--excavadora .col-total { width: 19%; }
+
 .campamento-detail-table .col-fecha {
   font-weight: 700;
   color: var(--color-primary-dark);
@@ -1451,6 +1597,77 @@
     overflow: visible;
     text-overflow: clip;
     max-width: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .campamento-detail-table--excavadora,
+  .campamento-detail-table--excavadora tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .campamento-detail-table--excavadora thead {
+    display: none;
+  }
+
+  .campamento-detail-table--excavadora tbody {
+    padding: 0.45rem;
+  }
+
+  .campamento-detail-table--excavadora tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    overflow: hidden;
+    margin-bottom: 0.45rem;
+    border: 1px solid #d7e4f2;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .campamento-detail-table--excavadora tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .campamento-detail-table--excavadora td,
+  .campamento-detail-table--excavadora td.num,
+  .campamento-detail-table--excavadora .col-fecha,
+  .campamento-detail-table--excavadora .col-tm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: auto !important;
+    min-width: 0;
+    padding: 0.55rem 0.6rem;
+    border-top: 0;
+    border-bottom: 1px solid #edf2f7;
+    text-align: right;
+    white-space: normal;
+  }
+
+  .campamento-detail-table--excavadora td:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+
+  .campamento-detail-table--excavadora td:nth-child(odd) {
+    border-right: 1px solid #edf2f7;
+  }
+
+  .campamento-detail-table--excavadora td::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .campamento-detail-table--excavadora .camp-placa-tag {
+    max-width: 65%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -1660,7 +1877,9 @@
 }
 
 #modalViajeBody .viaje-form-help {
-  position: static;
+  position: absolute;
+  top: 0;
+  right: 0;
   transform: none;
   animation: none;
 }
@@ -1720,6 +1939,39 @@
 }
 
 @media (max-width: 640px) {
+  .viaje-form-card__head {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.45rem;
+    padding: 0 0 0.4rem;
+    text-align: center;
+  }
+
+  .viaje-form-card__head h2,
+  .viaje-form-card__head h3 {
+    width: 100%;
+    padding: 0 2.4rem;
+    text-align: center;
+    transform: translateY(-0.25rem);
+  }
+
+  .viaje-tipo-toggle {
+    width: min(100%, 16rem);
+    flex-basis: auto;
+    align-self: center;
+  }
+
+  .viaje-tipo-btn {
+    min-height: 2.35rem;
+    padding: 0.42rem 0.55rem;
+    font-size: 0.76rem;
+  }
+
+  .viaje-section--datos {
+    margin-top: 0;
+  }
+
   .viaje-section--datos,
   .viaje-section--camiones {
     padding: 0.7rem 0.65rem;
@@ -1778,6 +2030,10 @@
     grid-template-columns: minmax(0, 1fr) 2.5rem 2.5rem;
     align-items: end;
     gap: 0.3rem;
+  }
+
+  .camp-viaje-row--excavadora .camp-viaje-row__placa-wrap {
+    grid-template-columns: minmax(0, 1fr) 2.5rem 2.5rem;
   }
 
   .camp-viaje-row__placa-picker {
@@ -2533,6 +2789,26 @@
 
 .camp-viajes-section__hint strong {
   color: #92400e;
+}
+
+@media (max-width: 640px) {
+  .camp-viajes-section__hint-long {
+    display: none;
+  }
+
+  .camp-viajes-section__hint-short {
+    display: inline;
+  }
+
+  .camp-viajes-section__hint-copy {
+    color: #334155;
+    font-weight: 600;
+  }
+
+  .camp-viajes-section__hint strong {
+    color: #0f172a;
+    font-weight: 800;
+  }
 }
 
 .camp-viajes-section--locked .camp-row-toolbar,

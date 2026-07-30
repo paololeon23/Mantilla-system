@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Gastos de cami&oacute;n por placa &mdash; Mantilla">
+  <meta name="description" content="Ingresos extras por placa &mdash; Mantilla">
   <meta name="theme-color" content="#0c1f3d">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Mantilla">
   <meta name="application-name" content="Mantilla">
-  <title>Mantilla &mdash; Gastos de cami&oacute;n</title>
+  <title>Mantilla &mdash; Ingresos extras</title>
   <script src="js/pwa.js?v=3"></script>
   <link rel="stylesheet" href="css/base/boot.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,7 @@
   <link rel="icon" href="assets/logo-truck.svg?v=3" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=1" sizes="180x180">
 </head>
-<body data-page="mantenimiento">
+<body data-page="ingresos-extras">
 <script>
 (function(){try{if(localStorage.getItem('mantilla-sidebar-collapsed')==='1'&&window.innerWidth>=900)document.body.classList.add('sidebar-desktop-collapsed');if(sessionStorage.getItem('mantilla-session'))document.documentElement.classList.add('mantilla-skip-entrance');sessionStorage.setItem('mantilla-session','1');}catch(e){}})();
 </script>
@@ -68,14 +68,14 @@
           <span class="nav-btn__text">Camiones</span>
           <span class="nav-btn__arrow">&rsaquo;</span>
         </a>
-        <a href="mantenimiento.html" class="nav-btn nav-btn--active" aria-current="page" data-tooltip="Gastos de cami&oacute;n">
+        <a href="mantenimiento.html" class="nav-btn" data-tooltip="Gastos de cami&oacute;n">
           <span class="nav-btn__icon">
             <i data-lucide="settings-2" class="lucide-icon lucide-icon--nav" aria-hidden="true"></i>
           </span>
           <span class="nav-btn__text">Gastos de cami&oacute;n</span>
           <span class="nav-btn__arrow">&rsaquo;</span>
         </a>
-        <a href="ingresos-extras.html" class="nav-btn" data-tooltip="Ingresos extras">
+        <a href="ingresos-extras.html" class="nav-btn nav-btn--active" aria-current="page" data-tooltip="Ingresos extras">
           <span class="nav-btn__icon">
             <i data-lucide="circle-dollar-sign" class="lucide-icon lucide-icon--nav" aria-hidden="true"></i>
           </span>
@@ -85,11 +85,11 @@
       </nav>
 
       <div class="sidebar__footer">
-        <div class="sidebar__footer-card" data-tooltip="Aceite, llantas y reparaciones">
+        <div class="sidebar__footer-card" data-tooltip="Fletes extras: ladrillos y m&aacute;s">
           <i data-lucide="info" class="lucide-icon lucide-icon--footer" aria-hidden="true"></i>
           <div>
-            <strong>Control de gastos</strong>
-            <span>Aceite, llantas y reparaciones</span>
+            <strong>Ingresos extras</strong>
+            <span>Fletes extras: ladrillos y m&aacute;s</span>
           </div>
         </div>
       </div>
@@ -120,9 +120,9 @@
     </div>
   </aside>
 
-  <div class="main-wrapper main-wrapper--mantenimiento" id="mainWrapper">
+  <div class="main-wrapper main-wrapper--ingresos" id="mainWrapper">
 
-    <div class="app-hero app-hero--mantenimiento" id="appHero">
+    <div class="app-hero app-hero--ingresos" id="appHero">
       <header class="topbar">
         <div class="topbar__inner">
           <div class="topbar__start">
@@ -138,20 +138,20 @@
 
           <div class="topbar__lead">
             <span class="topbar__page-icon" aria-hidden="true">
-              <i data-lucide="settings-2" class="lucide-icon" aria-hidden="true"></i>
+              <i data-lucide="circle-dollar-sign" class="lucide-icon" aria-hidden="true"></i>
             </span>
             <div class="topbar__titles">
               <h1 class="topbar__heading topbar__breadcrumb">
                 <span class="topbar__brand-label">Mantilla</span>
                 <span class="topbar__breadcrumb-sep" aria-hidden="true">/</span>
-                <span class="topbar__page-label" id="pageTitle">Gastos de cami&oacute;n</span>
+                <span class="topbar__page-label" id="pageTitle">Ingresos extras</span>
               </h1>
-              <p class="topbar__page-sub">Llantas, reparaciones y servicios por placa</p>
+              <p class="topbar__page-sub">Transporte extra por cami&oacute;n (ladrillos, fletes y m&aacute;s)</p>
             </div>
           </div>
 
           <div class="topbar__actions">
-            <button type="button" class="btn btn--primary btn--sm btn--round topbar__add-btn" id="btnAddMain" aria-label="Agregar gasto">
+            <button type="button" class="btn btn--primary btn--sm btn--round topbar__add-btn" id="btnAddMain" aria-label="Agregar ingreso">
               <i data-lucide="plus" class="lucide-icon" aria-hidden="true"></i>
               <span class="btn-label">Agregar</span>
             </button>
@@ -192,67 +192,67 @@
     </div>
 
     <main class="app-content">
-      <section class="panel panel--active" id="panelMantenimiento" aria-label="Gastos de cami&oacute;n">
+      <section class="panel panel--active" id="panelIngresos" aria-label="Ingresos extras">
 
-        <section class="maint-welcome" id="maintWelcome">
+        <section class="maint-welcome" id="ingresoWelcome">
           <div class="maint-welcome__content">
-            <span class="maint-welcome__eyebrow">Registro de gastos</span>
-            <h2 class="maint-welcome__title">Gastos de cami&oacute;n por placa</h2>
-            <p class="maint-welcome__text">Como en tu cuaderno: llantas, aceite, lavado, reparaciones y m&aacute;s.</p>
+            <span class="maint-welcome__eyebrow">Registro de ingresos</span>
+            <h2 class="maint-welcome__title">Ingresos extras por placa</h2>
+            <p class="maint-welcome__text">Lo que ganas de m&aacute;s por cami&oacute;n: ladrillos, fletes extras y similares.</p>
           </div>
-          <span class="maint-welcome__badge" id="maintWelcomeCount" aria-live="polite"></span>
+          <span class="maint-welcome__badge" id="ingresoWelcomeCount" aria-live="polite"></span>
         </section>
 
-        <div class="maint-filters" id="maintFiltersBar" aria-label="Filtros de gastos">
+        <div class="maint-filters" id="ingresoFiltersBar" aria-label="Filtros de ingresos">
           <div class="maint-filters__row">
             <div class="maint-filters__field">
-              <label for="maintFilterDesdePicker">Desde</label>
-              <input type="hidden" id="maintFilterDesde">
-              <div id="maintFilterDesdePicker"></div>
+              <label for="ingresoFilterDesdePicker">Desde</label>
+              <input type="hidden" id="ingresoFilterDesde">
+              <div id="ingresoFilterDesdePicker"></div>
             </div>
             <div class="maint-filters__field">
-              <label for="maintFilterHastaPicker">Hasta</label>
-              <input type="hidden" id="maintFilterHasta">
-              <div id="maintFilterHastaPicker"></div>
+              <label for="ingresoFilterHastaPicker">Hasta</label>
+              <input type="hidden" id="ingresoFilterHasta">
+              <div id="ingresoFilterHastaPicker"></div>
             </div>
             <div class="maint-filters__field maint-filters__field--placa">
-              <label for="maintFilterPlacaPicker">Veh&iacute;culo</label>
-              <input type="hidden" id="maintFilterPlaca" value="">
-              <div id="maintFilterPlacaPicker" class="maint-filter-placa-picker-mount"></div>
+              <label for="ingresoFilterPlacaPicker">Veh&iacute;culo</label>
+              <input type="hidden" id="ingresoFilterPlaca" value="">
+              <div id="ingresoFilterPlacaPicker" class="ingreso-filter-placa-picker-mount"></div>
             </div>
-            <button type="button" class="btn btn--ghost btn--sm maint-filters__clear" id="maintBtnClearFilters">Limpiar</button>
+            <button type="button" class="btn btn--ghost btn--sm maint-filters__clear" id="ingresoBtnClearFilters">Limpiar</button>
           </div>
-          <p class="maint-filters__hint" id="maintFilterHint" aria-live="polite"></p>
+          <p class="maint-filters__hint" id="ingresoFilterHint" aria-live="polite"></p>
         </div>
 
         <div class="panel__header panel__header--actions">
           <div class="panel__title-group">
-            <h2>Gastos de cami&oacute;n por placa</h2>
-            <span class="panel__count" id="maintCount">
+            <h2>Ingresos extras por placa</h2>
+            <span class="panel__count" id="ingresoCount">
               <i data-lucide="receipt-text" class="lucide-icon lucide-icon--count" aria-hidden="true"></i>
-              <span class="panel__count__text">0 gastos</span>
+              <span class="panel__count__text">0 ingresos</span>
             </span>
           </div>
-          <button type="button" class="btn btn--secondary" id="btnAddMantenimiento">Agregar Gasto</button>
+          <button type="button" class="btn btn--secondary" id="btnAddIngreso">Agregar ingreso</button>
         </div>
 
-        <div class="maint-summary" id="maintSummary"></div>
+        <div class="maint-summary" id="ingresoSummary"></div>
 
-        <div class="maint-history-block" id="maintHistoryBlock">
-          <div class="maint-history" id="maintHistory" aria-label="Historial por veh&iacute;culo"></div>
+        <div class="maint-history-block" id="ingresoHistoryBlock">
+          <div class="maint-history" id="ingresoHistory" aria-label="Historial por veh&iacute;culo"></div>
           <div class="maint-grand-total">
-            <span class="maint-grand-total__label">Total gastos</span>
-            <strong class="maint-grand-total__value" id="maintTotalMonto">&mdash;</strong>
+            <span class="maint-grand-total__label">Total ingresos</span>
+            <strong class="maint-grand-total__value" id="ingresoTotalMonto">&mdash;</strong>
           </div>
         </div>
 
-        <div class="cards-grid maint-mobile-list" id="maintCards"></div>
-        <div class="pagination pagination--maint" id="maintPagination" hidden aria-label="Paginaci&oacute;n de gastos"></div>
+        <div class="cards-grid maint-mobile-list" id="ingresoCards"></div>
+        <div class="pagination pagination--ingreso" id="ingresoPagination" hidden aria-label="Paginaci&oacute;n de ingresos"></div>
       </section>
     </main>
   </div>
 
-  <button type="button" class="mobile-fab" id="fabAdd" aria-label="Agregar gasto">
+  <button type="button" class="mobile-fab" id="fabAdd" aria-label="Agregar ingreso">
     <i data-lucide="plus" class="lucide-icon" aria-hidden="true"></i>
   </button>
 
@@ -265,61 +265,61 @@
       <i data-lucide="truck" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
       <span>Camiones</span>
     </a>
-    <a href="mantenimiento.html" class="bottom-nav__tab bottom-nav__tab--active" aria-current="page">
+    <a href="mantenimiento.html" class="bottom-nav__tab">
       <i data-lucide="settings-2" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
       <span>Gastos</span>
     </a>
-    <a href="ingresos-extras.html" class="bottom-nav__tab">
+    <a href="ingresos-extras.html" class="bottom-nav__tab bottom-nav__tab--active" aria-current="page">
       <i data-lucide="circle-dollar-sign" class="lucide-icon lucide-icon--bottom-nav" aria-hidden="true"></i>
       <span>Ingresos</span>
     </a>
   </nav>
 
-  <div class="modal-overlay modal-overlay--sheet" id="modalMantenimiento" role="dialog" aria-modal="true" aria-labelledby="modalMaintTitle">
+  <div class="modal-overlay modal-overlay--sheet" id="modalIngresos" role="dialog" aria-modal="true" aria-labelledby="modalIngresoTitle">
     <div class="modal modal--form modal--maint">
       <div class="modal__header modal__header--form">
         <div class="modal__header-brand">
           <span class="modal__header-icon" aria-hidden="true">
-            <i data-lucide="wrench" class="lucide-icon" aria-hidden="true"></i>
+            <i data-lucide="circle-dollar-sign" class="lucide-icon" aria-hidden="true"></i>
           </span>
           <div class="modal__header-text">
-            <span class="modal__eyebrow" id="modalMaintEyebrow">Gastos de cami&oacute;n</span>
-            <h3 id="modalMaintTitle">Nuevo gasto</h3>
+            <span class="modal__eyebrow" id="modalIngresoEyebrow">Ingresos extras</span>
+            <h3 id="modalIngresoTitle">Nuevo ingreso</h3>
           </div>
         </div>
-        <button class="modal__close" data-close="modalMantenimiento" type="button" aria-label="Cerrar">
+        <button class="modal__close" data-close="modalIngresos" type="button" aria-label="Cerrar">
           <i data-lucide="x" class="lucide-icon" aria-hidden="true"></i>
         </button>
       </div>
-      <form id="formMantenimiento" class="modal__body modal__body--form modal__body--maint" novalidate>
-        <input type="hidden" id="maintId">
+      <form id="formIngresos" class="modal__body modal__body--form modal__body--maint" novalidate>
+        <input type="hidden" id="ingresoId">
         <div class="maint-form-meta">
           <div class="form-group form-group--placa-picker">
-            <label for="maintPlacaPicker">Veh&iacute;culo *</label>
-            <input type="hidden" id="maintPlaca" required>
-            <div id="maintPlacaPicker" class="maint-placa-picker-mount"></div>
+            <label for="ingresoPlacaPicker">Veh&iacute;culo *</label>
+            <input type="hidden" id="ingresoPlaca" required>
+            <div id="ingresoPlacaPicker" class="ingreso-placa-picker-mount"></div>
           </div>
           <div class="maint-form-meta__row">
             <div class="form-group">
-              <label for="maintFechaPicker">Fecha *</label>
-              <input type="hidden" id="maintFecha" required>
-              <div id="maintFechaPicker"></div>
+              <label for="ingresoFechaPicker">Fecha *</label>
+              <input type="hidden" id="ingresoFecha" required>
+              <div id="ingresoFechaPicker"></div>
             </div>
             <div class="form-group">
-              <label for="maintHoraPicker">Hora</label>
-              <input type="hidden" id="maintHora">
-              <div id="maintHoraPicker"></div>
+              <label for="ingresoHoraPicker">Hora</label>
+              <input type="hidden" id="ingresoHora">
+              <div id="ingresoHoraPicker"></div>
             </div>
           </div>
         </div>
 
-        <section class="maint-items-board" aria-label="Productos y servicios">
+        <section class="maint-items-board" aria-label="Conceptos y cargas">
           <div class="maint-items-toolbar">
             <div class="maint-items-toolbar__lead">
-              <span class="maint-items-toolbar__label">Productos / servicios</span>
-              <span class="maint-items-count" id="maintItemCount" aria-live="polite">0</span>
+              <span class="maint-items-toolbar__label">Conceptos / cargas</span>
+              <span class="maint-items-count" id="ingresoItemCount" aria-live="polite">0</span>
             </div>
-            <button type="button" class="maint-add-item-btn" id="btnAddMaintItem">
+            <button type="button" class="maint-add-item-btn" id="btnAddIngresoItem">
               <i data-lucide="plus" class="lucide-icon maint-add-item-btn__icon" aria-hidden="true"></i>
               <span>Agregar</span>
             </button>
@@ -329,22 +329,22 @@
             <span class="maint-items-head__num"></span>
             <span class="maint-items-head__un">Un.</span>
             <span class="maint-items-head__desc">Descripci&oacute;n</span>
-            <span class="maint-items-head__cost">Costo (S/)</span>
+            <span class="maint-items-head__cost">Importe (S/)</span>
             <span class="maint-items-head__total">Total</span>
             <span class="maint-items-head__rm"></span>
           </div>
 
-          <div class="maint-items-list" id="maintItemsList" role="list"></div>
+          <div class="maint-items-list" id="ingresoItemsList" role="list"></div>
 
           <div class="maint-items-grand" aria-live="polite">
             <span class="maint-items-grand__lbl">Total general</span>
-            <strong class="maint-items-grand__val" id="maintGrandTotal">S/ 0.00</strong>
+            <strong class="maint-items-grand__val" id="ingresoGrandTotal">S/ 0.00</strong>
           </div>
         </section>
 
         <div class="modal__footer modal__footer--form">
-          <button type="button" class="btn btn--ghost" data-close="modalMantenimiento">Cancelar</button>
-          <button type="submit" class="btn btn--primary" id="btnSaveMantenimiento">Guardar gastos</button>
+          <button type="button" class="btn btn--ghost" data-close="modalIngresos">Cancelar</button>
+          <button type="submit" class="btn btn--primary" id="btnSaveIngreso">Guardar ingresos</button>
         </div>
       </form>
     </div>

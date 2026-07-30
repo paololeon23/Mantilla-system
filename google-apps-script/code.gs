@@ -3,7 +3,7 @@
  * MANTILLA — Google Apps Script (Web App)
  * =============================================================================
  *
- * 4 hojas: Viajes | Gastos | Camiones | Clientes
+ * 5 hojas: Viajes | Gastos | Ingresos extras | Camiones | Clientes
  * Columna id (primera) — clave estable para crear / actualizar / eliminar
  * Columna hora_registro SIEMPRE al final (ej. 5:15:00 p.m.)
  *
@@ -14,6 +14,7 @@
 var SHEETS = {
   VIAJES: 'Viajes',
   GASTOS: 'Gastos',
+  INGRESOS: 'Ingresos extras',
   CAMIONES: 'Camiones',
   CLIENTES: 'Clientes'
 };
@@ -27,8 +28,11 @@ HEADERS[SHEETS.VIAJES] = [
 HEADERS[SHEETS.GASTOS] = [
   'ID', 'FECHA', 'HORA', 'PLACA', 'DESCRIPCION', 'UNIDAD', 'COSTO_UNIT', 'MONTO', 'HORA_REGISTRO'
 ];
+HEADERS[SHEETS.INGRESOS] = [
+  'ID', 'FECHA', 'HORA', 'PLACA', 'DESCRIPCION', 'UNIDAD', 'COSTO_UNIT', 'MONTO', 'HORA_REGISTRO'
+];
 HEADERS[SHEETS.CAMIONES] = [
-  'ID', 'PLACA', 'CHOFER', 'TELEFONO', 'MARCA', 'FECHA_REGISTRO', 'HORA_REGISTRO'
+  'ID', 'PLACA', 'CHOFER', 'TELEFONO', 'BREVETE', 'TIPO', 'FECHA_REGISTRO', 'HORA_REGISTRO'
 ];
 HEADERS[SHEETS.CLIENTES] = [
   'ID', 'NOMBRE', 'DNI', 'HORA_REGISTRO'
@@ -42,6 +46,7 @@ function headerKey_(h) {
 var MODE_TO_SHEET = {
   viajes: SHEETS.VIAJES,
   gastos: SHEETS.GASTOS,
+  ingresos: SHEETS.INGRESOS,
   camiones: SHEETS.CAMIONES,
   clientes: SHEETS.CLIENTES
 };
@@ -67,17 +72,24 @@ var COLUMNAS_NUMERICAS_ = {
 // ---------------------------------------------------------------------------
 
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('Mantilla')
-    .addItem('Crear / reparar hojas', 'configurarHojas')
-    .addItem('Guardar ID de esta planilla', 'guardarSpreadsheetId')
-    .addToUi();
+  var active = SpreadsheetApp.getActiveSpreadsheet();
+  if (!active) return;
+  PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', active.getId());
+  configurarHojasSilencioso_();
+}
+
+function mostrarAlerta_(mensaje) {
+  try {
+    SpreadsheetApp.getUi().alert(mensaje);
+  } catch (err) {
+    Logger.log(mensaje);
+  }
 }
 
 function guardarSpreadsheetId() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
-  SpreadsheetApp.getUi().alert('SPREADSHEET_ID guardado: ' + ss.getId());
+  mostrarAlerta_('SPREADSHEET_ID guardado: ' + ss.getId());
 }
 
 function definirToken(token) {
@@ -89,7 +101,7 @@ function configurarHojas() {
   Object.keys(HEADERS).forEach(function (name) {
     ensureSheetWithHeaders_(ss, name, HEADERS[name]);
   });
-  SpreadsheetApp.getUi().alert('Hojas listas: Viajes, Gastos, Camiones, Clientes (columna id incluida)');
+  mostrarAlerta_('Hojas listas: Viajes, Gastos, Ingresos extras, Camiones y Clientes');
 }
 
 // ---------------------------------------------------------------------------
@@ -588,6 +600,11 @@ function valoresParaHoja_(headers, row) {
       // Texto plano para que Sheets no lo convierta en fecha 1899
       return hhmm || String(v || '').trim();
     }
+    if (key === 'tipo') {
+      return String(v || '').trim().toLowerCase() === 'excavadora'
+        ? 'excavadora'
+        : 'camion';
+    }
     if (COLUMNAS_NUMERICAS_.hasOwnProperty(key)) {
       return normalizarNumero_(v, COLUMNAS_NUMERICAS_[key]);
     }
@@ -688,6 +705,16 @@ function ensureSheetWithHeaders_(ss, name, headers) {
     var currentHeaders = lastCol > 0
       ? sheet.getRange(1, 1, 1, lastCol).getValues()[0]
       : [];
+    if (
+      name === SHEETS.CAMIONES
+      && headerKey_(currentHeaders[5]) === 'fecha_registro'
+      && headerKey_(currentHeaders[6]) === 'hora_registro'
+      && headerKey_(currentHeaders[7]) === 'tipo'
+    ) {
+      migrarTipoCamionesJuntoMarca_(sheet, headers);
+      styleHeaderRow_(sheet, headers.length);
+      return;
+    }
     var headersChanged = currentHeaders.length !== headers.length
       || headers.some(function (h, i) {
         return String(currentHeaders[i] || '').trim() !== h;
@@ -717,6 +744,25 @@ function ensureSheetWithHeaders_(ss, name, headers) {
 
   styleHeaderRow_(sheet, headers.length);
   sheet.setColumnWidth(1, 180);
+}
+
+/**
+ * Migra Camiones de:
+ * BREVETE | FECHA_REGISTRO | HORA_REGISTRO | TIPO
+ * a:
+ * BREVETE | TIPO | FECHA_REGISTRO | HORA_REGISTRO
+ * conservando todos los valores existentes.
+ */
+function migrarTipoCamionesJuntoMarca_(sheet, headers) {
+  var maxRows = sheet.getMaxRows();
+  sheet.insertColumnAfter(5);
+  sheet.getRange(1, 9, maxRows, 1).copyTo(
+    sheet.getRange(1, 6, maxRows, 1),
+    SpreadsheetApp.CopyPasteType.PASTE_NORMAL,
+    false
+  );
+  sheet.deleteColumn(9);
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
 }
 
 function migrarAgregarColumnaId_(sheet, sheetName) {

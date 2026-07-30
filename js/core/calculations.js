@@ -1,8 +1,42 @@
+const VIAJE_TIPO_CAMION = 'camion';
+const VIAJE_TIPO_EXCAVADORA = 'excavadora';
+
+function normalizeViajeTipo(tipo) {
+  const t = String(tipo || '').trim().toLowerCase();
+  if (t === VIAJE_TIPO_EXCAVADORA || t === 'h' || t === 'hora' || t === 'horas') {
+    return VIAJE_TIPO_EXCAVADORA;
+  }
+  return VIAJE_TIPO_CAMION;
+}
+
+function isExcavadoraTipo(tipo) {
+  return normalizeViajeTipo(tipo) === VIAJE_TIPO_EXCAVADORA;
+}
+
+function isOperacionExcavadora(op) {
+  if (!op) return false;
+  if (op.tipo) return isExcavadoraTipo(op.tipo);
+  return normalizeViajeTipo(op.unidad) === VIAJE_TIPO_EXCAVADORA;
+}
+
+function isFilaCampamentoActiva(f, tipo) {
+  if (!f) return false;
+  const t = normalizeViajeTipo(tipo || f.tipo);
+  const qty = parseMoneyNumber(f.toneladas);
+  if (!(qty > 0)) return false;
+  if (isExcavadoraTipo(t)) return !!(f.placa && String(f.placa).trim());
+  return !!(f.placa && String(f.placa).trim());
+}
+
 function calcFlete(peso, tarifa, fleteBase, guia, pesaje) {
   const variable = parseMoneyNumber(peso) * parseMoneyNumber(tarifa);
   return roundMoney(
     parseMoneyNumber(fleteBase) + variable + parseMoneyNumber(guia) + parseMoneyNumber(pesaje)
   );
+}
+
+function calcFleteExcavadora(horas, precioHora) {
+  return roundMoney(parseMoneyNumber(horas) * parseMoneyNumber(precioHora));
 }
 
 function calcGastos(combustible, viaticos) {
@@ -70,28 +104,46 @@ function rebuildCampamentosFromOperaciones(options = {}) {
   const prevById = new Map((state.campamentos || []).map((c) => [String(c.id), c]));
   const prevByKey = new Map();
   (state.campamentos || []).forEach((c) => {
-    const key = `${String(c.nombre || '').trim().toLowerCase()}|${normFecha(c.fecha)}`;
-    prevByKey.set(key, c);
+    const cTipo = normalizeViajeTipo(c.tipo);
+    const base = `${String(c.nombre || '').trim().toLowerCase()}|${normFecha(c.fecha)}`;
+    prevByKey.set(`${base}|${cTipo}`, c);
+    // Compat: fichas viejas sin tipo se indexan también como camión
+    if (!c.tipo) prevByKey.set(base, c);
   });
 
   const groups = new Map();
 
   (state.operaciones || []).forEach((op) => {
-    if (!op?.placa || !(money(op.peso) > 0)) return;
+    if (!(money(op.peso) > 0)) return;
+    const tipo = isOperacionExcavadora(op) ? VIAJE_TIPO_EXCAVADORA : VIAJE_TIPO_CAMION;
+    const placa = isExcavadoraTipo(tipo) ? String(op.placa || '').trim() : normPlaca(op.placa);
+    if (!isExcavadoraTipo(tipo) && !placa) return;
+
     const fecha = normFecha(op.fecha);
     if (!fecha) return;
 
     const nombre = String(op.cliente || '').trim() || 'Sin cliente';
-    const key = `${nombre.toLowerCase()}|${fecha}`;
+    // Separar Camión / Excavadora para la misma persona+fecha
+    const key = `${nombre.toLowerCase()}|${fecha}|${tipo}`;
 
     let camp = groups.get(key);
     if (!camp) {
-      const prev = (op.campamentoId && prevById.get(String(op.campamentoId))) || prevByKey.get(key);
+      let prev = null;
+      if (op.campamentoId) {
+        const byId = prevById.get(String(op.campamentoId));
+        if (byId && normalizeViajeTipo(byId.tipo) === tipo) prev = byId;
+      }
+      if (!prev) prev = prevByKey.get(key);
+      if (!prev && !isExcavadoraTipo(tipo)) {
+        const legacy = prevByKey.get(`${nombre.toLowerCase()}|${fecha}`);
+        if (legacy && normalizeViajeTipo(legacy.tipo) === VIAJE_TIPO_CAMION) prev = legacy;
+      }
       camp = {
         id: prev?.id || uid('camp'),
         nombre: prev?.nombre || nombre,
         fecha,
-        tarifa: money(op.tarifa) || prev?.tarifa || 110,
+        tipo,
+        tarifa: money(op.tarifa) || prev?.tarifa || (isExcavadoraTipo(tipo) ? 0 : 110),
         saldoAnterior: prev?.saldoAnterior || 0,
         filas: []
       };
@@ -103,19 +155,23 @@ function rebuildCampamentosFromOperaciones(options = {}) {
 
     camp.filas.push({
       opId: String(op.id || ''),
+      tipo,
       fecha,
       cliente: nombre,
       producto: op.producto || '',
       dniRuc: op.dniRuc || '',
       toneladas: money(op.peso),
-      guia: money(op.guia),
-      placa: normPlaca(op.placa),
-      pesaje: money(op.pesaje),
+      guia: isExcavadoraTipo(tipo) ? 0 : money(op.guia),
+      placa: isExcavadoraTipo(tipo) ? (placa || '') : placa,
+      pesaje: isExcavadoraTipo(tipo) ? 0 : money(op.pesaje),
+      precioHora: isExcavadoraTipo(tipo) ? money(op.tarifa) : undefined,
       combustible: money(op.combustible),
       viaticos: money(op.viaticos)
     });
 
     op.campamentoId = camp.id;
+    op.tipo = tipo;
+    op.unidad = isExcavadoraTipo(tipo) ? 'H' : (op.unidad || 'TM');
   });
 
   const next = [...groups.values()].sort((a, b) =>
@@ -125,10 +181,10 @@ function rebuildCampamentosFromOperaciones(options = {}) {
   if (!replace && !next.length) return false;
 
   const prevSig = (state.campamentos || []).map((c) =>
-    `${c.id}|${c.fecha}|${c.nombre}|${(c.filas || []).map((f) => f.opId || f.placa).join(',')}`
+    `${c.id}|${c.fecha}|${c.nombre}|${normalizeViajeTipo(c.tipo)}|${(c.filas || []).map((f) => f.opId || f.placa || f.toneladas).join(',')}`
   ).join(';');
   const nextSig = next.map((c) =>
-    `${c.id}|${c.fecha}|${c.nombre}|${(c.filas || []).map((f) => f.opId || f.placa).join(',')}`
+    `${c.id}|${c.fecha}|${c.nombre}|${normalizeViajeTipo(c.tipo)}|${(c.filas || []).map((f) => f.opId || f.placa || f.toneladas).join(',')}`
   ).join(';');
 
   if (prevSig === nextSig) return false;
@@ -142,12 +198,15 @@ function syncOperacionesFromCampamento(camp) {
 
   const prevOps = state.operaciones.filter((op) => op.campamentoId === camp.id);
   const usedPrevIds = new Set();
-  const tarifa = camp.tarifa;
+  const tipo = normalizeViajeTipo(camp.tipo);
+  const excavadora = isExcavadoraTipo(tipo);
+  const tarifaCamp = camp.tarifa;
 
   state.operaciones = state.operaciones.filter((op) => op.campamentoId !== camp.id);
 
   (camp.filas || []).forEach((f, index) => {
-    if (!f.placa || !f.toneladas) return;
+    f.tipo = tipo;
+    if (!isFilaCampamentoActiva(f, tipo)) return;
 
     let opId = (f.opId || '').trim();
     if (opId && usedPrevIds.has(opId)) opId = '';
@@ -158,12 +217,15 @@ function syncOperacionesFromCampamento(camp) {
 
     if (!opId) {
       const fechaFila = f.fecha || camp.fecha;
-      const match = prevOps.find((op) =>
-        !usedPrevIds.has(op.id) &&
-        op.placa === f.placa &&
-        op.fecha === fechaFila &&
-        Number(op.peso) === Number(f.toneladas)
-      );
+      const match = prevOps.find((op) => {
+        if (usedPrevIds.has(op.id) || op.fecha !== fechaFila) return false;
+        if (Number(op.peso) !== Number(f.toneladas)) return false;
+        if (excavadora) {
+          const ph = parseMoneyNumber(f.precioHora != null && f.precioHora !== '' ? f.precioHora : tarifaCamp);
+          return Number(op.tarifa) === ph && String(op.placa || '') === String(f.placa || '');
+        }
+        return op.placa === f.placa;
+      });
       if (match) opId = match.id;
     }
 
@@ -171,38 +233,46 @@ function syncOperacionesFromCampamento(camp) {
     usedPrevIds.add(opId);
     f.opId = opId;
 
-    const flete = calcFlete(f.toneladas, tarifa, 0, f.guia, f.pesaje);
+    const precioHora = excavadora
+      ? parseMoneyNumber(f.precioHora != null && f.precioHora !== '' ? f.precioHora : tarifaCamp)
+      : parseMoneyNumber(tarifaCamp);
+    const flete = excavadora
+      ? calcFleteExcavadora(f.toneladas, precioHora)
+      : calcFlete(f.toneladas, tarifaCamp, 0, f.guia, f.pesaje);
     const combustible = parseMoneyNumber(f.combustible);
     const viaticos = parseMoneyNumber(f.viaticos);
     const gastos = calcGastos(combustible, viaticos);
     const clienteFila = f.cliente || camp.nombre;
-    const productoFila = f.producto || (isNombreCampamento(clienteFila) ? 'carbon' : '');
-    const chofer = (typeof getChoferByPlaca === 'function' ? getChoferByPlaca(f.placa) : '')
-      || (typeof findLastChofer === 'function' ? findLastChofer(f.placa) : '')
-      || camp.nombre;
+    const productoFila = f.producto || (!excavadora && isNombreCampamento(clienteFila) ? 'carbon' : '');
+    const chofer = excavadora
+      ? ((typeof getChoferByPlaca === 'function' ? getChoferByPlaca(f.placa) : '') || camp.nombre || clienteFila)
+      : ((typeof getChoferByPlaca === 'function' ? getChoferByPlaca(f.placa) : '')
+        || (typeof findLastChofer === 'function' ? findLastChofer(f.placa) : '')
+        || camp.nombre);
 
     state.operaciones.push({
       id: opId,
       campamentoId: camp.id,
+      tipo,
       fecha: f.fecha || camp.fecha,
-      placa: f.placa,
+      placa: excavadora ? (f.placa || '') : f.placa,
       chofer,
       cliente: clienteFila,
       dniRuc: f.dniRuc || '',
       producto: productoFila,
-      unidad: 'TM',
+      unidad: excavadora ? 'H' : 'TM',
       peso: parseMoneyNumber(f.toneladas),
-      tarifa: parseMoneyNumber(tarifa),
+      tarifa: precioHora,
       fleteBase: 0,
-      guia: parseMoneyNumber(f.guia),
-      pesaje: parseMoneyNumber(f.pesaje),
+      guia: excavadora ? 0 : parseMoneyNumber(f.guia),
+      pesaje: excavadora ? 0 : parseMoneyNumber(f.pesaje),
       flete,
       combustible,
       viaticos,
       gastos,
       utilidad: calcUtilidad(flete, gastos)
     });
-    registerCatalogValue('placas', f.placa);
+    if (!excavadora && f.placa) registerCatalogValue('placas', f.placa);
     registerCatalogValue('clientes', clienteFila);
     if (productoFila) registerCatalogValue('productos', productoFila);
   });
@@ -233,18 +303,46 @@ function loadData() {
       if (!state.campamentos) state.campamentos = [];
       state.campamentos.forEach((c) => {
         if (c.saldoAnterior == null) c.saldoAnterior = 0;
+        c.tipo = normalizeViajeTipo(c.tipo);
         c.filas?.forEach((f) => {
           if (f.cliente == null) f.cliente = '';
           if (f.dniRuc == null) f.dniRuc = '';
           if (f.producto == null) f.producto = '';
           if (!f.fecha) f.fecha = c.fecha;
+          f.tipo = normalizeViajeTipo(f.tipo || c.tipo);
+          if (isExcavadoraTipo(f.tipo) && !String(f.placa || '').trim()) {
+            f.placa = typeof getDefaultExcavadoraValue === 'function'
+              ? getDefaultExcavadoraValue()
+              : 'Excavadora 1';
+          }
+          if (isExcavadoraTipo(f.tipo) && f.precioHora == null && c.tarifa != null) {
+            f.precioHora = c.tarifa;
+          }
         });
+      });
+      state.operaciones.forEach((op) => {
+        op.tipo = isOperacionExcavadora(op) ? VIAJE_TIPO_EXCAVADORA : VIAJE_TIPO_CAMION;
+        if (isExcavadoraTipo(op.tipo)) {
+          op.unidad = 'H';
+          if (!String(op.placa || '').trim()) {
+            op.placa = typeof getDefaultExcavadoraValue === 'function'
+              ? getDefaultExcavadoraValue()
+              : 'Excavadora 1';
+          }
+        }
+        else if (!op.unidad) op.unidad = 'TM';
       });
       purgeStaleCampamentos();
       if ((state.operaciones || []).length) {
         rebuildCampamentosFromOperaciones();
       }
       if (!state.camiones) state.camiones = [];
+      state.camiones.forEach((c) => {
+        if (!c.brevete && c.marca) c.brevete = c.marca;
+        c.tipo = typeof normalizeVehiculoTipo === 'function'
+          ? normalizeVehiculoTipo(c.tipo)
+          : (String(c.tipo || '').toLowerCase() === 'excavadora' ? 'excavadora' : 'camion');
+      });
       if (!state.mantenimiento) state.mantenimiento = [];
       (state.mantenimiento || []).forEach((m) => {
         if (m.hora == null) m.hora = '';
@@ -261,6 +359,35 @@ function loadData() {
           m.horaRegistro = normalizeTime(m.horaRegistro) || m.horaRegistro;
         }
         // Si hora está vacía o es 00:00 falso, intentar recuperar de horaRegistro / id
+        if ((!m.hora || m.hora === '00:00') && m.horaRegistro) {
+          const recovered = typeof normalizeTime === 'function' ? normalizeTime(m.horaRegistro) : '';
+          if (recovered && recovered !== '00:00') m.hora = recovered;
+        }
+        if ((!m.hora || m.hora === '00:00') && typeof horaFromMantillaId === 'function') {
+          const fromId = horaFromMantillaId(m.id);
+          if (fromId) m.hora = fromId;
+        }
+        if (m.unidad == null) m.unidad = 1;
+        if (m.costoUnit == null) m.costoUnit = m.monto;
+        if (m.fecha) m.fecha = normalizeDateISO(m.fecha);
+        if (m.unidad != null) m.unidad = parseMoneyNumber(m.unidad) || 1;
+        if (m.costoUnit != null) m.costoUnit = parseMoneyNumber(m.costoUnit);
+        if (m.monto != null) m.monto = parseMoneyNumber(m.monto);
+      });
+      if (!state.ingresosExtras) state.ingresosExtras = [];
+      (state.ingresosExtras || []).forEach((m) => {
+        if (m.hora == null) m.hora = '';
+        else if (typeof normalizeTime === 'function') {
+          const raw = String(m.hora).trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(raw) || /^1899-12-3/.test(raw)) {
+            m.hora = '';
+          } else {
+            m.hora = normalizeTime(m.hora);
+          }
+        }
+        if (m.horaRegistro && typeof normalizeTime === 'function') {
+          m.horaRegistro = normalizeTime(m.horaRegistro) || m.horaRegistro;
+        }
         if ((!m.hora || m.hora === '00:00') && m.horaRegistro) {
           const recovered = typeof normalizeTime === 'function' ? normalizeTime(m.horaRegistro) : '';
           if (recovered && recovered !== '00:00') m.hora = recovered;
@@ -294,6 +421,7 @@ function loadData() {
   state = {
     operaciones: [],
     mantenimiento: [],
+    ingresosExtras: [],
     campamentos: [],
     camiones: [],
     catalogos: { ...CATALOGOS_DEFAULT }
@@ -335,7 +463,7 @@ const CAMP_LIST_RECENT_MIN = 3;
 
 function getRecentCampamentos(minCount = CAMP_LIST_RECENT_MIN) {
   const all = [...(state.campamentos || [])]
-    .filter((c) => (c.filas || []).some((f) => f.placa && Number(f.toneladas) > 0))
+    .filter((c) => (c.filas || []).some((f) => isFilaCampamentoActiva(f, c.tipo)))
     .sort((a, b) => {
       const byDate = campamentoEffectiveDate(b).localeCompare(campamentoEffectiveDate(a));
       return byDate || String(b.id).localeCompare(String(a.id));
@@ -393,7 +521,10 @@ function filterOperaciones() {
 }
 
 function countViajesGuardados() {
-  return (state.campamentos || []).reduce((s, c) => s + (c.filas?.filter((f) => f.placa && f.toneladas > 0).length || 0), 0);
+  return (state.campamentos || []).reduce(
+    (s, c) => s + (c.filas?.filter((f) => isFilaCampamentoActiva(f, c.tipo)).length || 0),
+    0
+  );
 }
 
 function filterMantenimiento(options = {}) {
@@ -402,9 +533,9 @@ function filterMantenimiento(options = {}) {
     const f = typeof getMaintFilters === 'function' ? getMaintFilters() : { placa: '', desde: '', hasta: '' };
     return state.mantenimiento.filter((m) => {
       const placaKey = f.placa
-        ? (typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(f.placa) : f.placa)
+        ? (typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(f.placa) : f.placa)
         : '';
-      const mPlaca = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(m.placa) : m.placa;
+      const mPlaca = typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(m.placa) : m.placa;
       if (!ignorePlaca && placaKey && mPlaca !== placaKey) return false;
       const mFecha = normalizeDateISO(m.fecha);
       const desde = normalizeDateISO(f.desde);
@@ -417,6 +548,34 @@ function filterMantenimiento(options = {}) {
 
   const f = getFilters();
   return state.mantenimiento.filter((m) => {
+    if (!ignorePlaca && f.placa && m.placa !== f.placa) return false;
+    if (f.fecha && m.fecha !== f.fecha) return false;
+    return true;
+  });
+}
+
+function filterIngresosExtras(options = {}) {
+  const ignorePlaca = !!options.ignorePlaca;
+  if (!Array.isArray(state.ingresosExtras)) state.ingresosExtras = [];
+  if ($('#ingresoFilterDesde') || $('#ingresoFilterHasta')) {
+    const f = typeof getIngresoFilters === 'function' ? getIngresoFilters() : { placa: '', desde: '', hasta: '' };
+    return state.ingresosExtras.filter((m) => {
+      const placaKey = f.placa
+        ? (typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(f.placa) : f.placa)
+        : '';
+      const mPlaca = typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(m.placa) : m.placa;
+      if (!ignorePlaca && placaKey && mPlaca !== placaKey) return false;
+      const mFecha = normalizeDateISO(m.fecha);
+      const desde = normalizeDateISO(f.desde);
+      const hasta = normalizeDateISO(f.hasta);
+      if (desde && mFecha && mFecha < desde) return false;
+      if (hasta && mFecha && mFecha > hasta) return false;
+      return true;
+    });
+  }
+
+  const f = getFilters();
+  return state.ingresosExtras.filter((m) => {
     if (!ignorePlaca && f.placa && m.placa !== f.placa) return false;
     if (f.fecha && m.fecha !== f.fecha) return false;
     return true;
@@ -454,8 +613,9 @@ function getVisiblePages(current, totalPages) {
 function renderPagination(el, meta, onPage, pageSize = PAGE_SIZE) {
   if (!el) return;
 
-  // Solo se muestra cuando hay más de una página
-  if (!meta.total || meta.totalPages <= 1) {
+  const alwaysShow = el.classList.contains('pagination--camp-list');
+  // En Viajes se mantiene visible para dejar claro el límite 8/4.
+  if (!meta.total || (meta.totalPages <= 1 && !alwaysShow)) {
     el.innerHTML = '';
     el.hidden = true;
     el.classList.add('pagination--hidden');

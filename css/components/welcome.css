@@ -10,7 +10,7 @@
 
 .modal--welcome {
   border-radius: var(--radius-xl);
-  max-width: 420px;
+  max-width: 360px;
   width: 100%;
   overflow: hidden;
   box-shadow:
@@ -188,7 +188,7 @@
 }
 
 .welcome-modal__body {
-  padding: 1.35rem 1.5rem 0.5rem;
+  padding: 1.75rem 1.5rem 0.5rem;
   text-align: center;
 }
 
@@ -201,7 +201,7 @@
 }
 
 .welcome-modal__title {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.45rem;
   font-size: 1.45rem;
   font-weight: 800;
   line-height: 1.25;
@@ -217,6 +217,28 @@
   margin: 0;
   font-size: 0.92rem;
   line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.welcome-modal__tip {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1.1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #d7e5f5;
+  border-radius: var(--radius-md);
+  background: #f5f9fe;
+  text-align: left;
+}
+
+.welcome-modal__tip strong {
+  font-size: 0.78rem;
+  color: var(--color-primary-dark);
+}
+
+.welcome-modal__tip span {
+  font-size: 0.82rem;
+  line-height: 1.45;
   color: var(--color-text-muted);
 }
 

@@ -7,7 +7,7 @@ Mantilla.VERSION = '1.2.0';
 
 Mantilla.getPage = function getPage() {
   const page = document.body?.dataset?.page;
-  if (page === 'viajes' || page === 'mantenimiento' || page === 'camiones') return page;
+  if (page === 'viajes' || page === 'mantenimiento' || page === 'camiones' || page === 'ingresos-extras') return page;
   return 'viajes';
 };
 

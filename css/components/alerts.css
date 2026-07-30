@@ -23,6 +23,83 @@
   max-width: min(26rem, calc(100vw - 1.5rem));
 }
 
+.mantilla-swal-container--toast {
+  padding: max(0.8rem, env(safe-area-inset-top, 0)) 0.8rem 0 !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+
+.mantilla-swal--toast {
+  width: min(23rem, calc(100vw - 1.6rem)) !important;
+  min-width: 0 !important;
+  max-width: min(23rem, calc(100vw - 1.6rem)) !important;
+  padding: 0.9rem 2.4rem 1rem 0.95rem !important;
+  border-radius: 16px !important;
+  pointer-events: auto;
+  box-shadow: 0 14px 38px rgba(12, 31, 61, 0.18), 0 4px 12px rgba(12, 31, 61, 0.08) !important;
+}
+
+.mantilla-swal--toast .mantilla-swal__stack {
+  display: grid;
+  grid-template-columns: 2.35rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: center;
+  text-align: left;
+}
+
+.mantilla-swal--toast .mantilla-swal__status-icon {
+  grid-row: 1 / span 2;
+  width: 2.35rem;
+  height: 2.35rem;
+  margin: 0;
+}
+
+.mantilla-swal--toast .mantilla-swal__status-icon .lucide-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.mantilla-swal--toast .mantilla-swal__title {
+  grid-column: 2;
+  font-size: 0.94rem !important;
+  line-height: 1.2 !important;
+}
+
+.mantilla-swal--toast .mantilla-swal__detail {
+  grid-column: 2;
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.mantilla-swal--toast .swal2-close {
+  top: 0.35rem !important;
+  right: 0.35rem !important;
+  width: 1.7rem !important;
+  height: 1.7rem !important;
+  font-size: 1.25rem !important;
+  color: #94a3b8 !important;
+}
+
+.mantilla-swal-toast-show {
+  animation: mantillaSwalToastIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+
+.mantilla-swal-toast-hide {
+  animation: mantillaSwalToastOut 0.2s ease both !important;
+}
+
+@keyframes mantillaSwalToastIn {
+  from { opacity: 0; transform: translateX(1.25rem) scale(0.96); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes mantillaSwalToastOut {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(0.75rem) scale(0.97); }
+}
+
 .mantilla-swal__stack {
   display: flex;
   flex-direction: column;
@@ -319,6 +396,14 @@
     padding: 1.45rem 1.2rem 1.4rem !important;
     border-radius: 16px !important;
     min-width: calc(100vw - 2rem);
+  }
+
+  .mantilla-swal--toast {
+    width: calc(100vw - 1.2rem) !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 1.2rem) !important;
+    padding: 0.85rem 2.25rem 0.9rem 0.85rem !important;
+    border-radius: 14px !important;
   }
 
   .mantilla-swal__status-icon {

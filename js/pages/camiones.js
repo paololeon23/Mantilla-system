@@ -1,5 +1,11 @@
 // ---- Camiones registrados (placa + chofer) ----
 
+function normalizeVehiculoTipo(tipo) {
+  return String(tipo || '').toLowerCase() === 'excavadora' ? 'excavadora' : 'camion';
+}
+
+let camionTipoPicker;
+
 function buildCamionesFromCatalogos() {
   const byPlaca = new Map();
   (CATALOGOS.placas || []).forEach((raw) => {
@@ -10,8 +16,9 @@ function buildCamionesFromCatalogos() {
       placa,
       chofer: PLACA_CHOFER[raw] || PLACA_CHOFER[placa] || '',
       telefono: '',
-      marca: '',
+      brevete: '',
       fechaRegistro: todayISO(),
+      tipo: 'camion',
       activo: true
     });
   });
@@ -25,7 +32,7 @@ function ensureCamionesState() {
 function syncCatalogosFromCamiones() {
   ensureCamionesState();
   const placas = (state.camiones || [])
-    .filter((c) => c.activo !== false)
+    .filter((c) => c.activo !== false && normalizeVehiculoTipo(c.tipo) === 'camion')
     .map((c) => formatPlacaDisplay(c.placa))
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b, 'es'));
@@ -41,7 +48,7 @@ function syncCatalogosFromCamiones() {
 function getPlacasRegistradas() {
   ensureCamionesState();
   return (state.camiones || [])
-    .filter((c) => c.activo !== false)
+    .filter((c) => c.activo !== false && normalizeVehiculoTipo(c.tipo) === 'camion')
     .map((c) => formatPlacaDisplay(c.placa))
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b, 'es'));
@@ -50,7 +57,7 @@ function getPlacasRegistradas() {
 function getCamionesPickerOptions() {
   ensureCamionesState();
   return (state.camiones || [])
-    .filter((c) => c.activo !== false)
+    .filter((c) => c.activo !== false && normalizeVehiculoTipo(c.tipo) === 'camion')
     .map((c) => ({
       value: formatPlacaDisplay(c.placa),
       placa: formatPlacaDisplay(c.placa),
@@ -58,6 +65,65 @@ function getCamionesPickerOptions() {
     }))
     .filter((c) => c.placa)
     .sort((a, b) => a.placa.localeCompare(b.placa, 'es'));
+}
+
+function getExcavadorasPickerOptions(currentValue = '') {
+  ensureCamionesState();
+  const current = String(currentValue || '').trim();
+  const options = (state.camiones || [])
+    .filter((c) => c.activo !== false && normalizeVehiculoTipo(c.tipo) === 'excavadora')
+    .map((c) => ({
+      value: String(c.placa || '').trim(),
+      placa: String(c.placa || '').trim(),
+      chofer: (c.chofer || '').trim()
+    }))
+    .filter((c) => c.value)
+    .sort((a, b) => a.value.localeCompare(b.value, 'es'));
+  if (current && !options.some((o) => o.value === current)) {
+    options.unshift({ value: current, placa: current, chofer: '' });
+  }
+  if (!options.length) {
+    options.push({ value: 'Excavadora 1', placa: 'Excavadora 1', chofer: '' });
+  }
+  return options;
+}
+
+function formatVehiculoDisplay(value) {
+  const raw = String(value || '').trim();
+  const vehiculo = (state.camiones || []).find(
+    (c) => String(c.placa || '').trim().toLowerCase() === raw.toLowerCase()
+  );
+  return vehiculo && normalizeVehiculoTipo(vehiculo.tipo) === 'excavadora'
+    ? String(vehiculo.placa || '').trim()
+    : formatPlacaDisplay(raw);
+}
+
+function getVehiculosPickerOptions(currentValue = '') {
+  ensureCamionesState();
+  const current = String(currentValue || '').trim();
+  const options = (state.camiones || [])
+    .filter((c) => c.activo !== false)
+    .map((c) => {
+      const value = normalizeVehiculoTipo(c.tipo) === 'excavadora'
+        ? String(c.placa || '').trim()
+        : formatPlacaDisplay(c.placa);
+      return {
+        value,
+        placa: value,
+        chofer: (c.chofer || '').trim()
+      };
+    })
+    .filter((option) => option.value)
+    .sort((a, b) => a.value.localeCompare(b.value, 'es'));
+
+  if (current && !options.some((option) => option.value.toLowerCase() === current.toLowerCase())) {
+    options.unshift({
+      value: current,
+      placa: current,
+      chofer: getChoferByPlaca(current) || ''
+    });
+  }
+  return options;
 }
 
 function getCamionPlacaPickerOptions(currentValue, excludePlacas = []) {
@@ -91,10 +157,36 @@ function getCamionPlacaPickerOptions(currentValue, excludePlacas = []) {
 }
 
 function getChoferByPlaca(placa) {
+  const raw = String(placa || '').trim();
+  const exact = (state.camiones || []).find((c) => String(c.placa || '').trim() === raw);
+  if (exact?.chofer) return exact.chofer;
   const key = formatPlacaDisplay(placa);
   const found = (state.camiones || []).find((c) => formatPlacaDisplay(c.placa) === key);
   if (found?.chofer) return found.chofer;
   return PLACA_CHOFER[placa] || PLACA_CHOFER[key] || '';
+}
+
+function applyCamionFormTipo(tipo) {
+  const excavadora = normalizeVehiculoTipo(tipo) === 'excavadora';
+  const tipoInput = $('#camionTipo');
+  if (tipoInput) tipoInput.value = excavadora ? 'excavadora' : 'camion';
+  camionTipoPicker?.setValue(excavadora ? 'excavadora' : 'camion');
+  const placaLabel = document.querySelector('label[for="camionPlaca"]');
+  const placaInput = $('#camionPlaca');
+  const placaHint = $('#camionPlacaHint');
+  const choferLabel = document.querySelector('label[for="camionChofer"]');
+  if (placaLabel) placaLabel.textContent = excavadora ? 'Excavadora *' : 'Placa *';
+  if (placaInput) {
+    placaInput.placeholder = excavadora ? 'Ej: Excavadora 1' : 'Ej: CHM-786';
+    placaInput.maxLength = excavadora ? 40 : 7;
+    placaInput.setAttribute('autocapitalize', excavadora ? 'sentences' : 'characters');
+  }
+  if (placaHint) {
+    placaHint.textContent = excavadora
+      ? 'Nombre o código para distinguirla de otras excavadoras'
+      : '7 caracteres con guión (ej: CHM-786, GT5-765)';
+  }
+  if (choferLabel) choferLabel.textContent = excavadora ? 'Operador *' : 'Chofer *';
 }
 
 function openCamionModal(editId) {
@@ -115,18 +207,24 @@ function openCamionModal(editId) {
       });
       return;
     }
-    $('#modalCamionEyebrow').textContent = 'Editar camión';
-    $('#modalCamionTitle').textContent = formatPlacaDisplay(cam.placa);
+    const excavadora = normalizeVehiculoTipo(cam.tipo) === 'excavadora';
+    $('#modalCamionEyebrow').textContent = excavadora ? 'Editar excavadora' : 'Editar camión';
+    $('#modalCamionTitle').textContent = excavadora ? (cam.placa || 'Excavadora') : formatPlacaDisplay(cam.placa);
     $('#camionId').value = cam.id;
-    $('#camionPlaca').value = formatPlacaDisplay(cam.placa);
+    applyCamionFormTipo(cam.tipo);
+    $('#camionPlaca').value = normalizeVehiculoTipo(cam.tipo) === 'excavadora'
+      ? (cam.placa || '')
+      : formatPlacaDisplay(cam.placa);
     $('#camionChofer').value = cam.chofer || '';
     $('#camionTelefono').value = cam.telefono || '';
-    $('#camionMarca').value = cam.marca || '';
+    $('#camionBrevete').value = cam.brevete || cam.marca || '';
   } else {
-    $('#modalCamionEyebrow').textContent = 'Nuevo camión';
+    $('#modalCamionEyebrow').textContent = 'Nuevo vehículo';
     $('#modalCamionTitle').textContent = 'Registrar vehículo';
+    applyCamionFormTipo('camion');
   }
 
+  if (typeof markCamionFormClean === 'function') markCamionFormClean();
   openModal('modalCamion');
   refreshLucideIcons();
   updateInputWrapStates(form);
@@ -139,14 +237,16 @@ function openCamionModal(editId) {
 
 function saveCamion(e) {
   e.preventDefault();
-  const placaRaw = $('#camionPlaca').value;
-  const placa = normalizePlacaPeru(placaRaw);
+  const tipo = normalizeVehiculoTipo($('#camionTipo')?.value);
+  const excavadora = tipo === 'excavadora';
+  const placaRaw = $('#camionPlaca').value.trim();
+  const placa = excavadora ? placaRaw : normalizePlacaPeru(placaRaw);
 
-  if (!isValidPlacaPeru(placa)) {
+  if ((excavadora && !placa) || (!excavadora && !isValidPlacaPeru(placa))) {
     showToast({
-      title: 'Placa inválida',
+      title: excavadora ? 'Falta la excavadora' : 'Placa inválida',
       type: 'warning',
-      detail: placaPeruHint()
+      detail: excavadora ? 'Escribe el nombre o código de la excavadora' : placaPeruHint()
     });
     return;
   }
@@ -156,18 +256,21 @@ function saveCamion(e) {
     showToast({
       title: 'Falta el chofer',
       type: 'warning',
-      detail: 'Escribe el nombre del chofer asignado'
+      detail: excavadora ? 'Escribe el nombre del operador asignado' : 'Escribe el nombre del chofer asignado'
     });
     return;
   }
 
   const editId = $('#camionId').value;
   const duplicate = (state.camiones || []).find(
-    (c) => formatPlacaDisplay(c.placa) === placa && c.id !== editId
+    (c) => normalizeVehiculoTipo(c.tipo) === tipo
+      && (excavadora ? String(c.placa || '').trim().toLowerCase() : formatPlacaDisplay(c.placa))
+        === (excavadora ? placa.toLowerCase() : placa)
+      && c.id !== editId
   );
   if (duplicate) {
     showToast({
-      title: 'Placa ya registrada',
+      title: excavadora ? 'Excavadora ya registrada' : 'Placa ya registrada',
       type: 'warning',
       detail: alertDetailHtml([{ b: placa }, ' ya está en el historial'])
     });
@@ -179,10 +282,11 @@ function saveCamion(e) {
     placa,
     chofer,
     telefono: normalizeTelefono($('#camionTelefono').value),
-    marca: $('#camionMarca').value.trim(),
+    brevete: $('#camionBrevete').value.trim(),
     fechaRegistro: editId
       ? ((state.camiones || []).find((c) => c.id === editId)?.fechaRegistro || todayISO())
       : todayISO(),
+    tipo,
     activo: true
   };
 
@@ -193,7 +297,7 @@ function saveCamion(e) {
     state.camiones.push(record);
   }
 
-  registerCatalogValue('placas', placa);
+  if (!excavadora) registerCatalogValue('placas', placa);
   registerCatalogValue('choferes', chofer);
   syncCatalogosFromCamiones();
   saveData();
@@ -201,12 +305,16 @@ function saveCamion(e) {
   closeModal('modalCamion');
   renderCamionesList();
   Mantilla.activity?.log?.({
-    title: idx >= 0 ? `Camión actualizado · ${placa}` : `Camión registrado · ${placa}`,
+    title: idx >= 0
+      ? `${excavadora ? 'Excavadora' : 'Camión'} actualizado · ${placa}`
+      : `${excavadora ? 'Excavadora' : 'Camión'} registrado · ${placa}`,
     path: `camiones/${chofer || 'sin chofer'}`,
-    type: 'camion'
+    type: excavadora ? 'excavadora' : 'camion'
   });
   showToast({
-    title: idx >= 0 ? 'Camión actualizado' : 'Camión registrado',
+    title: idx >= 0
+      ? (excavadora ? 'Excavadora actualizada' : 'Camión actualizado')
+      : (excavadora ? 'Excavadora registrada' : 'Camión registrado'),
     detail: alertDetailHtml([
       { b: placa },
       ' · ',
@@ -222,7 +330,11 @@ async function deleteCamionById(id) {
     message: `Se eliminará el camión ${formatPlacaDisplay(cam.placa)} del registro.`
   });
   if (!ok) return;
+  const card = [...document.querySelectorAll('.camion-card')]
+    .find((item) => item.dataset.id === String(id));
+  markElementDeleting(card);
   Mantilla.sync?.syncDelete?.('camiones', id);
+  await deletingTransition();
   state.camiones = (state.camiones || []).filter((c) => c.id !== id);
   syncCatalogosFromCamiones();
   saveData();
@@ -232,7 +344,13 @@ async function deleteCamionById(id) {
     path: `camiones/${cam.chofer || 'sin chofer'}`,
     type: 'camion'
   });
-  showToast({ title: 'Camión eliminado', type: 'info', detail: 'Quitado del historial' });
+  showToast({
+    title: 'Vehículo eliminado',
+    type: 'info',
+    detail: navigator.onLine
+      ? 'Se quitó de la lista y se sincroniza con Google'
+      : 'Se quitó de la lista; se sincronizará al recuperar conexión'
+  });
 }
 
 function getCamionesPageSize() {
@@ -252,8 +370,8 @@ function renderCamionesList() {
   if (count) {
     const textEl = count.querySelector('.panel__count__text') || count;
     textEl.textContent = items.length
-      ? `${items.length} camión${items.length !== 1 ? 'es' : ''}`
-      : 'Sin camiones';
+      ? `${items.length} vehículo${items.length !== 1 ? 's' : ''}`
+      : 'Sin vehículos';
   }
 
   if (!items.length) {
@@ -262,9 +380,9 @@ function renderCamionesList() {
         <span class="camiones-empty__icon" aria-hidden="true">
           <i data-lucide="truck" class="lucide-icon" aria-hidden="true"></i>
         </span>
-        <p class="camiones-empty__title">Sin camiones registrados</p>
-        <p class="camiones-empty__text">Registra placa y chofer para usarlos en Viajes y Gastos.</p>
-        <button type="button" class="btn btn--primary btn--sm" id="camionesEmptyAdd">+ Registrar camión</button>
+        <p class="camiones-empty__title">Sin vehículos registrados</p>
+        <p class="camiones-empty__text">Registra un camión o excavadora para usarlo en Viajes y Gastos.</p>
+        <button type="button" class="btn btn--primary btn--sm" id="camionesEmptyAdd">+ Registrar vehículo</button>
       </div>`;
     $('#camionesEmptyAdd')?.addEventListener('click', () => openCamionModal());
     renderPagination($('#camionesPagination'), { total: 0, page: 1, totalPages: 1, start: 0, end: 0 }, () => {}, getCamionesPageSize());
@@ -279,15 +397,15 @@ function renderCamionesList() {
   list.innerHTML = meta.slice.map((cam) => `
     <article class="camion-card" data-id="${cam.id}">
       <div class="camion-card__head">
-        <span class="camion-card__placa">${formatPlacaDisplay(cam.placa)}</span>
+        <span class="camion-card__placa">${escapeHtml(normalizeVehiculoTipo(cam.tipo) === 'excavadora' ? cam.placa : formatPlacaDisplay(cam.placa))}</span>
         <span class="camion-card__fecha">${formatDate(cam.fechaRegistro)}</span>
       </div>
       <div class="camion-card__body">
         <div class="camion-card__row">
-          <span class="camion-card__label">Chofer</span>
+          <span class="camion-card__label">${normalizeVehiculoTipo(cam.tipo) === 'excavadora' ? 'Operador' : 'Chofer'}</span>
           <strong class="camion-card__value">${escapeHtml(cam.chofer)}</strong>
         </div>
-        ${cam.marca ? `<div class="camion-card__row"><span class="camion-card__label">Marca</span><span class="camion-card__value">${escapeHtml(cam.marca)}</span></div>` : ''}
+        ${(cam.brevete || cam.marca) ? `<div class="camion-card__row"><span class="camion-card__label">Brevete</span><span class="camion-card__value">${escapeHtml(cam.brevete || cam.marca)}</span></div>` : ''}
         ${cam.telefono ? `<div class="camion-card__row"><span class="camion-card__label">Teléfono</span><span class="camion-card__value">${escapeHtml(cam.telefono)}</span></div>` : ''}
       </div>
       <div class="camion-card__actions">
@@ -327,9 +445,32 @@ function wireCamionChoferCombo() {
   });
 }
 
+function initCamionTipoPicker() {
+  const input = $('#camionTipo');
+  const mount = $('#camionTipoPicker');
+  if (!input || !mount) return;
+  if (camionTipoPicker && mount.querySelector('.ms')) return;
+  camionTipoPicker = new MantillaSelectPicker(input, mount, {
+    title: 'Tipo de vehículo',
+    searchable: false,
+    formatPlaca: false,
+    preserveValue: true,
+    getOptions: () => [
+      { value: 'camion', label: 'Camión' },
+      { value: 'excavadora', label: 'Excavadora' }
+    ]
+  });
+}
+
 function wireCamionForm() {
   wireCamionPlacaInput();
   wireCamionChoferCombo();
+  initCamionTipoPicker();
+  const tipo = $('#camionTipo');
+  if (tipo && !tipo.dataset.wired) {
+    tipo.dataset.wired = '1';
+    tipo.addEventListener('change', () => applyCamionFormTipo(tipo.value));
+  }
   const form = $('#formCamion');
   if (form && !form.dataset.wired) {
     form.dataset.wired = '1';

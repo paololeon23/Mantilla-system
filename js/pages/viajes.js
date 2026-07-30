@@ -1,17 +1,126 @@
-// ---- Viajes (persona o campamento) ----
+const KPI_INFO_CONTENT = {
+  utilidad: {
+    title: 'Utilidad total',
+    detail: 'Muestra la ganancia real del período filtrado después de considerar todos los ingresos y gastos registrados.',
+    formula: 'Viajes + ingresos extras − gastos de viajes − gastos de camión'
+  },
+  gastos: {
+    title: 'Gastos totales',
+    detail: 'Incluye combustible y viáticos de los viajes, además de llantas, reparaciones, servicios y demás gastos de los vehículos.',
+    formula: 'Gastos de viajes + gastos de todos los vehículos'
+  },
+  ingresos: {
+    title: 'Ingresos extras',
+    detail: 'Suma los transportes adicionales registrados para camiones o excavadoras, por ejemplo ladrillos o un flete extra.',
+    formula: 'Suma de todos los ingresos extras del período'
+  },
+  viajes: {
+    title: 'Viajes registrados',
+    detail: 'Cuenta cada viaje u operación guardada que coincide con los filtros seleccionados.',
+    formula: 'Cantidad de viajes del período filtrado'
+  }
+};
 
-function calcCampamentoTotals(filas, tarifa, saldoAnterior = 0) {
-  const activas = filas.filter((f) => parseMoneyNumber(f.toneladas) > 0);
+function showKpiInfoModal(type) {
+  const info = KPI_INFO_CONTENT[type];
+  if (!info) return;
+  if (typeof Swal === 'undefined') {
+    showToast({ title: info.title, detail: info.detail, type: 'info', timer: 4000 });
+    return;
+  }
+
+  closeMantillaAlert();
+  Swal.fire({
+    icon: false,
+    title: ' ',
+    html: `
+      <div class="mantilla-swal__stack mantilla-swal__stack--confirm kpi-info-modal">
+        <div class="mantilla-swal__status-icon mantilla-swal__status-icon--info" aria-hidden="true">
+          ${lucideIcon('info', 'lucide-icon--alert')}
+        </div>
+        <h2 class="mantilla-swal__title mantilla-swal__title--inline">${escapeHtml(info.title)}</h2>
+        <p class="mantilla-swal__detail mantilla-swal__detail--confirm">${escapeHtml(info.detail)}</p>
+        <div class="kpi-info-modal__formula">
+          <span>Así se calcula</span>
+          <strong>${escapeHtml(info.formula)}</strong>
+        </div>
+      </div>
+    `,
+    showConfirmButton: true,
+    confirmButtonText: 'Entendido',
+    allowOutsideClick: true,
+    allowEscapeKey: true,
+    heightAuto: true,
+    buttonsStyling: false,
+    customClass: {
+      container: 'mantilla-swal-container',
+      popup: 'mantilla-swal mantilla-swal--confirm',
+      title: 'mantilla-swal__title mantilla-swal__title--hidden',
+      htmlContainer: 'mantilla-swal__detail-wrap',
+      confirmButton: 'mantilla-swal__btn mantilla-swal__btn--confirm',
+      actions: 'mantilla-swal__actions'
+    },
+    didOpen: () => refreshLucideIcons()
+  });
+}
+
+// ---- Viajes (persona o campamento / excavadora) ----
+
+function getCampFormTipo() {
+  const raw = $('#campTipo')?.value
+    || document.querySelector('.viaje-tipo-btn--active')?.dataset?.tipo
+    || VIAJE_TIPO_CAMION;
+  return normalizeViajeTipo(raw);
+}
+
+function isCampFormExcavadora() {
+  return isExcavadoraTipo(getCampFormTipo());
+}
+
+function calcCampamentoTotals(filas, tarifa, saldoAnterior = 0, tipo = VIAJE_TIPO_CAMION) {
+  const excavadora = isExcavadoraTipo(tipo);
+  const activas = (filas || []).filter((f) => isFilaCampamentoActiva(f, tipo));
   const toneladas = roundMoney(activas.reduce((s, f) => s + parseMoneyNumber(f.toneladas), 0));
-  const guiaTotal = roundMoney(activas.reduce((s, f) => s + parseMoneyNumber(f.guia), 0));
-  const pesajeTotal = roundMoney(activas.reduce((s, f) => s + parseMoneyNumber(f.pesaje), 0));
+  const guiaTotal = excavadora
+    ? 0
+    : roundMoney(activas.reduce((s, f) => s + parseMoneyNumber(f.guia), 0));
+  const pesajeTotal = excavadora
+    ? 0
+    : roundMoney(activas.reduce((s, f) => s + parseMoneyNumber(f.pesaje), 0));
   const count = activas.length;
   const tarifaNum = parseMoneyNumber(tarifa);
-  const producto = roundMoney(toneladas * tarifaNum);
-  const subtotal = roundMoney(producto + guiaTotal + pesajeTotal);
+  let producto;
+  if (excavadora) {
+    producto = roundMoney(activas.reduce((s, f) => {
+      const ph = parseMoneyNumber(
+        f.precioHora != null && f.precioHora !== '' ? f.precioHora : tarifaNum
+      );
+      return s + parseMoneyNumber(f.toneladas) * ph;
+    }, 0));
+  } else {
+    producto = roundMoney(toneladas * tarifaNum);
+  }
+  const subtotal = excavadora
+    ? producto
+    : roundMoney(producto + guiaTotal + pesajeTotal);
   const saldo = parseMoneyNumber(saldoAnterior);
   const totalConSaldo = roundMoney(subtotal + saldo);
-  return { toneladas, guiaTotal, pesajeTotal, count, producto, subtotal, saldoAnterior: saldo, totalConSaldo };
+  const gastosTotal = roundMoney(activas.reduce(
+    (s, f) => s + calcGastos(f.combustible, f.viaticos),
+    0
+  ));
+  return {
+    toneladas,
+    guiaTotal,
+    pesajeTotal,
+    count,
+    producto,
+    subtotal,
+    saldoAnterior: saldo,
+    totalConSaldo,
+    gastosTotal,
+    tipo: excavadora ? VIAJE_TIPO_EXCAVADORA : VIAJE_TIPO_CAMION
+  };
 }
 
 let _calcPrev = {};
@@ -26,8 +135,9 @@ function flashCalcEl(el, key) {
   el.classList.add('calc-flash');
 }
 
-function updateSumLive(filas) {
-  const parts = filasCampamentoValidas(filas)
+function updateSumLive(filas, tipo = getCampFormTipo()) {
+  const excavadora = isExcavadoraTipo(tipo);
+  const parts = filasCampamentoValidas(filas, tipo)
     .map((f) => Number(f.toneladas))
     .filter((n) => n > 0);
   const partsEl = $('#campSumParts');
@@ -36,10 +146,12 @@ function updateSumLive(filas) {
 
   if (parts.length) {
     partsEl.textContent = parts.map((p) => p.toFixed(2)).join(' + ');
-    totalEl.textContent = `${parts.reduce((a, b) => a + b, 0).toFixed(2)} TM`;
+    totalEl.textContent = excavadora
+      ? `${parts.reduce((a, b) => a + b, 0).toFixed(2)} h`
+      : `${parts.reduce((a, b) => a + b, 0).toFixed(2)} TM`;
   } else {
-    partsEl.textContent = 'Toneladas por camión';
-    totalEl.textContent = '0.00 TM';
+    partsEl.textContent = excavadora ? 'Horas por fila' : 'Toneladas por camión';
+    totalEl.textContent = excavadora ? '0.00 h' : '0.00 TM';
   }
   flashCalcEl(totalEl, 'sumTotal');
 }
@@ -48,7 +160,25 @@ function campamentoCalcLine(text) {
   return `<p class="campamento-calc__line">${lucideIcon('arrow-right', 'lucide-icon--calc-line')}<span>${text}</span></p>`;
 }
 
-function campamentoCalcHtml(totals, tarifa) {
+function campamentoCalcHtml(totals, tarifa, filas = null) {
+  if (isExcavadoraTipo(totals.tipo)) {
+    const activas = (filas || []).filter((f) => isFilaCampamentoActiva(f, VIAJE_TIPO_EXCAVADORA));
+    let html = '';
+    if (activas.length) {
+      html = activas.map((f) => {
+        const horas = parseMoneyNumber(f.toneladas);
+        const ph = parseMoneyNumber(
+          f.precioHora != null && f.precioHora !== '' ? f.precioHora : tarifa
+        );
+        const lineTotal = roundMoney(horas * ph);
+        return campamentoCalcLine(`${horas.toFixed(2)} h × ${ph} = ${formatMoney(lineTotal)}`);
+      }).join('');
+    } else {
+      html = campamentoCalcLine(`${totals.toneladas.toFixed(2)} h × tarifa = ${formatMoney(totals.producto)}`);
+    }
+    html += `<p class="campamento-calc__subtotal"><strong>Subtotal = ${formatMoney(totals.subtotal)}</strong></p>`;
+    return html;
+  }
   let html = `
     ${campamentoCalcLine(`${totals.toneladas.toFixed(2)} × ${tarifa} = ${formatMoney(totals.producto)} +`)}
     ${campamentoCalcLine(`${totals.count} Guía${totals.count !== 1 ? 's' : ''} = ${formatMoney(totals.guiaTotal)}`)}
@@ -71,6 +201,19 @@ function campPlacaPickerHtml(selected = '') {
   return `
     <input type="hidden" class="camp-input" data-field="placa" value="${val}">
     <div class="camp-placa-picker-mount"></div>`;
+}
+
+function getDefaultExcavadoraValue() {
+  if (typeof getExcavadorasPickerOptions !== 'function') return 'Excavadora 1';
+  const options = getExcavadorasPickerOptions('');
+  return options.length === 1 ? options[0].value : '';
+}
+
+function campExcavadoraPickerHtml(selected = '') {
+  const val = selected || getDefaultExcavadoraValue();
+  return `
+    <input type="hidden" class="camp-input" data-field="placa" value="${escapeHtml(val)}">
+    <div class="camp-placa-picker-mount camp-excavadora-picker-mount"></div>`;
 }
 
 function campFechaPickerHtml(fecha = '') {
@@ -122,7 +265,7 @@ function getCampPlacaInfoFromCard(card) {
     placa = triggerPlaca.textContent.trim();
   }
 
-  if (typeof formatPlacaDisplay === 'function' && placa) {
+  if (!isCampFormExcavadora() && typeof formatPlacaDisplay === 'function' && placa) {
     placa = formatPlacaDisplay(placa);
     if (input) input.value = placa;
   }
@@ -191,12 +334,39 @@ function initCampPlacaPickers(root = $('#campViajesList')) {
   });
 }
 
+function initCampExcavadoraPickers(root = $('#campViajesList')) {
+  if (!root) return;
+  root.querySelectorAll('.camp-viaje-row--excavadora').forEach((card) => {
+    const input = campCardInput(card, 'placa');
+    const mount = card.querySelector('.camp-excavadora-picker-mount');
+    if (!input || !mount) return;
+    card._placaPicker = new MantillaSelectPicker(input, mount, {
+      placeholder: 'Elegir excavadora',
+      title: 'Excavadora asignada',
+      searchable: true,
+      formatPlaca: false,
+      searchPlaceholder: 'Buscar excavadora u operador…',
+      noOptionsText: 'Registra una excavadora en Vehículos',
+      getOptions: () => getExcavadorasPickerOptions(input.value)
+    });
+    if (!input.dataset.wiredPlaca) {
+      input.dataset.wiredPlaca = '1';
+      input.addEventListener('change', () => {
+        updateChoferGastosButton(card);
+        scheduleRecalcCampamentoForm();
+      });
+    }
+  });
+}
+
 let campListPlacaPicker;
 
 function initCampListPlacaPicker() {
   const input = $('#campListPlaca');
   const mount = $('#campListPlacaPicker');
-  if (!input || !mount || campListPlacaPicker) return;
+  if (!input || !mount) return;
+  // Tras SPA el mount es nuevo: recrear si el picker apunta a un DOM viejo.
+  if (campListPlacaPicker && mount.querySelector('.ms')) return;
   campListPlacaPicker = new MantillaSelectPicker(input, mount, {
     placeholder: 'Todas las placas',
     title: 'Buscar por placa',
@@ -204,10 +374,19 @@ function initCampListPlacaPicker() {
     searchable: true,
     getOptions: () => getCamionPlacaPickerOptions(input.value)
   });
-  input.addEventListener('change', () => {
-    campListPage = 1;
-    renderCampamentoList();
-  });
+  if (!input.dataset.campListPlacaWired) {
+    input.dataset.campListPlacaWired = '1';
+    input.addEventListener('change', () => {
+      // "Todas las placas" significa mostrar todo: elimina también
+      // cualquier fecha/historial que pudiera seguir activo.
+      if (!input.value.trim()) {
+        campListDayFilter = 'all';
+        clearCampHistorialResults();
+      }
+      campListPage = 1;
+      renderCampamentoList();
+    });
+  }
 }
 
 function setCampListPlacaFilter(placa) {
@@ -223,22 +402,34 @@ function campCardNum(card, field) {
   return parseFloat(campCardInput(card, field)?.value) || 0;
 }
 
-function calcCampFilaFleteFromData(f, tarifa) {
+function calcCampFilaFleteFromData(f, tarifa, tipo = getCampFormTipo()) {
+  if (isExcavadoraTipo(tipo)) {
+    const ph = parseMoneyNumber(
+      f.precioHora != null && f.precioHora !== '' ? f.precioHora : tarifa
+    );
+    return calcFleteExcavadora(f.toneladas, ph);
+  }
   return calcFlete(f.toneladas, tarifa, 0, f.guia, f.pesaje);
 }
 
 function calcCampFilaFlete(card) {
-  const tarifa = parseFloat($('#campTarifa')?.value) || 110;
-  return calcCampFilaFleteFromData(getCampFilaFromCard(card), tarifa);
+  const tarifa = parseFloat($('#campTarifa')?.value) || 0;
+  const tipo = getCampFormTipo();
+  const fallback = isExcavadoraTipo(tipo) ? 0 : 110;
+  return calcCampFilaFleteFromData(getCampFilaFromCard(card), tarifa || fallback, tipo);
 }
 
 function getCampFilaFromCard(card) {
+  const tipo = getCampFormTipo();
   const { placa } = getCampPlacaInfoFromCard(card);
+  const precioRaw = campCardInput(card, 'precioHora')?.value;
   return {
+    tipo,
     toneladas: campCardNum(card, 'toneladas'),
-    guia: campCardNum(card, 'guia'),
-    pesaje: campCardNum(card, 'pesaje'),
+    guia: isExcavadoraTipo(tipo) ? 0 : campCardNum(card, 'guia'),
+    pesaje: isExcavadoraTipo(tipo) ? 0 : campCardNum(card, 'pesaje'),
     placa,
+    precioHora: precioRaw === '' || precioRaw == null ? '' : campCardNum(card, 'precioHora'),
     combustible: campCardNum(card, 'combustible'),
     viaticos: campCardNum(card, 'viaticos')
   };
@@ -247,14 +438,21 @@ function getCampFilaFromCard(card) {
 function updateChoferGastosButton(card) {
   const btn = card?.querySelector('.camp-chofer-gastos-btn');
   if (!btn) return;
-  const { placa, combustible, viaticos } = getCampFilaFromCard(card);
+  const tipo = getCampFormTipo();
+  const excavadora = isExcavadoraTipo(tipo);
+  const { placa, combustible, viaticos, toneladas } = getCampFilaFromCard(card);
   const hasGastos = combustible > 0 || viaticos > 0;
   const flete = calcCampFilaFlete(card);
   const gastos = calcGastos(combustible, viaticos);
   const utilidad = calcUtilidad(flete, gastos);
+  const ready = excavadora ? (toneladas > 0 || !!($('#campNombre')?.value || '').trim()) : !!placa;
   btn.classList.toggle('camp-chofer-gastos-btn--filled', hasGastos);
-  btn.classList.toggle('camp-chofer-gastos-btn--ready', !!placa);
-  if (placa) {
+  btn.classList.toggle('camp-chofer-gastos-btn--ready', ready);
+  if (excavadora) {
+    const persona = ($('#campNombre')?.value || '').trim() || 'Excavadora';
+    btn.title = `Gastos — ${persona}`;
+    btn.setAttribute('aria-label', `Gastos de ${persona}`);
+  } else if (placa) {
     btn.title = `Gastos de chofer — ${placa}`;
     btn.setAttribute('aria-label', `Gastos de chofer ${placa}`);
   }
@@ -292,24 +490,34 @@ function updateChoferGastosModal() {
 
 function refreshChoferGastosModalHeader() {
   if (!_choferGastosCard) return;
-  const { placa, chofer } = getCampPlacaInfoFromCard(_choferGastosCard);
+  const excavadora = isCampFormExcavadora();
   const title = $('#choferGastosTitle');
   const subtitle = $('#choferGastosSubtitle');
+  if (excavadora) {
+    const persona = ($('#campNombre')?.value || '').trim() || 'Excavadora';
+    if (title) title.textContent = persona;
+    if (subtitle) subtitle.textContent = 'Gastos (no suman al cobro)';
+    return;
+  }
+  const { placa, chofer } = getCampPlacaInfoFromCard(_choferGastosCard);
   if (title) title.textContent = placa || 'Sin placa';
   if (subtitle) subtitle.textContent = chofer || 'Chofer no asignado';
 }
 
 function openChoferGastosModal(card) {
   if (!card) return;
-  const { placa, chofer } = getCampPlacaInfoFromCard(card);
-  if (!placa) {
-    showToast({
-      title: 'Elige una placa',
-      type: 'warning',
-      detail: 'Selecciona la placa del camión en esta fila antes de registrar gastos.'
-    });
-    card.querySelector('.ms__trigger')?.focus();
-    return;
+  const excavadora = isCampFormExcavadora();
+  if (!excavadora) {
+    const { placa } = getCampPlacaInfoFromCard(card);
+    if (!placa) {
+      showToast({
+        title: 'Elige una placa',
+        type: 'warning',
+        detail: 'Selecciona la placa del camión en esta fila antes de registrar gastos.'
+      });
+      card.querySelector('.ms__trigger')?.focus();
+      return;
+    }
   }
   _choferGastosCard = card;
   refreshChoferGastosModalHeader();
@@ -350,13 +558,56 @@ function wireChoferGastosModal() {
   $('#btnSaveChoferGastos')?.addEventListener('click', saveChoferGastos);
 }
 
-function campViajeCardHtml(f, index, fechaDefault) {
+function campViajeCardHtml(f, index, fechaDefault, tipo = getCampFormTipo()) {
   const num = index + 1;
+  const excavadora = isExcavadoraTipo(tipo);
   const combVal = f.combustible === '' || f.combustible == null ? '' : f.combustible;
   const viatVal = f.viaticos === '' || f.viaticos == null ? '' : f.viaticos;
   const fechaVal = f.fecha || fechaDefault || todayISO();
+  const precioVal = f.precioHora === '' || f.precioHora == null ? '' : f.precioHora;
+
+  if (excavadora) {
+    return `
+    <article class="camp-viaje-card camp-viaje-row camp-viaje-row--excavadora camp-row-enter" data-row="${index}" data-tipo="excavadora" role="listitem">
+      <div class="camp-viaje-row__top">
+        <span class="camp-viaje-row__num" aria-hidden="true">${num}</span>
+        <div class="camp-viaje-row__placa camp-viaje-row__placa--excavadora">
+          <div class="camp-viaje-row__placa-wrap">
+            <div class="camp-viaje-row__placa-picker">
+              <label class="camp-viaje-field__lbl">Excavadora</label>
+              ${campExcavadoraPickerHtml(f.placa || '')}
+            </div>
+            <div class="camp-viaje-row__fecha">
+              <label class="camp-viaje-field__lbl">Fecha</label>
+              ${campFechaPickerHtml(fechaVal)}
+            </div>
+            <button type="button" class="camp-chofer-gastos-btn" data-action="chofer-gastos" title="Gastos" aria-label="Gastos fila ${num}">
+              ${lucideIcon('wallet', 'lucide-icon--sm')}
+              <span class="camp-chofer-gastos-btn__text">Gastos</span>
+              <span class="camp-chofer-gastos-btn__util" hidden></span>
+            </button>
+          </div>
+        </div>
+        <button type="button" class="camp-viaje-card__remove camp-remove-row" title="Quitar fila" aria-label="Quitar fila ${num}">${lucideIcon('x', 'lucide-icon--sm')}</button>
+      </div>
+      <div class="camp-viaje-row__bottom">
+        <div class="camp-viaje-field camp-viaje-field--toneladas camp-viaje-field--horas">
+          <label class="camp-viaje-field__lbl">Horas</label>
+          ${campFieldInput('toneladas', f.toneladas || '', '0.01')}
+        </div>
+        <div class="camp-viaje-field camp-viaje-field--precio">
+          <label class="camp-viaje-field__lbl">Precio/hora (S/)</label>
+          ${campFieldInput('precioHora', precioVal, '0.01')}
+        </div>
+      </div>
+      <input type="hidden" class="camp-input" data-field="combustible" value="${combVal}">
+      <input type="hidden" class="camp-input" data-field="viaticos" value="${viatVal}">
+      <input type="hidden" class="camp-input" data-field="opId" value="${f.opId || ''}">
+    </article>`;
+  }
+
   return `
-    <article class="camp-viaje-card camp-viaje-row camp-row-enter" data-row="${index}" role="listitem">
+    <article class="camp-viaje-card camp-viaje-row camp-row-enter" data-row="${index}" data-tipo="camion" role="listitem">
       <div class="camp-viaje-row__top">
         <span class="camp-viaje-row__num" aria-hidden="true">${num}</span>
         <div class="camp-viaje-row__placa">
@@ -398,9 +649,43 @@ function campViajeCardHtml(f, index, fechaDefault) {
     </article>`;
 }
 
-function campamentoFilasReadonlyHtml(filas, fechaCamp) {
-  const rows = filas.filter((f) => f.placa && f.toneladas > 0);
+function campamentoFilasReadonlyHtml(filas, fechaCamp, tipo = VIAJE_TIPO_CAMION) {
+  const excavadora = isExcavadoraTipo(tipo);
+  const rows = (filas || []).filter((f) => isFilaCampamentoActiva(f, tipo));
   if (!rows.length) return '';
+  if (excavadora) {
+    return `
+    <div class="campamento-detail-table-wrap">
+      <table class="campamento-detail-table campamento-detail-table--excavadora">
+        <thead>
+          <tr>
+            <th class="col-equipo" title="Excavadora">Exc.</th>
+            <th class="col-fecha">Fecha</th>
+            <th class="num col-tm">Horas</th>
+            <th class="num col-precio">Precio/h</th>
+            <th class="num col-gastos">Gastos</th>
+            <th class="num col-total">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((f) => {
+            const ph = parseMoneyNumber(f.precioHora != null && f.precioHora !== '' ? f.precioHora : 0);
+            const total = calcFleteExcavadora(f.toneladas, ph);
+            const gastos = calcGastos(f.combustible, f.viaticos);
+            return `
+            <tr>
+              <td class="col-equipo" data-label="Exc."><span class="camp-placa-tag">${escapeHtml(f.placa || '—')}</span></td>
+              <td class="col-fecha" data-label="Fecha">${formatDateDM(f.fecha || fechaCamp)}</td>
+              <td class="num col-tm" data-label="Horas">${Number(f.toneladas).toFixed(2)}</td>
+              <td class="num col-precio" data-label="Precio/h">${ph.toFixed(2)}</td>
+              <td class="num col-gastos" data-label="Gastos">${formatMoney(gastos)}</td>
+              <td class="num col-total" data-label="Total">${formatMoney(total)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  }
   return `
     <div class="campamento-detail-table-wrap">
       <table class="campamento-detail-table">
@@ -448,6 +733,10 @@ function clearCampFormDetails() {
 function applyCampFormDetailsFromNombre(nombre = '') {
   const n = (nombre || $('#campNombre')?.value.trim() || '').trim();
   if (!n) return;
+  if (isCampFormExcavadora()) {
+    updateCampCamionesLock();
+    return;
+  }
   const preset = CLIENTE_PRESETS[n];
   if ($('#campProducto')) {
     if (preset?.producto) $('#campProducto').value = preset.producto;
@@ -458,10 +747,11 @@ function applyCampFormDetailsFromNombre(nombre = '') {
 }
 
 function loadCampFormDetailsFromCamp(camp) {
-  const fila = camp.filas?.find((f) => f.placa && f.toneladas) || camp.filas?.[0];
+  const tipo = normalizeViajeTipo(camp.tipo);
+  const fila = camp.filas?.find((f) => isFilaCampamentoActiva(f, tipo)) || camp.filas?.[0];
   setCampFormDetails({
     dniRuc: fila?.dniRuc || '',
-    producto: fila?.producto || (isNombreCampamento(camp.nombre) ? 'carbon' : '')
+    producto: fila?.producto || (!isExcavadoraTipo(tipo) && isNombreCampamento(camp.nombre) ? 'carbon' : '')
   });
   updateCampCamionesLock();
 }
@@ -476,13 +766,16 @@ function updateCampCamionesLock() {
   const addBtn = $('#btnAddCampFila');
   const hint = $('#campViajesLockHint');
   const unlocked = isCampCamionesUnlocked();
+  const excavadora = isCampFormExcavadora();
 
   section?.classList.toggle('camp-viajes-section--locked', !unlocked);
   if (section) section.setAttribute('aria-disabled', unlocked ? 'false' : 'true');
 
   if (addBtn) {
     addBtn.disabled = !unlocked;
-    addBtn.title = unlocked ? 'Agregar camión' : 'Primero completa persona o campamento';
+    addBtn.title = unlocked
+      ? (excavadora ? 'Agregar fila' : 'Agregar camión')
+      : 'Primero completa el cliente';
   }
 
   if (board) {
@@ -499,6 +792,137 @@ function updateCampCamionesLock() {
   if (hint) hint.hidden = unlocked;
 }
 
+function applyCampFormTipoLabels(tipo = getCampFormTipo()) {
+  const excavadora = isExcavadoraTipo(tipo);
+  const form = $('#viajeFormSection');
+  form?.classList.toggle('viaje-form-card--excavadora', excavadora);
+  form?.classList.toggle('viaje-form-card--camion', !excavadora);
+
+  const nombreLabel = $('#campNombreLabel');
+  if (nombreLabel) nombreLabel.textContent = 'Cliente *';
+  const nombreInput = $('#campNombre');
+  if (nombreInput) {
+    nombreInput.placeholder = 'Ej: Juan Pérez, Empresa ABC';
+  }
+
+  const productoGroup = $('#campProductoGroup');
+  if (productoGroup) productoGroup.hidden = false;
+  const productoLabel = $('#campProductoLabel');
+  const productoInput = $('#campProducto');
+  if (productoLabel) productoLabel.textContent = excavadora ? 'Detalles' : 'Producto';
+  if (productoInput) {
+    productoInput.placeholder = excavadora
+      ? 'Ej: Trabajo realizado, zona o servicio'
+      : 'Producto';
+  }
+
+  const toolbarLabel = $('#campRowToolbarLabel');
+  if (toolbarLabel) toolbarLabel.textContent = excavadora ? 'Excavadora' : 'Camiones';
+
+  const section = $('#viajeSectionCamiones');
+  if (section) section.setAttribute('aria-label', excavadora ? 'Excavadora' : 'Camiones');
+
+  const hintLong = $('#campViajesLockHintLong');
+  const hintShort = $('#campViajesLockHintShort');
+  if (hintLong) {
+    hintLong.innerHTML = excavadora
+      ? 'Completa el <strong>cliente</strong> arriba para agregar filas'
+      : 'Completa el <strong>cliente</strong> arriba para agregar camiones';
+  }
+  if (hintShort) {
+    hintShort.innerHTML = 'Completa el <strong>cliente</strong> para desbloquear';
+  }
+
+  const qtyLabel = $('#campTotalQtyLabel');
+  if (qtyLabel) qtyLabel.textContent = excavadora ? 'Horas' : 'Toneladas';
+  $('#campTotalGuiaItem')?.classList.toggle('is-hidden', excavadora);
+  $('#campTotalPesajeItem')?.classList.toggle('is-hidden', excavadora);
+  if ($('#campTotalGuiaItem')) $('#campTotalGuiaItem').hidden = excavadora;
+  if ($('#campTotalPesajeItem')) $('#campTotalPesajeItem').hidden = excavadora;
+  if ($('#campTarifaGroup')) $('#campTarifaGroup').hidden = excavadora;
+
+  document.querySelectorAll('#viajeTipoToggle .viaje-tipo-btn').forEach((btn) => {
+    const active = normalizeViajeTipo(btn.dataset.tipo) === normalizeViajeTipo(tipo);
+    btn.classList.toggle('viaje-tipo-btn--active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  if ($('#campTipo')) $('#campTipo').value = normalizeViajeTipo(tipo);
+}
+
+function filaHasTipoIncompatibleData(f, fromTipo, toTipo) {
+  if (!f) return false;
+  const qty = Number(f.toneladas) > 0;
+  const gastos = Number(f.combustible) > 0 || Number(f.viaticos) > 0;
+  if (isExcavadoraTipo(toTipo)) {
+    // Guía/pesaje vienen con valores por defecto: sin placa ni toneladas no son datos ingresados.
+    return !!(f.placa || qty || gastos);
+  }
+  // Pasar a camión: horas / precio / gastos excavadora
+  return !!(qty || Number(f.precioHora) > 0 || gastos);
+}
+
+async function setCampFormTipo(nextTipo, { force = false, keepFilas = false } = {}) {
+  const tipo = normalizeViajeTipo(nextTipo);
+  const current = getCampFormTipo();
+  if (tipo === current && !force) {
+    applyCampFormTipoLabels(tipo);
+    return true;
+  }
+
+  if (!force && !keepFilas) {
+    const filas = typeof getCampamentoFilasFromDom === 'function' ? getCampamentoFilasFromDom() : [];
+    const incompatible = filas.some((f) => filaHasTipoIncompatibleData(f, current, tipo));
+    if (incompatible) {
+      const ok = await showConfirm({
+        title: '¿Cambiar tipo de viaje?',
+        message: 'Las filas actuales no son compatibles. Se reiniciarán al cambiar a '
+          + (isExcavadoraTipo(tipo) ? 'Excavadora' : 'Camión') + '.',
+        confirmLabel: 'Cambiar',
+        cancelLabel: 'Cancelar',
+        danger: true
+      });
+      if (!ok) {
+        applyCampFormTipoLabels(current);
+        return false;
+      }
+    }
+  }
+
+  if ($('#campTipo')) $('#campTipo').value = tipo;
+  applyCampFormTipoLabels(tipo);
+
+  if (!keepFilas) {
+    const nombre = $('#campNombre')?.value?.trim() || '';
+    const fecha = $('#campFecha')?.value || todayISO();
+    if (isExcavadoraTipo(tipo)) {
+      if ($('#campTarifa')) $('#campTarifa').value = '0';
+      renderCampamentoFormFilas(defaultCampamentoFilas(nombre, fecha, tipo));
+    } else {
+      if ($('#campTarifa') && !(parseFloat($('#campTarifa').value) > 0)) {
+        $('#campTarifa').value = isNombreCampamento(nombre) ? '110' : '110';
+      }
+      renderCampamentoFormFilas(defaultCampamentoFilas(nombre, fecha, tipo));
+    }
+  } else {
+    recalcCampamentoForm();
+  }
+  updateCampCamionesLock();
+  Mantilla.drafts?.saveViajeNow?.();
+  return true;
+}
+
+function wireCampTipoToggle() {
+  const toggle = $('#viajeTipoToggle');
+  if (!toggle || toggle.dataset.wired) return;
+  toggle.dataset.wired = '1';
+  toggle.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.viaje-tipo-btn');
+    if (!btn) return;
+    e.preventDefault();
+    await setCampFormTipo(btn.dataset.tipo);
+  });
+}
+
 function wireCampFormDetails() {
   const block = $('#campFormTop');
   if (!block || block.dataset.wired) return;
@@ -507,7 +931,7 @@ function wireCampFormDetails() {
   const onNombreUpdate = () => {
     const n = $('#campNombre')?.value.trim() || '';
     const preset = CLIENTE_PRESETS[n];
-    if (preset?.producto && !$('#campProducto')?.value) {
+    if (!isCampFormExcavadora() && preset?.producto && !$('#campProducto')?.value) {
       $('#campProducto').value = preset.producto;
     }
     updateCampCamionesLock();
@@ -515,22 +939,28 @@ function wireCampFormDetails() {
 
   $('#campNombre')?.addEventListener('input', onNombreUpdate);
   $('#campNombre')?.addEventListener('change', onNombreUpdate);
+  wireCampTipoToggle();
+  applyCampFormTipoLabels(getCampFormTipo());
   updateCampCamionesLock();
 }
 
 function getCampamentoFilasFromDom() {
   const { cliente, dniRuc, producto } = getCampFormDetails();
+  const tipo = getCampFormTipo();
   return [...$('#campViajesList').querySelectorAll('.camp-viaje-card')].map((card) => {
     const { placa } = getCampPlacaInfoFromCard(card);
+    const precioRaw = campCardInput(card, 'precioHora')?.value;
     return {
+      tipo,
       cliente,
       dniRuc,
-      producto,
+      producto: isExcavadoraTipo(tipo) ? (producto || '') : producto,
       fecha: getCampFechaFromCard(card),
       toneladas: campCardNum(card, 'toneladas'),
-      guia: campCardNum(card, 'guia'),
+      guia: isExcavadoraTipo(tipo) ? 0 : campCardNum(card, 'guia'),
       placa,
-      pesaje: campCardNum(card, 'pesaje'),
+      pesaje: isExcavadoraTipo(tipo) ? 0 : campCardNum(card, 'pesaje'),
+      precioHora: precioRaw === '' || precioRaw == null ? '' : campCardNum(card, 'precioHora'),
       combustible: campCardNum(card, 'combustible'),
       viaticos: campCardNum(card, 'viaticos'),
       opId: campCardInput(card, 'opId')?.value?.trim() || ''
@@ -538,11 +968,22 @@ function getCampamentoFilasFromDom() {
   });
 }
 
-function filasCampamentoValidas(filas) {
-  return filas.filter((f) => f.placa && (Number(f.toneladas) || 0) > 0);
+function filasCampamentoValidas(filas, tipo = getCampFormTipo()) {
+  return filas.filter((f) => isFilaCampamentoActiva(f, tipo));
 }
 
-function filasCampamentoIncompletas(filas) {
+function filasCampamentoIncompletas(filas, tipo = getCampFormTipo()) {
+  if (isExcavadoraTipo(tipo)) {
+    // Excavadora: horas sin precio (o viceversa) se considera incompleta
+    return filas
+      .map((f, i) => ({ ...f, rowNum: i + 1 }))
+      .filter((f) => {
+        const horas = Number(f.toneladas) || 0;
+        const ph = Number(f.precioHora) || 0;
+        const excavadora = String(f.placa || '').trim();
+        return !excavadora || (horas > 0 && !(ph > 0)) || (ph > 0 && !(horas > 0));
+      });
+  }
   return filas
     .map((f, i) => ({ ...f, rowNum: i + 1 }))
     .filter((f) => !f.placa && (Number(f.toneladas) || 0) > 0);
@@ -552,34 +993,50 @@ function getCampamentoFilasFromForm() {
   return filasCampamentoValidas(getCampamentoFilasFromDom());
 }
 
-function getUltimoSaldoCuenta(nombre, excludeId = '') {
+function getUltimoSaldoCuenta(nombre, excludeId = '', tipo = getCampFormTipo()) {
   const key = (nombre || '').trim().toLowerCase();
   if (!key) return 0;
+  const tipoKey = normalizeViajeTipo(tipo);
   const hojas = (state.campamentos || [])
-    .filter((c) => c.id !== excludeId && c.nombre.trim().toLowerCase() === key)
+    .filter((c) =>
+      c.id !== excludeId
+      && c.nombre.trim().toLowerCase() === key
+      && normalizeViajeTipo(c.tipo) === tipoKey
+    )
     .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id.localeCompare(a.id));
   if (!hojas.length) return 0;
   const last = hojas[0];
-  const totals = calcCampamentoTotals(last.filas, last.tarifa, last.saldoAnterior || 0);
+  const totals = calcCampamentoTotals(last.filas, last.tarifa, last.saldoAnterior || 0, last.tipo);
   return totals.totalConSaldo;
 }
 
 function recalcCampamentoForm() {
+  const tipo = getCampFormTipo();
+  const excavadora = isExcavadoraTipo(tipo);
   const filas = getCampamentoFilasFromDom();
-  const filasValidas = filasCampamentoValidas(filas);
-  const incompletas = filasCampamentoIncompletas(filas);
+  const filasValidas = filasCampamentoValidas(filas, tipo);
+  const incompletas = filasCampamentoIncompletas(filas, tipo);
   const saldoAnterior = parseFloat($('#campSaldoAnterior').value) || 0;
-  const tarifa = parseFloat($('#campTarifa').value) || 110;
-  const totals = calcCampamentoTotals(filasValidas, tarifa, saldoAnterior);
+  let tarifa = parseFloat($('#campTarifa').value) || 0;
+  if (excavadora) {
+    const firstPh = filasValidas.find((f) => Number(f.precioHora) > 0)?.precioHora;
+    if (firstPh != null) {
+      tarifa = parseMoneyNumber(firstPh);
+      if ($('#campTarifa')) $('#campTarifa').value = String(tarifa);
+    }
+  } else if (!(tarifa > 0)) {
+    tarifa = 110;
+  }
+  const totals = calcCampamentoTotals(filasValidas, tarifa, saldoAnterior, tipo);
 
-  updateSumLive(filas);
+  updateSumLive(filas, tipo);
 
   const tmFoot = $('#campTotalToneladas');
   const guiaFoot = $('#campTotalGuia');
   const pesajeFoot = $('#campTotalPesaje');
   if (tmFoot) tmFoot.textContent = totals.toneladas.toFixed(2);
-  if (guiaFoot) guiaFoot.textContent = totals.guiaTotal.toFixed(0);
-  if (pesajeFoot) pesajeFoot.textContent = totals.pesajeTotal.toFixed(1);
+  if (guiaFoot) guiaFoot.textContent = excavadora ? '—' : totals.guiaTotal.toFixed(0);
+  if (pesajeFoot) pesajeFoot.textContent = excavadora ? '—' : totals.pesajeTotal.toFixed(1);
   flashCalcEl(tmFoot, 'footTm');
   flashCalcEl(guiaFoot, 'footGuia');
   flashCalcEl(pesajeFoot, 'footPesaje');
@@ -587,11 +1044,13 @@ function recalcCampamentoForm() {
   const linesEl = $('#campCalcLines');
   if (linesEl) {
     if (incompletas.length) {
-      linesEl.innerHTML = `<p class="campamento-calc__placeholder campamento-calc__placeholder--warn">Fila ${incompletas.map((f) => f.rowNum).join(', ')}: elige placa para incluirla en el total</p>`;
+      linesEl.innerHTML = excavadora
+        ? `<p class="campamento-calc__placeholder campamento-calc__placeholder--warn">Fila ${incompletas.map((f) => f.rowNum).join(', ')}: elige excavadora y completa horas y precio/hora</p>`
+        : `<p class="campamento-calc__placeholder campamento-calc__placeholder--warn">Fila ${incompletas.map((f) => f.rowNum).join(', ')}: elige placa para incluirla en el total</p>`;
     } else {
       linesEl.innerHTML = filasValidas.length
-        ? campamentoCalcHtml(totals, tarifa)
-        : '<p class="campamento-calc__placeholder">Toneladas por camión</p>';
+        ? campamentoCalcHtml(totals, tarifa, filasValidas)
+        : `<p class="campamento-calc__placeholder">${excavadora ? 'Horas por fila' : 'Toneladas por camión'}</p>`;
     }
   }
 
@@ -619,14 +1078,25 @@ function recalcCampamentoForm() {
     const n = filas.length;
     const validas = filasValidas.length;
     rowBadge.textContent = String(n);
-    const label = `${n} camión${n !== 1 ? 'es' : ''}${validas ? `, ${validas} listo${validas !== 1 ? 's' : ''}` : ''}`;
+    const unit = excavadora ? 'fila' : 'camión';
+    const unitPlural = excavadora ? 'filas' : 'camiones';
+    const label = `${n} ${n !== 1 ? unitPlural : unit}${validas ? `, ${validas} listo${validas !== 1 ? 's' : ''}` : ''}`;
     rowBadge.setAttribute('aria-label', label);
     rowBadge.title = label;
   }
 
   $('#campViajesList')?.querySelectorAll('.camp-viaje-card').forEach((card, i) => {
     const f = filas[i];
-    const incomplete = f && !f.placa && (Number(f.toneladas) || 0) > 0;
+    let incomplete = false;
+    if (f) {
+      if (excavadora) {
+        const horas = Number(f.toneladas) || 0;
+        const ph = Number(f.precioHora) || 0;
+        incomplete = (horas > 0 && !(ph > 0)) || (ph > 0 && !(horas > 0));
+      } else {
+        incomplete = !f.placa && (Number(f.toneladas) || 0) > 0;
+      }
+    }
     card.classList.toggle('camp-viaje-row--incomplete', !!incomplete);
   });
 
@@ -662,15 +1132,26 @@ function defaultGuiaPesaje(nombre) {
     : { guia: 200, pesaje: 28 };
 }
 
-function defaultCampamentoFilas(nombre = '', fecha = '') {
+function defaultCampamentoFilas(nombre = '', fecha = '', tipo = getCampFormTipo()) {
   const fDefault = fecha || $('#campFecha')?.value || todayISO();
+  if (isExcavadoraTipo(tipo)) {
+    return [{ tipo: VIAJE_TIPO_EXCAVADORA, fecha: fDefault, toneladas: '', placa: getDefaultExcavadoraValue(), guia: 0, pesaje: 0, precioHora: '' }];
+  }
   const { guia, pesaje } = defaultGuiaPesaje(nombre);
-  return [{ fecha: fDefault, toneladas: '', guia, placa: '', pesaje }];
+  return [{ tipo: VIAJE_TIPO_CAMION, fecha: fDefault, toneladas: '', guia, placa: '', pesaje }];
 }
 
 function applyNombreDefaults() {
   const nombre = $('#campNombre').value.trim();
   if ($('#campId').value) return;
+  if (isCampFormExcavadora()) {
+    applyCampFormDetailsFromNombre(nombre);
+    const filas = getCampamentoFilasFromDom();
+    if (!filas.length || filas.every((f) => !f.toneladas && !f.precioHora)) {
+      renderCampamentoFormFilas(defaultCampamentoFilas(nombre));
+    }
+    return;
+  }
   const { guia, pesaje } = defaultGuiaPesaje(nombre);
   if (isNombreCampamento(nombre)) {
     $('#campTarifa').value = 110;
@@ -691,7 +1172,7 @@ function applyNombreDefaults() {
 function applySaldoAutomatico() {
   const nombre = $('#campNombre').value.trim();
   const excludeId = $('#campId').value;
-  const saldo = getUltimoSaldoCuenta(nombre, excludeId);
+  const saldo = getUltimoSaldoCuenta(nombre, excludeId, getCampFormTipo());
   $('#campSaldoAnterior').value = saldo > 0 ? saldo.toFixed(2) : '0';
   recalcCampamentoForm();
   if (saldo > 0) {
@@ -709,21 +1190,29 @@ function applySaldoAutomatico() {
 function renderCampamentoFormFilas(filas) {
   if (typeof closeOverlayPickers === 'function') closeOverlayPickers();
   const fechaDefault = $('#campFecha').value || todayISO();
-  const filasReady = filas.map((f) => ({ ...f, fecha: f.fecha || fechaDefault }));
+  const tipo = getCampFormTipo();
+  const filasReady = filas.map((f) => ({
+    ...f,
+    tipo: normalizeViajeTipo(f.tipo || tipo),
+    fecha: f.fecha || fechaDefault
+  }));
   const list = $('#campViajesList');
   if (!list) return;
 
-  list.innerHTML = filasReady.map((f, i) => campViajeCardHtml(f, i, fechaDefault)).join('');
+  list.innerHTML = filasReady.map((f, i) => campViajeCardHtml(f, i, fechaDefault, tipo)).join('');
 
   list.querySelectorAll('.camp-viaje-card').forEach((card) => {
     const tm = campCardInput(card, 'toneladas')?.value;
     const placa = campCardInput(card, 'placa')?.value;
-    card.classList.toggle('camp-viaje-row--filled', !!(tm || placa));
+    const ph = campCardInput(card, 'precioHora')?.value;
+    card.classList.toggle('camp-viaje-row--filled', !!(tm || placa || ph));
   });
 
   updateCampBoardHeader();
+  applyCampFormTipoLabels(tipo);
   recalcCampamentoForm();
-  initCampPlacaPickers(list);
+  if (isExcavadoraTipo(tipo)) initCampExcavadoraPickers(list);
+  else initCampPlacaPickers(list);
   initCampFechaPickers(list);
   updateAllChoferGastosButtons();
   updateCampCamionesLock();
@@ -748,16 +1237,21 @@ function wireCampViajesList() {
     if (removeBtn) {
       e.preventDefault();
       const cards = list.querySelectorAll('.camp-viaje-card');
+      const excavadora = isCampFormExcavadora();
       if (cards.length <= 1) {
         showToast({
           title: 'Acción no permitida',
           type: 'warning',
-          detail: 'Debe quedar al menos un camión en el formulario'
+          detail: excavadora
+            ? 'Debe quedar al menos una fila en el formulario'
+            : 'Debe quedar al menos un camión en el formulario'
         });
         return;
       }
       const ok = await showConfirm({
-        message: 'Se quitará este camión del formulario.'
+        message: excavadora
+          ? 'Se quitará esta fila del formulario.'
+          : 'Se quitará este camión del formulario.'
       });
       if (!ok) return;
       removeBtn.closest('.camp-viaje-card')?.remove();
@@ -771,7 +1265,8 @@ function wireCampViajesList() {
     const card = e.target.closest('.camp-viaje-card');
     const tm = campCardInput(card, 'toneladas')?.value;
     const placa = getCampPlacaInfoFromCard(card).placa;
-    card?.classList.toggle('camp-viaje-row--filled', !!(tm || placa));
+    const ph = campCardInput(card, 'precioHora')?.value;
+    card?.classList.toggle('camp-viaje-row--filled', !!(tm || placa || ph));
     if (card) updateChoferGastosButton(card);
     if (card === _choferGastosCard) {
       refreshChoferGastosModalHeader();
@@ -865,14 +1360,21 @@ function groupServerViajesToCamps(rows, fecha) {
       : String(row.fecha || '');
     if (rowFecha !== fechaKey) return;
 
+    const unidad = row.unidad_medida || 'TM';
+    const tipo = normalizeViajeTipo(unidad === 'H' || unidad === 'h' ? VIAJE_TIPO_EXCAVADORA : VIAJE_TIPO_CAMION);
+    const placa = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(row.placa) : (row.placa || '');
+    if (!isExcavadoraTipo(tipo) && !placa) return;
+    if (!(money(row.ticket_balanza) > 0)) return;
+
     const nombre = String(row.cliente || '').trim() || 'Sin cliente';
-    const key = `${nombre.toLowerCase()}|${fechaKey}`;
+    const key = `${nombre.toLowerCase()}|${fechaKey}|${tipo}`;
     if (!groups.has(key)) {
       groups.set(key, {
-        id: historialSlug(nombre, fechaKey),
+        id: historialSlug(`${nombre}-${tipo}`, fechaKey),
         nombre,
         fecha: fechaKey,
-        tarifa: money(row.flete_tonelada) || 110,
+        tipo,
+        tarifa: money(row.flete_tonelada) || (isExcavadoraTipo(tipo) ? 0 : 110),
         saldoAnterior: 0,
         filas: [],
         fromServer: true
@@ -884,14 +1386,16 @@ function groupServerViajesToCamps(rows, fecha) {
     if (tarifa > 0) camp.tarifa = tarifa;
 
     camp.filas.push({
+      tipo,
       fecha: rowFecha,
       cliente: nombre,
       producto: row.producto || '',
       dniRuc: row.dni || '',
       toneladas: money(row.ticket_balanza),
-      guia: money(row.guia),
-      placa: typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(row.placa) : (row.placa || ''),
-      pesaje: money(row.pesaje),
+      guia: isExcavadoraTipo(tipo) ? 0 : money(row.guia),
+      placa: isExcavadoraTipo(tipo) ? '' : placa,
+      pesaje: isExcavadoraTipo(tipo) ? 0 : money(row.pesaje),
+      precioHora: isExcavadoraTipo(tipo) ? tarifa : undefined,
       combustible: money(row.combustible),
       viaticos: money(row.viaticos),
       opId: row.id || ''
@@ -905,22 +1409,38 @@ function mergeHistorialCamps(localCamps, serverCamps) {
   const byKey = new Map();
 
   (serverCamps || []).forEach((camp) => {
-    const key = `${String(camp.nombre || '').trim().toLowerCase()}|${camp.fecha}`;
-    byKey.set(key, { ...camp, filas: [...(camp.filas || [])] });
+    const tipo = normalizeViajeTipo(camp.tipo);
+    const key = `${String(camp.nombre || '').trim().toLowerCase()}|${camp.fecha}|${tipo}`;
+    byKey.set(key, { ...camp, tipo, filas: [...(camp.filas || [])] });
   });
 
   (localCamps || []).forEach((camp) => {
-    const key = `${String(camp.nombre || '').trim().toLowerCase()}|${camp.fecha}`;
+    const tipo = normalizeViajeTipo(camp.tipo);
+    const key = `${String(camp.nombre || '').trim().toLowerCase()}|${camp.fecha}|${tipo}`;
     const prev = byKey.get(key);
     if (!prev) {
-      byKey.set(key, { ...camp, filas: [...(camp.filas || [])], fromServer: false });
+      byKey.set(key, { ...camp, tipo, filas: [...(camp.filas || [])], fromServer: false });
       return;
     }
-    const placas = new Set((prev.filas || []).map((f) => f.placa));
-    (camp.filas || []).forEach((f) => {
-      if (f.placa && !placas.has(f.placa)) prev.filas.push(f);
-    });
+    if (isExcavadoraTipo(tipo)) {
+      const opIds = new Set((prev.filas || []).map((f) => f.opId).filter(Boolean));
+      (camp.filas || []).forEach((f) => {
+        if (f.opId && opIds.has(f.opId)) return;
+        if (!f.opId && (prev.filas || []).some((pf) =>
+          Number(pf.toneladas) === Number(f.toneladas)
+          && Number(pf.precioHora || 0) === Number(f.precioHora || 0)
+          && (pf.fecha || camp.fecha) === (f.fecha || camp.fecha)
+        )) return;
+        prev.filas.push(f);
+      });
+    } else {
+      const placas = new Set((prev.filas || []).map((f) => f.placa));
+      (camp.filas || []).forEach((f) => {
+        if (f.placa && !placas.has(f.placa)) prev.filas.push(f);
+      });
+    }
     prev.id = camp.id;
+    prev.tipo = tipo;
     prev.fromServer = false;
     prev.saldoAnterior = camp.saldoAnterior || 0;
     if (camp.tarifa) prev.tarifa = camp.tarifa;
@@ -957,13 +1477,18 @@ function renderCampHistorialTable(camps, fecha, sourceLabel) {
       <p class="camp-historial-card__label">${formatDate(fecha)} · ${camps.length} resultado${camps.length !== 1 ? 's' : ''}${sourceLabel ? ` · ${escapeHtml(sourceLabel)}` : ''}</p>
       <div class="camp-historial-list" role="list">
         ${camps.map((camp) => {
-          const totals = calcCampamentoTotals(camp.filas || [], camp.tarifa, camp.saldoAnterior || 0);
-          const n = (camp.filas || []).filter((f) => f.placa && Number(f.toneladas) > 0).length;
+          const tipo = normalizeViajeTipo(camp.tipo);
+          const excavadora = isExcavadoraTipo(tipo);
+          const totals = calcCampamentoTotals(camp.filas || [], camp.tarifa, camp.saldoAnterior || 0, tipo);
+          const n = (camp.filas || []).filter((f) => isFilaCampamentoActiva(f, tipo)).length;
+          const meta = excavadora
+            ? `${n} fila${n !== 1 ? 's' : ''} · ${totals.toneladas.toFixed(2)} h · Excavadora`
+            : `${n} camión${n !== 1 ? 'es' : ''} · ${totals.toneladas.toFixed(2)} TM`;
           return `<div class="camp-historial-row" role="listitem">
             <button type="button" class="camp-historial-row__open" data-historial-camp="${camp.id}" title="Ver PDF" aria-label="Ver PDF de ${escapeHtml(camp.nombre)}">
               <span class="camp-historial-row__main">
                 <strong class="camp-historial-row__name">${escapeHtml(camp.nombre)}</strong>
-                <span class="camp-historial-row__meta">${n} camión${n !== 1 ? 'es' : ''} · ${totals.toneladas.toFixed(2)} TM</span>
+                <span class="camp-historial-row__meta">${meta}</span>
               </span>
               <strong class="camp-historial-row__total">${formatMoney(totals.totalConSaldo)}</strong>
             </button>
@@ -1060,20 +1585,25 @@ function openHistorialCampPdf(campId) {
 }
 
 function renderCampamentoSheet(camp) {
-  const totals = calcCampamentoTotals(camp.filas, camp.tarifa, camp.saldoAnterior || 0);
-  const filasValidas = camp.filas.filter((f) => f.placa && f.toneladas > 0);
+  const tipo = normalizeViajeTipo(camp.tipo);
+  const excavadora = isExcavadoraTipo(tipo);
+  const totals = calcCampamentoTotals(camp.filas, camp.tarifa, camp.saldoAnterior || 0, tipo);
+  const filasValidas = camp.filas.filter((f) => isFilaCampamentoActiva(f, tipo));
   const saldoTxt = camp.saldoAnterior > 0
     ? `<div class="campamento-sheet__saldo">Saldo Anterior: <strong>${formatMoney(camp.saldoAnterior)}</strong></div>`
     : '';
+  const meta = excavadora
+    ? `${formatDate(camp.fecha)} · Excavadora · ${filasValidas.length} fila${filasValidas.length !== 1 ? 's' : ''}`
+    : `${formatDate(camp.fecha)} · ${filasValidas.length} camión${filasValidas.length !== 1 ? 'es' : ''} · ${filasValidas.length} viaje${filasValidas.length !== 1 ? 's' : ''}`;
   return `
-    <article class="campamento-sheet" data-id="${camp.id}">
+    <article class="campamento-sheet${excavadora ? ' campamento-sheet--excavadora' : ''}" data-id="${camp.id}" data-tipo="${tipo}">
       <div class="campamento-sheet__nombre">${escapeHtml(camp.nombre)}</div>
-      <div class="campamento-sheet__meta">${formatDate(camp.fecha)} · ${filasValidas.length} camión${filasValidas.length !== 1 ? 'es' : ''} · ${filasValidas.length} viaje${filasValidas.length !== 1 ? 's' : ''}</div>
+      <div class="campamento-sheet__meta">${meta}</div>
       ${saldoTxt}
-      ${campamentoFilasReadonlyHtml(camp.filas, camp.fecha)}
+      ${campamentoFilasReadonlyHtml(camp.filas, camp.fecha, tipo)}
       <div class="campamento-calc">
         <p class="campamento-calc__title">Cálculos</p>
-        <div class="campamento-calc__lines">${campamentoCalcHtml(totals, camp.tarifa)}</div>
+        <div class="campamento-calc__lines">${campamentoCalcHtml(totals, camp.tarifa, camp.filas)}</div>
         <div class="campamento-calc__grand">
           <span>${camp.saldoAnterior > 0 ? 'Total con saldo' : 'Total'}</span>
           <strong>${formatMoney(totals.totalConSaldo)}</strong>
@@ -1181,55 +1711,80 @@ function renderCampamentoList() {
 
 function addCampamentoFila() {
   if (!isCampCamionesUnlocked()) {
+    const excavadora = isCampFormExcavadora();
     showToast({
       title: 'Cliente requerido',
       type: 'warning',
-      detail: 'Completa persona o campamento antes de agregar camiones'
+      detail: excavadora
+        ? 'Completa el cliente antes de agregar filas'
+        : 'Completa el cliente antes de agregar camiones'
     });
     $('#campNombre')?.focus();
     return;
   }
 
+  const tipo = getCampFormTipo();
+  const excavadora = isExcavadoraTipo(tipo);
   const nombre = $('#campNombre').value.trim();
-  const { guia, pesaje } = defaultGuiaPesaje(nombre);
   const fecha = $('#campFecha').value || todayISO();
   const filas = getCampamentoFilasFromDom();
 
-  const totalPlacas = getCamionPlacaPickerOptions('').length;
-  const ocupadas = getCampPlacasOcupadas();
-  if (totalPlacas > 0 && ocupadas.size >= totalPlacas) {
-    showToast({
-      title: 'Sin placas libres',
-      type: 'warning',
-      detail: 'Todas las placas ya están asignadas en este formulario'
-    });
-    return;
+  if (!excavadora) {
+    const totalPlacas = getCamionPlacaPickerOptions('').length;
+    const ocupadas = getCampPlacasOcupadas();
+    if (totalPlacas > 0 && ocupadas.size >= totalPlacas) {
+      showToast({
+        title: 'Sin placas libres',
+        type: 'warning',
+        detail: 'Todas las placas ya están asignadas en este formulario'
+      });
+      return;
+    }
   }
 
   if (!filas.length) {
-    renderCampamentoFormFilas(defaultCampamentoFilas(nombre, fecha));
+    renderCampamentoFormFilas(defaultCampamentoFilas(nombre, fecha, tipo));
     applyCampFormDetailsFromNombre(nombre);
     showToast({
-      title: 'Camión listo',
+      title: excavadora ? 'Fila lista' : 'Camión listo',
       type: 'success',
-      detail: alertDetailHtml([
-        { b: '1 camión' },
-        ' \u2014 completa placa y toneladas'
-      ])
+      detail: alertDetailHtml(excavadora
+        ? [{ b: '1 fila' }, ' \u2014 completa horas y precio/hora']
+        : [{ b: '1 camión' }, ' \u2014 completa placa y toneladas'])
     });
     return;
   }
 
-  filas.push({ fecha, toneladas: '', guia, placa: '', pesaje, combustible: '', viaticos: '' });
+  if (excavadora) {
+    filas.push({
+      tipo,
+      fecha,
+      toneladas: '',
+      placa: getDefaultExcavadoraValue(),
+      guia: 0,
+      pesaje: 0,
+      precioHora: '',
+      combustible: '',
+      viaticos: ''
+    });
+  } else {
+    const { guia, pesaje } = defaultGuiaPesaje(nombre);
+    filas.push({ fecha, toneladas: '', guia, placa: '', pesaje, combustible: '', viaticos: '', tipo });
+  }
   renderCampamentoFormFilas(filas);
   updateCampCamionesLock();
   const cards = $('#campViajesList').querySelectorAll('.camp-viaje-card');
-  cards[cards.length - 1]?.querySelector('.ms__trigger, [data-field="toneladas"]')?.focus();
+  const focusSel = excavadora
+    ? '.camp-excavadora-picker-mount .ms__trigger, [data-field="toneladas"], [data-field="precioHora"]'
+    : '.ms__trigger, [data-field="toneladas"]';
+  cards[cards.length - 1]?.querySelector(focusSel)?.focus();
   showToast({
-    title: 'Camión agregado',
+    title: excavadora ? 'Fila agregada' : 'Camión agregado',
     detail: alertDetailHtml([
       { b: String(filas.length) },
-      ` camión${filas.length !== 1 ? 'es' : ''} en el formulario`
+      excavadora
+        ? ` fila${filas.length !== 1 ? 's' : ''} en el formulario`
+        : ` camión${filas.length !== 1 ? 'es' : ''} en el formulario`
     ])
   });
 }
@@ -1382,23 +1937,29 @@ function wireCampListPanel() {
 }
 
 function initCampListFechaPicker() {
-  if (dpCampListFecha || !$('#campListFecha') || !$('#campListFechaPicker')) return;
+  const input = $('#campListFecha');
+  const mount = $('#campListFechaPicker');
+  if (!input || !mount) return;
+  if (dpCampListFecha && mount.querySelector('.dp')) return;
   dpCampListFecha = new MantillaDatePicker('#campListFecha', '#campListFechaPicker', {
     placeholder: 'Fecha',
     allowEmpty: true,
     compact: true
   });
-  $('#campListFecha')?.addEventListener('change', () => {
-    const fecha = $('#campListFecha')?.value || '';
-    if (!fecha) {
-      clearCampHistorialResults();
-      campListDayFilter = 'all';
-      campListPage = 1;
-      renderCampamentoList();
-      return;
-    }
-    buscarHistorialPorFecha(fecha, { silent: true });
-  });
+  if (!input.dataset.campListFechaWired) {
+    input.dataset.campListFechaWired = '1';
+    input.addEventListener('change', () => {
+      const fecha = $('#campListFecha')?.value || '';
+      if (!fecha) {
+        clearCampHistorialResults();
+        campListDayFilter = 'all';
+        campListPage = 1;
+        renderCampamentoList();
+        return;
+      }
+      buscarHistorialPorFecha(fecha, { silent: true });
+    });
+  }
 }
 
 function wireCampListResize() {
@@ -1424,18 +1985,20 @@ let _savingCampamento = false;
 function saveCampamento(e) {
   e.preventDefault();
   if (_savingCampamento) return;
+  const tipo = getCampFormTipo();
+  const excavadora = isExcavadoraTipo(tipo);
   const { cliente, producto } = getCampFormDetails();
 
   if (!cliente) {
     showToast({
       title: 'Cliente requerido',
       type: 'warning',
-      detail: 'Completa persona o campamento'
+      detail: 'Completa el cliente'
     });
     $('#campNombre')?.focus();
     return;
   }
-  if (!producto) {
+  if (!excavadora && !producto) {
     showToast({
       title: 'Producto requerido',
       type: 'warning',
@@ -1446,68 +2009,114 @@ function saveCampamento(e) {
   }
 
   const allFilas = getCampamentoFilasFromDom();
-  const incompletas = filasCampamentoIncompletas(allFilas);
+  const incompletas = filasCampamentoIncompletas(allFilas, tipo);
 
   if (incompletas.length) {
     showToast({
       title: 'Filas incompletas',
       type: 'warning',
-      detail: alertDetailHtml([
-        'Fila ',
-        { b: incompletas.map((f) => f.rowNum).join(', ') },
-        ': elige ',
-        { b: 'placa' },
-        ' en cada camión con toneladas antes de guardar'
-      ])
+      detail: excavadora
+        ? alertDetailHtml([
+          'Fila ',
+          { b: incompletas.map((f) => f.rowNum).join(', ') },
+          ': completa ',
+          { b: 'excavadora, horas y precio/hora' }
+        ])
+        : alertDetailHtml([
+          'Fila ',
+          { b: incompletas.map((f) => f.rowNum).join(', ') },
+          ': elige ',
+          { b: 'placa' },
+          ' en cada camión con toneladas antes de guardar'
+        ])
     });
     incompletas.forEach((f) => {
       const card = $('#campViajesList')?.querySelectorAll('.camp-viaje-card')[f.rowNum - 1];
       card?.classList.add('camp-viaje-row--incomplete');
-      card?.querySelector('.camp-placa-picker-mount .ms__trigger')?.focus();
+      if (excavadora) {
+        const missingExcavadora = !String(incompletas.find((f) => f.rowNum === Number(card?.dataset.row) + 1)?.placa || '').trim();
+        if (missingExcavadora) card?.querySelector('.camp-excavadora-picker-mount .ms__trigger')?.focus();
+        else card?.querySelector('[data-field="precioHora"], [data-field="toneladas"]')?.focus();
+      }
+      else card?.querySelector('.camp-placa-picker-mount .ms__trigger')?.focus();
     });
     return;
   }
 
-  const filas = filasCampamentoValidas(allFilas);
+  const filas = filasCampamentoValidas(allFilas, tipo);
 
-  const placasVistas = new Set();
-  for (const f of filas) {
-    const placaKey = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(f.placa) : f.placa;
-    if (placasVistas.has(placaKey)) {
-      showToast({
-        title: 'Placa repetida',
-        type: 'warning',
-        detail: alertDetailHtml([
-          { b: placaKey },
-          ' ya está en otro camión. Un mismo camión no puede hacer dos viajes a la vez.'
-        ])
-      });
-      return;
+  if (!excavadora) {
+    const placasVistas = new Set();
+    for (const f of filas) {
+      const placaKey = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(f.placa) : f.placa;
+      if (placasVistas.has(placaKey)) {
+        showToast({
+          title: 'Placa repetida',
+          type: 'warning',
+          detail: alertDetailHtml([
+            { b: placaKey },
+            ' ya está en otro camión. Un mismo camión no puede hacer dos viajes a la vez.'
+          ])
+        });
+        return;
+      }
+      placasVistas.add(placaKey);
     }
-    placasVistas.add(placaKey);
   }
 
   if (!filas.length) {
     showToast({
       title: 'Faltan datos',
       type: 'warning',
-      detail: 'Escribe toneladas y placa en al menos una fila'
+      detail: excavadora
+        ? 'Escribe horas y precio/hora en al menos una fila'
+        : 'Escribe toneladas y placa en al menos una fila'
     });
     return;
   }
 
   const nombre = $('#campNombre').value.trim();
   const saldoAnterior = parseFloat($('#campSaldoAnterior').value) || 0;
-  const tarifa = parseFloat($('#campTarifa').value) || 110;
-  const totals = calcCampamentoTotals(filas, tarifa, saldoAnterior);
+  let tarifa = parseFloat($('#campTarifa').value) || 0;
+  if (excavadora) {
+    tarifa = parseMoneyNumber(
+      filas.find((f) => Number(f.precioHora) > 0)?.precioHora || tarifa || 0
+    );
+  } else if (!(tarifa > 0)) {
+    tarifa = 110;
+  }
+  const totals = calcCampamentoTotals(filas, tarifa, saldoAnterior, tipo);
+
+  // Evitar mezclar tipos en la misma ficha editada
+  const existingId = $('#campId').value;
+  const previousOpIds = new Set(
+    existingId
+      ? (state.operaciones || [])
+        .filter((op) => op.campamentoId === existingId)
+        .map((op) => String(op.id || '').trim())
+        .filter(Boolean)
+      : []
+  );
+  if (existingId) {
+    const existing = state.campamentos.find((c) => c.id === existingId);
+    if (existing && normalizeViajeTipo(existing.tipo) !== tipo) {
+      showToast({
+        title: 'Tipo distinto',
+        type: 'warning',
+        detail: 'No se puede cambiar el tipo al editar. Cancela y crea un registro nuevo.'
+      });
+      return;
+    }
+  }
 
   const camp = {
-    id: $('#campId').value || uid('camp'),
+    id: existingId || uid('camp'),
     nombre,
+    tipo,
     saldoAnterior,
     fecha: $('#campFecha').value,
     tarifa,
-    filas,
+    filas: filas.map((f) => ({ ...f, tipo })),
     subtotal: totals.subtotal,
     totalConSaldo: totals.totalConSaldo
   };
@@ -1520,6 +2129,18 @@ function saveCampamento(e) {
   _savingCampamento = true;
   try {
   syncOperacionesFromCampamento(camp);
+  // Si al editar se quitó una fila, eliminar también su registro en Sheets.
+  if (previousOpIds.size && window.Mantilla?.sync?.syncDelete) {
+    const currentOpIds = new Set(
+      (state.operaciones || [])
+        .filter((op) => op.campamentoId === camp.id)
+        .map((op) => String(op.id || '').trim())
+        .filter(Boolean)
+    );
+    previousOpIds.forEach((opId) => {
+      if (!currentOpIds.has(opId)) Mantilla.sync.syncDelete('viajes', opId);
+    });
+  }
   registerCatalogValue('clientes', nombre);
   filas.forEach((f) => {
     if (f.cliente) registerCatalogValue('clientes', f.cliente);
@@ -1551,7 +2172,6 @@ function saveCampamento(e) {
   renderOperaciones();
   renderCampamentoList();
 
-  // Señalar la ficha en "Viajes guardados"
   setTimeout(() => goToCampamentoGuardado(savedCampId, { nombre: savedNombre, fecha: savedFecha }), 120);
   setTimeout(() => goToCampamentoGuardado(savedCampId, { nombre: savedNombre, fecha: savedFecha }), 450);
 
@@ -1559,7 +2179,9 @@ function saveCampamento(e) {
   Mantilla.drafts?.clearViaje?.();
   Mantilla.activity?.log?.({
     title: isEdit ? `Viaje actualizado · ${nombre || 'Sin nombre'}` : `Viaje guardado · ${nombre || 'Sin nombre'}`,
-    path: `viajes/${savedFecha || '—'} · ${activas} camión${activas !== 1 ? 'es' : ''}`,
+    path: excavadora
+      ? `viajes/${savedFecha || '—'} · Excavadora · ${activas} fila${activas !== 1 ? 's' : ''}`
+      : `viajes/${savedFecha || '—'} · ${activas} camión${activas !== 1 ? 'es' : ''}`,
     type: 'viaje'
   });
   showToast({
@@ -1568,8 +2190,8 @@ function saveCampamento(e) {
       { b: nombre || 'Sin nombre' },
       ' · ',
       { b: String(activas) },
-      ` camión${activas !== 1 ? 'es' : ''}`,
-      ' · ',
+      excavadora ? ` fila${activas !== 1 ? 's' : ''}` : ` camión${activas !== 1 ? 'es' : ''}`,
+      excavadora ? ' · Excavadora · ' : ' · ',
       { b: formatMoney(totals.totalConSaldo) }
     ])
   });
@@ -1589,7 +2211,17 @@ async function deleteCampamentoById(id) {
   const campNombre = camp?.nombre || 'Viaje';
   const campFecha = camp?.fecha || '—';
   const ops = (state.operaciones || []).filter((op) => op.campamentoId === id);
-  ops.forEach((op) => Mantilla.sync?.syncDelete?.('viajes', op.id));
+  // Usar ambas fuentes: algunas fichas reconstruidas conservan los IDs
+  // en sus filas aunque la operación local ya no esté disponible.
+  const opIds = new Set([
+    ...ops.map((op) => String(op.id || '').trim()),
+    ...(camp?.filas || []).map((fila) => String(fila.opId || '').trim())
+  ].filter(Boolean));
+  const sheet = [...document.querySelectorAll('.campamento-sheet')]
+    .find((item) => item.dataset.id === String(id));
+  markElementDeleting(sheet);
+  opIds.forEach((opId) => Mantilla.sync?.syncDelete?.('viajes', opId));
+  await deletingTransition();
   state.campamentos = state.campamentos.filter((c) => c.id !== id);
   state.operaciones = state.operaciones.filter((op) => op.campamentoId !== id);
   saveData();
@@ -1603,7 +2235,9 @@ async function deleteCampamentoById(id) {
   showToast({
     title: 'Registro eliminado',
     type: 'info',
-    detail: 'Los viajes guardados fueron eliminados'
+    detail: navigator.onLine
+      ? 'Se quitó de la lista y se sincroniza con Google'
+      : 'Se quitó de la lista; se sincronizará al recuperar conexión'
   });
 }
 
@@ -1611,20 +2245,42 @@ window.deleteCampamento = (id) => deleteCampamentoById(id);
 
 function buildCampamentoPrintHtml(camp) {
   const filas = camp.filas || [];
-  const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0);
-  const rows = filas.filter((f) => f.placa && Number(f.toneladas) > 0);
-  const saldoRow = camp.saldoAnterior > 0
-    ? `<p class="saldo">Saldo anterior: <strong>${formatMoney(camp.saldoAnterior)}</strong></p>`
-    : '';
-  const tableRows = rows.map((f) => `
+  const tipo = normalizeViajeTipo(camp.tipo);
+  const excavadora = isExcavadoraTipo(tipo);
+  const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0, tipo);
+  const rows = filas.filter((f) => isFilaCampamentoActiva(f, tipo));
+  const details = rows[0] || filas[0] || {};
+  const dniRuc = details.dniRuc || '';
+  const producto = details.producto || '';
+  const tableRows = rows.map((f) => {
+    if (excavadora) {
+      const ph = parseMoneyNumber(f.precioHora != null && f.precioHora !== '' ? f.precioHora : camp.tarifa);
+      return `
+    <tr>
+      <td>${escapeHtml(f.placa || '—')}</td>
+      <td>${formatDateDM(f.fecha || camp.fecha)}</td>
+      <td>${Number(f.toneladas).toFixed(2)}</td>
+      <td>${formatMoney(ph)}</td>
+      <td>${formatMoney(calcFleteExcavadora(f.toneladas, ph))}</td>
+    </tr>`;
+    }
+    return `
     <tr>
       <td>${formatDateDM(f.fecha || camp.fecha)}</td>
       <td>${Number(f.toneladas).toFixed(2)}</td>
+      <td>${formatMoney(camp.tarifa)}</td>
       <td>${Number(f.guia).toFixed(0)}</td>
       <td>${escapeHtml(f.placa)}</td>
       <td>${Number(f.pesaje).toFixed(1)}</td>
-    </tr>`).join('');
-  const calcLines = `
+    </tr>`;
+  }).join('');
+  const calcLines = excavadora
+    ? rows.map((f) => {
+      const ph = parseMoneyNumber(f.precioHora != null && f.precioHora !== '' ? f.precioHora : camp.tarifa);
+      return `<p>&gt; ${Number(f.toneladas).toFixed(2)} h x ${formatMoney(ph)} = ${formatMoney(calcFleteExcavadora(f.toneladas, ph))}</p>`;
+    }).join('') + `
+    <p class="campamento-calc__subtotal"><strong>Subtotal = ${formatMoney(totals.subtotal)}</strong></p>`
+    : `
     <p>&gt; ${totals.toneladas.toFixed(2)} x ${camp.tarifa} = ${formatMoney(totals.producto)} +</p>
     <p>&gt; ${totals.count} Guia${totals.count !== 1 ? 's' : ''} = ${formatMoney(totals.guiaTotal)}</p>
     <p>&gt; ${totals.count} Pesaje${totals.count !== 1 ? 's' : ''} = ${formatMoney(totals.pesajeTotal)}</p>
@@ -1635,9 +2291,11 @@ function buildCampamentoPrintHtml(camp) {
   const genHora = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
   return `<!DOCTYPE html>
-<html lang="es">
+<html lang="es" translate="no">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="google" content="notranslate">
   <title>${escapeHtml(camp.nombre)} — ${formatDate(camp.fecha)}</title>
   <style>
     * { box-sizing: border-box; }
@@ -1671,8 +2329,19 @@ function buildCampamentoPrintHtml(camp) {
       font-size: 0.8rem;
       color: #475569;
     }
-    .meta { margin: 0 0 0.55rem; color: #475569; }
     .saldo { margin: 0 0 1.15rem; color: #475569; }
+    .details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.45rem 1.25rem;
+      margin: 0.85rem 0 0.65rem;
+      padding: 0.75rem 0.85rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+    }
+    .details p { margin: 0; color: #334155; }
+    .details strong { color: #0f172a; }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -1691,6 +2360,11 @@ function buildCampamentoPrintHtml(camp) {
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      color: #0a1628;
+    }
+    tfoot td {
+      background: #f1f5f9;
+      font-weight: 800;
       color: #0a1628;
     }
     .calc {
@@ -1754,6 +2428,40 @@ function buildCampamentoPrintHtml(camp) {
       font-size: 0.68rem;
       color: #64748b;
     }
+    @media (max-width: 480px) {
+      body {
+        width: 100%;
+        padding: 0.85rem 0.65rem 1rem;
+        overflow-x: hidden;
+        font-size: 11px;
+      }
+      .brand {
+        gap: 0.5rem;
+        margin-bottom: 0.85rem;
+      }
+      .brand h1 { min-width: 0; font-size: 0.88rem; }
+      .brand span { max-width: 46%; font-size: 0.65rem; }
+      .details {
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 0.35rem 0.55rem;
+        padding: 0.6rem;
+      }
+      .details p { min-width: 0; overflow-wrap: anywhere; }
+      table {
+        width: 100%;
+        table-layout: fixed;
+        margin: 0.75rem auto 1rem;
+        font-size: 9px;
+      }
+      th, td {
+        min-width: 0;
+        padding: 0.55rem 0.12rem;
+        overflow-wrap: anywhere;
+      }
+      th { font-size: 0.55rem; letter-spacing: 0; }
+      .calc { margin-top: 1rem; padding: 0.8rem; }
+    }
     @media print {
       body { padding: 0.4rem 0 16mm; }
       @page { margin: 12mm 12mm 16mm; }
@@ -1770,24 +2478,47 @@ function buildCampamentoPrintHtml(camp) {
     }
   </style>
 </head>
-<body>
+<body class="notranslate" translate="no">
   <div class="brand">
     <h1>${escapeHtml(camp.nombre)}</h1>
     <span>Mantilla - Gestion de Flota</span>
   </div>
-  <p class="meta">${formatDate(camp.fecha)} - ${rows.length} camion${rows.length !== 1 ? 'es' : ''}</p>
-  ${saldoRow}
+  <div class="details">
+    <p><strong>Tipo:</strong> ${excavadora ? 'Excavadora' : 'Camión'}</p>
+    <p><strong>Saldo:</strong> ${formatMoney(camp.saldoAnterior || 0)}</p>
+    <p><strong>Cliente:</strong> ${escapeHtml(camp.nombre || '—')}</p>
+    <p><strong>DNI / RUC:</strong> ${escapeHtml(dniRuc || '—')}</p>
+    <p><strong>${excavadora ? 'Detalles' : 'Producto'}:</strong> ${escapeHtml(producto || '—')}</p>
+    <p><strong>Fecha del día:</strong> ${escapeHtml(formatDate(camp.fecha))}</p>
+  </div>
   <table>
     <thead>
       <tr>
-        <th>Fecha</th>
-        <th>TM</th>
-        <th>Guia</th>
-        <th>Placa</th>
-        <th>Pesaje</th>
+        ${excavadora
+          ? '<th>Excavadora</th><th>Fecha</th><th>Horas</th><th>Precio/hora</th><th>Total</th>'
+          : '<th>Fecha</th><th>TM</th><th>Precio/TM</th><th>Guia</th><th>Placa</th><th>Pesaje</th>'}
       </tr>
     </thead>
     <tbody>${tableRows}</tbody>
+    ${rows.length ? `
+    <tfoot>
+      ${excavadora ? `
+      <tr>
+        <td>TOTAL</td>
+        <td></td>
+        <td>${totals.toneladas.toFixed(2)}</td>
+        <td></td>
+        <td>${formatMoney(totals.producto)}</td>
+      </tr>` : `
+      <tr>
+        <td>TOTAL</td>
+        <td>${totals.toneladas.toFixed(2)}</td>
+        <td></td>
+        <td>${totals.guiaTotal.toFixed(0)}</td>
+        <td></td>
+        <td>${totals.pesajeTotal.toFixed(1)}</td>
+      </tr>`}
+    </tfoot>` : ''}
   </table>
   <div class="calc">
     <h2>Calculos</h2>
@@ -1949,8 +2680,13 @@ function buildCampamentoPdfDoc(camp) {
   if (!JsPDF) throw new Error('jsPDF no disponible');
 
   const filas = camp.filas || [];
-  const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0);
-  const rows = filas.filter((f) => f.placa && Number(f.toneladas) > 0);
+  const tipo = normalizeViajeTipo(camp.tipo);
+  const excavadora = isExcavadoraTipo(tipo);
+  const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0, tipo);
+  const rows = filas.filter((f) => isFilaCampamentoActiva(f, tipo));
+  const details = rows[0] || filas[0] || {};
+  const dniRuc = details.dniRuc || '';
+  const producto = details.producto || '';
   const doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
   const pageW = doc.internal.pageSize.getWidth();
@@ -1996,28 +2732,49 @@ function buildCampamentoPdfDoc(camp) {
   doc.line(marginX, y, pageW - marginX, y);
   y += 9;
 
-  doc.setFontSize(10);
-  doc.setTextColor(...muted);
+  doc.setFillColor(...fill);
+  doc.setDrawColor(...line);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(marginX, y, contentW, 31, 1.5, 1.5, 'FD');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...ink);
+  const colW = contentW * 0.47;
+  const rightX = marginX + contentW * 0.52;
+  put(`Tipo: ${excavadora ? 'Excavadora' : 'Camion'}`, marginX + 4, y + 7, { maxWidth: colW });
+  put(`Saldo: ${formatMoneyPdf(camp.saldoAnterior || 0)}`, rightX, y + 7, { maxWidth: colW });
   put(
-    `${formatDate(camp.fecha)} - ${rows.length} camion${rows.length !== 1 ? 'es' : ''}`,
-    marginX,
-    y
+    `Cliente: ${camp.nombre || '-'}`,
+    marginX + 4,
+    y + 15,
+    { maxWidth: colW }
   );
-  y += 7;
+  put(`DNI / RUC: ${dniRuc || '-'}`, rightX, y + 15, { maxWidth: colW });
+  put(
+    `${excavadora ? 'Detalles' : 'Producto'}: ${producto || '-'}`,
+    marginX + 4,
+    y + 23,
+    { maxWidth: colW }
+  );
+  put(`Fecha del dia: ${formatDate(camp.fecha)}`, rightX, y + 23, { maxWidth: colW });
+  y += 37;
 
-  if (Number(camp.saldoAnterior) > 0) {
-    doc.setTextColor(...muted);
-    put(`Saldo anterior: ${formatMoneyPdf(camp.saldoAnterior)}`, marginX, y);
-    y += 7;
-  }
-
-  const cols = [
-    { label: 'FECHA', w: contentW * 0.18 },
-    { label: 'TM', w: contentW * 0.16 },
-    { label: 'GUIA', w: contentW * 0.16 },
-    { label: 'PLACA', w: contentW * 0.28 },
-    { label: 'PESAJE', w: contentW * 0.22 }
-  ];
+  const cols = excavadora
+    ? [
+      { label: 'EXCAVADORA', w: contentW * 0.25 },
+      { label: 'FECHA', w: contentW * 0.15 },
+      { label: 'HORAS', w: contentW * 0.15 },
+      { label: 'PRECIO/H', w: contentW * 0.22 },
+      { label: 'TOTAL', w: contentW * 0.23 }
+    ]
+    : [
+      { label: 'FECHA', w: contentW * 0.14 },
+      { label: 'TM', w: contentW * 0.13 },
+      { label: 'PRECIO/TM', w: contentW * 0.18 },
+      { label: 'GUIA', w: contentW * 0.13 },
+      { label: 'PLACA', w: contentW * 0.24 },
+      { label: 'PESAJE', w: contentW * 0.18 }
+    ];
 
   // Misma grilla que el HTML del modal: borde fino #94a3b8 en cada celda
   const drawTableGrid = (topY, rowCount) => {
@@ -2073,13 +2830,23 @@ function buildCampamentoPdfDoc(camp) {
         doc.setFillColor(...fill);
         doc.rect(marginX, y, contentW, rowH, 'F');
       }
-      const vals = [
-        formatDateDM(f.fecha || camp.fecha),
-        Number(f.toneladas).toFixed(2),
-        Number(f.guia).toFixed(0),
-        String(f.placa || ''),
-        Number(f.pesaje).toFixed(1)
-      ];
+      const ph = parseMoneyNumber(f.precioHora != null && f.precioHora !== '' ? f.precioHora : camp.tarifa);
+      const vals = excavadora
+        ? [
+          String(f.placa || ''),
+          formatDateDM(f.fecha || camp.fecha),
+          Number(f.toneladas).toFixed(2),
+          formatMoneyPdf(ph),
+          formatMoneyPdf(calcFleteExcavadora(f.toneladas, ph))
+        ]
+        : [
+          formatDateDM(f.fecha || camp.fecha),
+          Number(f.toneladas).toFixed(2),
+          formatMoneyPdf(camp.tarifa),
+          Number(f.guia).toFixed(0),
+          String(f.placa || ''),
+          Number(f.pesaje).toFixed(1)
+        ];
       let x = marginX;
       cols.forEach((c, ci) => {
         put(vals[ci], x + c.w / 2, y + rowH / 2 + 1.3, { align: 'center' });
@@ -2122,11 +2889,67 @@ function buildCampamentoPdfDoc(camp) {
     }
   }
 
+  if (rows.length) {
+    ensureSpace(rowH + 2);
+    doc.setFillColor(...headerFill);
+    doc.setDrawColor(...line);
+    doc.setLineWidth(0.25);
+    doc.rect(marginX, y, contentW, rowH, 'FD');
+    let gridX = marginX;
+    for (let c = 0; c < cols.length - 1; c += 1) {
+      gridX += cols[c].w;
+      doc.line(gridX, y, gridX, y + rowH);
+    }
+    const totalVals = excavadora
+      ? [
+        'TOTAL',
+        '',
+        totals.toneladas.toFixed(2),
+        '',
+        formatMoneyPdf(totals.producto)
+      ]
+      : [
+        'TOTAL',
+        totals.toneladas.toFixed(2),
+        '',
+        totals.guiaTotal.toFixed(0),
+        '',
+        totals.pesajeTotal.toFixed(1)
+      ];
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...navy);
+    let totalX = marginX;
+    cols.forEach((c, ci) => {
+      put(totalVals[ci], totalX + c.w / 2, y + rowH / 2 + 1.3, { align: 'center' });
+      totalX += c.w;
+    });
+    y += rowH;
+  }
+
+  const calcRows = excavadora
+    ? [
+      ...rows.map((f) => {
+        const horas = parseMoneyNumber(f.toneladas);
+        const precioHora = parseMoneyNumber(
+          f.precioHora != null && f.precioHora !== '' ? f.precioHora : camp.tarifa
+        );
+        return `> ${horas.toFixed(2)} horas x ${formatMoneyPdf(precioHora)} = ${formatMoneyPdf(calcFleteExcavadora(horas, precioHora))}`;
+      }),
+      `Subtotal = ${formatMoneyPdf(totals.subtotal)}`
+    ]
+    : [
+      `> ${totals.toneladas.toFixed(2)} x ${camp.tarifa} = ${formatMoneyPdf(totals.producto)} +`,
+      `> ${totals.count} Guia${totals.count !== 1 ? 's' : ''} = ${formatMoneyPdf(totals.guiaTotal)}`,
+      `> ${totals.count} Pesaje${totals.count !== 1 ? 's' : ''} = ${formatMoneyPdf(totals.pesajeTotal)}`,
+      `Subtotal = ${formatMoneyPdf(totals.subtotal)}`
+    ];
+
   y += 10;
-  ensureSpace(56);
+  const boxH = Math.max(50, 30 + calcRows.length * 6);
+  ensureSpace(boxH + 6);
 
   // Caja CALCULOS: mismo borde fino y radio suave que el modal
-  const boxH = 50;
   doc.setFillColor(...fill);
   doc.setDrawColor(...line);
   doc.setLineWidth(0.25);
@@ -2142,12 +2965,6 @@ function buildCampamentoPdfDoc(camp) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(...ink);
-  const calcRows = [
-    `> ${totals.toneladas.toFixed(2)} x ${camp.tarifa} = ${formatMoneyPdf(totals.producto)} +`,
-    `> ${totals.count} Guia${totals.count !== 1 ? 's' : ''} = ${formatMoneyPdf(totals.guiaTotal)}`,
-    `> ${totals.count} Pesaje${totals.count !== 1 ? 's' : ''} = ${formatMoneyPdf(totals.pesajeTotal)}`,
-    `Subtotal = ${formatMoneyPdf(totals.subtotal)}`
-  ];
   calcRows.forEach((t) => {
     put(t, marginX + 5, cy);
     cy += 6;
@@ -2279,7 +3096,7 @@ function ensureJsPdf() {
     }
 
     const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.src = 'assets/vendor/jspdf.umd.min.js';
     script.dataset.mantillaJspdf = '1';
     script.onload = () => {
       script.dataset.loaded = '1';
@@ -2322,12 +3139,15 @@ async function downloadCampamentoPdf() {
 
 function buildCampamentoShareText(camp) {
   const filas = camp.filas || [];
-  const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0);
-  const rows = filas.filter((f) => f.placa && Number(f.toneladas) > 0);
+  const tipo = normalizeViajeTipo(camp.tipo);
+  const excavadora = isExcavadoraTipo(tipo);
+  const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0, tipo);
+  const rows = filas.filter((f) => isFilaCampamentoActiva(f, tipo));
   return [
     `*${camp.nombre}*`,
     `Fecha: ${formatDate(camp.fecha)}`,
-    `Camiones: ${rows.length}`,
+    excavadora ? 'Tipo: Excavadora' : 'Tipo: Camión',
+    excavadora ? `Horas: ${totals.toneladas.toFixed(2)}` : `Camiones: ${rows.length}`,
     `Total: ${formatMoney(totals.totalConSaldo)}`,
     '— Mantilla · Gestión de Flota'
   ].join('\n');

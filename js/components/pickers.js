@@ -254,21 +254,27 @@ class MantillaSelectPicker {
     this.searchable = options.searchable !== false;
     this.allowEmpty = options.allowEmpty === true;
     this.noOptionsText = options.noOptionsText || 'Sin coincidencias';
+    this.formatPlaca = options.formatPlaca !== false;
+    this.preserveValue = options.preserveValue === true;
+    this.searchPlaceholder = options.searchPlaceholder || 'Buscar placa o chofer…';
     this.searchQuery = '';
     this.build();
   }
 
+  normalizeValue(value) {
+    if (!this.formatPlaca) return String(value || '').trim();
+    return typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(value) : value;
+  }
+
   normalizeOption(opt) {
     if (typeof opt === 'string') {
-      const placa = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(opt) : opt;
+      const placa = this.normalizeValue(opt);
       const chofer = typeof getChoferByPlaca === 'function' ? getChoferByPlaca(placa) : '';
       return { value: placa, placa, chofer: (chofer || '').trim() };
     }
-    const placa = typeof formatPlacaDisplay === 'function'
-      ? formatPlacaDisplay(opt.placa || opt.value || '')
-      : (opt.placa || opt.value || '');
+    const placa = this.normalizeValue(opt.placa || opt.label || opt.value || '');
     return {
-      value: placa,
+      value: this.preserveValue ? String(opt.value || '').trim() : placa,
       placa,
       chofer: (opt.chofer || '').trim()
     };
@@ -279,7 +285,7 @@ class MantillaSelectPicker {
   }
 
   findOption(value) {
-    const key = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(value) : value;
+    const key = this.preserveValue ? String(value || '').trim() : this.normalizeValue(value);
     return this.getNormalizedOptions().find((opt) => opt.value === key) || {
       value: key,
       placa: key,
@@ -289,14 +295,14 @@ class MantillaSelectPicker {
 
   renderOptionLabel(opt) {
     const choferHtml = opt.chofer
-      ? `<span class="ms__option-chofer">${escapeHtml(opt.chofer)}</span>`
+      ? `<span class="ms__option-separator" aria-hidden="true">-</span><span class="ms__option-chofer">${escapeHtml(opt.chofer)}</span>`
       : '';
     return `<span class="ms__option-placa">${escapeHtml(opt.placa)}</span>${choferHtml}`;
   }
 
   renderTriggerLabel(opt) {
     const choferHtml = opt.chofer
-      ? `<span class="ms__trigger-chofer">${escapeHtml(opt.chofer)}</span>`
+      ? `<span class="ms__trigger-separator" aria-hidden="true">-</span><span class="ms__trigger-chofer">${escapeHtml(opt.chofer)}</span>`
       : '';
     return `<span class="ms__trigger-placa">${escapeHtml(opt.placa)}</span>${choferHtml}`;
   }
@@ -304,7 +310,7 @@ class MantillaSelectPicker {
   build() {
     const searchHtml = this.searchable
       ? `<div class="ms__search-wrap">
-          <input type="search" class="ms__search field-input" placeholder="Buscar placa o chofer…" autocomplete="off" enterkeyhint="search" aria-label="Buscar">
+          <input type="search" class="ms__search field-input" placeholder="${escapeHtml(this.searchPlaceholder)}" autocomplete="off" enterkeyhint="search" aria-label="Buscar">
         </div>`
       : '';
     const footHtml = this.allowEmpty
@@ -378,9 +384,9 @@ class MantillaSelectPicker {
   }
 
   renderList() {
-    const selected = typeof formatPlacaDisplay === 'function'
-      ? formatPlacaDisplay(this.input.value)
-      : this.input.value;
+    const selected = this.preserveValue
+      ? String(this.input.value || '').trim()
+      : this.normalizeValue(this.input.value);
     const q = (this.searchQuery || '').trim().toLowerCase();
     let options = this.getNormalizedOptions();
     if (q) {
@@ -407,7 +413,7 @@ class MantillaSelectPicker {
   }
 
   pick(value) {
-    this.input.value = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(value) : value;
+    this.input.value = this.preserveValue ? String(value || '').trim() : this.normalizeValue(value);
     this.updateTrigger();
     this.input.dispatchEvent(new Event('change', { bubbles: true }));
     this.close();
@@ -828,6 +834,6 @@ class MantillaTimePicker {
   }
 }
 
-let dpMaintFecha, dpFilterFecha, dpCampFecha;
-let tpMaintHora;
+let dpMaintFecha, dpFilterFecha, dpCampFecha, dpIngresoFecha;
+let tpMaintHora, tpIngresoHora;
 

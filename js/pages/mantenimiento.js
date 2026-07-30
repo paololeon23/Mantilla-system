@@ -19,11 +19,11 @@ function maintItemFromRecord(m) {
 
 function getMaintGroupByFechaPlaca(fecha, placa) {
   const fechaKey = typeof normalizeDateISO === 'function' ? normalizeDateISO(fecha) : String(fecha || '');
-  const placaKey = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(placa) : String(placa || '');
+  const placaKey = typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(placa) : String(placa || '');
   return (state.mantenimiento || [])
     .filter((m) => {
       const mf = typeof normalizeDateISO === 'function' ? normalizeDateISO(m.fecha) : m.fecha;
-      const mp = typeof formatPlacaDisplay === 'function' ? formatPlacaDisplay(m.placa) : m.placa;
+      const mp = typeof formatVehiculoDisplay === 'function' ? formatVehiculoDisplay(m.placa) : m.placa;
       return mf === fechaKey && mp === placaKey;
     })
     .sort(typeof compareMaintRecords === 'function' ? compareMaintRecords : ((a, b) => 0));
@@ -189,7 +189,7 @@ function setMaintFormMode(editMode) {
 function saveMantenimiento(e) {
   e.preventDefault();
 
-  const placa = formatPlacaDisplay($('#maintPlaca').value.trim());
+  const placa = formatVehiculoDisplay($('#maintPlaca').value.trim());
   if (!placa) {
     showToast({
       title: 'Falta la placa',
@@ -335,6 +335,13 @@ window.deleteOperacion = async (id) => {
   if (!ok) return;
 
   const op = state.operaciones.find((o) => o.id === id);
+  document.querySelectorAll('[data-op-id], [data-id]').forEach((element) => {
+    if (element.dataset.opId === String(id) || element.dataset.id === String(id)) {
+      markElementDeleting(element);
+    }
+  });
+  Mantilla.sync?.syncDelete?.('viajes', id);
+  await deletingTransition();
   if (op?.campamentoId) {
     const camp = state.campamentos.find((c) => c.id === op.campamentoId);
     if (camp) {
@@ -356,7 +363,9 @@ window.deleteOperacion = async (id) => {
   showToast({
     title: 'Registro eliminado',
     type: 'info',
-    detail: 'El registro fue quitado de la lista'
+    detail: navigator.onLine
+      ? 'Se quitó de la lista y se sincroniza con Google'
+      : 'Se quitó de la lista; se sincronizará al recuperar conexión'
   });
 };
 
@@ -367,7 +376,11 @@ window.deleteMantenimiento = async (id) => {
   });
   if (!ok) return;
   const gasto = state.mantenimiento.find((m) => m.id === id);
+  document.querySelectorAll('[data-maint-id]').forEach((element) => {
+    if (element.dataset.maintId === String(id)) markElementDeleting(element);
+  });
   Mantilla.sync?.syncDelete?.('gastos', id);
+  await deletingTransition();
   state.mantenimiento = state.mantenimiento.filter((m) => m.id !== id);
   saveData();
   renderMantenimiento();
@@ -380,7 +393,9 @@ window.deleteMantenimiento = async (id) => {
   showToast({
     title: 'Gasto eliminado',
     type: 'info',
-    detail: 'El gasto fue quitado del historial'
+    detail: navigator.onLine
+      ? 'Se quitó del historial y se sincroniza con Google'
+      : 'Se quitó del historial; se sincronizará al recuperar conexión'
   });
 };
 
@@ -397,14 +412,17 @@ function initMaintPlacaPicker() {
   // Tras navegación SPA el mount es nuevo: recrear el picker
   if (maintPlacaPicker && mount.querySelector('.ms')) return;
   maintPlacaPicker = new MantillaSelectPicker(input, mount, {
-    placeholder: 'Elegir placa',
-    title: 'Placa del camión',
-    getOptions: () => getCamionPlacaPickerOptions(input.value)
+    placeholder: 'Elegir camión o excavadora',
+    title: 'Elegir vehículo',
+    searchable: true,
+    formatPlaca: false,
+    preserveValue: true,
+    getOptions: () => getVehiculosPickerOptions(input.value)
   });
 }
 
 function setMaintPlacaValue(placa) {
-  const value = placa ? formatPlacaDisplay(placa) : '';
+  const value = placa ? formatVehiculoDisplay(placa) : '';
   if (maintPlacaPicker) {
     maintPlacaPicker.setValue(value);
   } else if ($('#maintPlaca')) {
@@ -418,17 +436,19 @@ function initMaintFilterPlacaPicker() {
   if (!input || !mount) return;
   if (maintFilterPlacaPicker && mount.querySelector('.ms')) return;
   maintFilterPlacaPicker = new MantillaSelectPicker(input, mount, {
-    placeholder: 'Todas las placas',
-    title: 'Filtrar por placa',
+    placeholder: 'Vehículos',
+    title: 'Filtrar por vehículo',
     allowEmpty: true,
     searchable: true,
-    getOptions: () => getCamionPlacaPickerOptions(input.value)
+    formatPlaca: false,
+    preserveValue: true,
+    getOptions: () => getVehiculosPickerOptions(input.value)
   });
   input.addEventListener('change', onMaintFilterChange);
 }
 
 function setMaintFilterPlacaValue(placa) {
-  const value = placa ? formatPlacaDisplay(placa) : '';
+  const value = placa ? formatVehiculoDisplay(placa) : '';
   if (maintFilterPlacaPicker) {
     maintFilterPlacaPicker.setValue(value);
   } else if ($('#maintFilterPlaca')) {

@@ -4,19 +4,23 @@ function closeSidebar() {
   const sidebar = $('#sidebar');
   if (!sidebar) return;
   const backdrop = $('#sidebarBackdrop');
+  const menuButton = $('#menuToggle');
   sidebar.classList.remove('sidebar--open');
   if (backdrop) backdrop.classList.remove('sidebar-backdrop--open');
   document.body.classList.remove('sidebar-open');
+  menuButton?.setAttribute('aria-expanded', 'false');
 }
 
 function toggleSidebar() {
   const sidebar = $('#sidebar');
   if (!sidebar) return;
   const backdrop = $('#sidebarBackdrop');
+  const menuButton = $('#menuToggle');
   const open = !sidebar.classList.contains('sidebar--open');
   sidebar.classList.toggle('sidebar--open', open);
   if (backdrop) backdrop.classList.toggle('sidebar-backdrop--open', open);
   document.body.classList.toggle('sidebar-open', open);
+  menuButton?.setAttribute('aria-expanded', String(open));
 }
 
 const SIDEBAR_COLLAPSE_KEY = 'mantilla-sidebar-collapsed';

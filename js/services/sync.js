@@ -116,6 +116,8 @@
 
         gastos: new Set(data.gastos || []),
 
+        ingresos: new Set(data.ingresos || []),
+
         camiones: new Set(data.camiones || []),
 
         clientes: new Set(data.clientes || [])
@@ -124,7 +126,13 @@
 
     } catch (_) {
 
-      return { viajes: new Set(), gastos: new Set(), camiones: new Set(), clientes: new Set() };
+      return {
+        viajes: new Set(),
+        gastos: new Set(),
+        ingresos: new Set(),
+        camiones: new Set(),
+        clientes: new Set()
+      };
 
     }
 
@@ -136,13 +144,15 @@
 
     localStorage.setItem(SYNCED_IDS_KEY, JSON.stringify({
 
-      viajes: [...sets.viajes],
+      viajes: [...(sets.viajes || [])],
 
-      gastos: [...sets.gastos],
+      gastos: [...(sets.gastos || [])],
 
-      camiones: [...sets.camiones],
+      ingresos: [...(sets.ingresos || [])],
 
-      clientes: [...sets.clientes]
+      camiones: [...(sets.camiones || [])],
+
+      clientes: [...(sets.clientes || [])]
 
     }));
 
@@ -204,22 +214,56 @@
 
 
 
-  function enqueue(item) {
+  function queueItemRowId(item) {
+    const row = item?.rows?.[0];
+    const id = row?.id || row?.uid;
+    return id ? String(id) : '';
+  }
 
+  function isQueueDelete(item) {
+    return item?.rows?.[0]?.accion === 'eliminar';
+  }
+
+  function getPendingDeleteIdsForMode(mode) {
+    const ids = new Set();
+    loadQueue().forEach((item) => {
+      if (item.mode !== mode || !isQueueDelete(item)) return;
+      const id = queueItemRowId(item);
+      if (id) ids.add(id);
+    });
+    return ids;
+  }
+
+  function enqueue(item) {
     if (!isSyncEnabled()) return;
 
-    const queue = loadQueue();
+    const itemRowId = queueItemRowId(item);
+    const itemIsDelete = isQueueDelete(item);
+    let queue = loadQueue();
+
+    // La intención más reciente gana entre guardar y eliminar el mismo ID.
+    if (itemRowId) {
+      queue = queue.filter((queued) => {
+        if (queued.mode !== item.mode || queueItemRowId(queued) !== itemRowId) return true;
+        return isQueueDelete(queued) === itemIsDelete;
+      });
+    }
 
     const exists = queue.findIndex((q) => q.id === item.id);
-
-    if (exists >= 0) queue[exists] = { ...queue[exists], ...item, intentos: 0 };
-
-    else queue.push({ ...item, intentos: 0, creado_en: horaRegistroAhora() });
+    const actualizadoEn = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    if (exists >= 0) {
+      queue[exists] = { ...queue[exists], ...item, intentos: 0, actualizado_en: actualizadoEn };
+    } else {
+      queue.push({
+        ...item,
+        intentos: 0,
+        creado_en: horaRegistroAhora(),
+        actualizado_en: actualizadoEn
+      });
+    }
 
     saveQueue(queue);
-
     scheduleSync();
-
   }
 
 
@@ -486,7 +530,11 @@
 
       telefono: record.telefono || '',
 
-      marca: record.marca || '',
+      brevete: record.brevete || record.marca || '',
+
+      marca: record.brevete || record.marca || '',
+
+      tipo: typeof normalizeVehiculoTipo === 'function' ? normalizeVehiculoTipo(record.tipo) : (record.tipo || 'camion'),
 
       fecha_registro: record.fechaRegistro || (typeof todayISO === 'function' ? todayISO() : ''),
 
@@ -549,7 +597,12 @@
 
       const ok = await confirmarEliminado(id, item.mode);
 
-      if (ok) unmarkSynced(item.mode, id);
+      if (ok) {
+        unmarkSynced(item.mode, id);
+        document.dispatchEvent(new CustomEvent('mantilla:sync-item', {
+          detail: { mode: item.mode, id: String(id), action: 'delete', ok: true }
+        }));
+      }
 
       return ok;
 
@@ -593,13 +646,13 @@
 
         item.intentos = (item.intentos || 0) + 1;
 
-        if (item.intentos < 8) rest.push(item);
+        rest.push(item);
 
       } catch (_) {
 
         item.intentos = (item.intentos || 0) + 1;
 
-        if (item.intentos < 8) rest.push(item);
+        rest.push(item);
 
       }
 
@@ -607,16 +660,41 @@
 
 
 
+    // No perder acciones nuevas que se encolaron mientras corría este lote.
+    const originalById = new Map(queue.map((item) => [item.id, item]));
+    let hadFreshDuringBatch = false;
+    loadQueue().forEach((latest) => {
+      const original = originalById.get(latest.id);
+      if (original && latest.actualizado_en === original.actualizado_en) return;
+      hadFreshDuringBatch = true;
+      const latestRowId = queueItemRowId(latest);
+      if (latestRowId) {
+        for (let i = rest.length - 1; i >= 0; i -= 1) {
+          if (
+            rest[i].mode === latest.mode
+            && queueItemRowId(rest[i]) === latestRowId
+            && isQueueDelete(rest[i]) !== isQueueDelete(latest)
+          ) {
+            rest.splice(i, 1);
+          }
+        }
+      }
+      const idx = rest.findIndex((item) => item.id === latest.id);
+      if (idx >= 0) rest[idx] = latest;
+      else rest.push(latest);
+    });
     saveQueue(rest);
 
     syncing = false;
 
-
+    // Solo reintentar ya si hubo cola nueva durante el lote (no spamear fallos).
+    if (hadFreshDuringBatch) {
+      scheduleSync();
+      return;
+    }
 
     if (!rest.length && pullEnabled()) {
-
       pullFromServer().catch(() => {});
-
     }
 
   }
@@ -658,6 +736,28 @@
         id: `gastos-${record.id}`,
 
         mode: 'gastos',
+
+        rows: [mapGastoToRow(record)]
+
+      });
+
+    });
+
+  }
+
+
+
+  function syncIngresos(records) {
+
+    if (!isSyncEnabled() || !records?.length) return;
+
+    records.forEach((record) => {
+
+      enqueue({
+
+        id: `ingresos-${record.id}`,
+
+        mode: 'ingresos',
 
         rows: [mapGastoToRow(record)]
 
@@ -749,7 +849,9 @@
 
       telefono: row.telefono || '',
 
-      marca: row.marca || '',
+      brevete: row.brevete || row.marca || '',
+
+      tipo: typeof normalizeVehiculoTipo === 'function' ? normalizeVehiculoTipo(row.tipo) : (row.tipo || 'camion'),
 
       fechaRegistro: typeof normalizeDateISO === 'function'
         ? normalizeDateISO(row.fecha_registro)
@@ -815,15 +917,24 @@
 
   function mapServerViajeToLocal(row, prev) {
 
+    const unidad = row.unidad_medida || prev?.unidad || 'TM';
+    const tipo = (typeof normalizeViajeTipo === 'function'
+      ? normalizeViajeTipo(unidad === 'H' || unidad === 'h' ? 'excavadora' : (prev?.tipo || 'camion'))
+      : ((unidad === 'H' || unidad === 'h') ? 'excavadora' : 'camion'));
+
     return {
 
       id: String(row.id),
 
       campamentoId: prev?.campamentoId || '',
 
+      tipo,
+
       fecha: typeof normalizeDateISO === 'function' ? normalizeDateISO(row.fecha) : String(row.fecha || ''),
 
-      placa: row.placa || '',
+      placa: row.placa || (tipo === 'excavadora'
+        ? (typeof getDefaultExcavadoraValue === 'function' ? getDefaultExcavadoraValue() : 'Excavadora 1')
+        : ''),
 
       chofer: row.chofer || '',
 
@@ -833,7 +944,7 @@
 
       producto: row.producto || '',
 
-      unidad: row.unidad_medida || 'TM',
+      unidad: (tipo === 'excavadora') ? 'H' : (unidad || 'TM'),
 
       peso: money(row.ticket_balanza),
 
@@ -883,9 +994,8 @@
 
     );
 
-    const synced = loadSyncedIds()[mode] || new Set();
-
     const pending = getPendingIdsForMode(mode);
+    const pendingDeletes = getPendingDeleteIdsForMode(mode);
 
     let changed = false;
 
@@ -898,16 +1008,12 @@
     const kept = [];
 
     prevById.forEach((item, id) => {
-
-      if (pending.has(id)) {
-
-        kept.push(item);
-
+      if (pendingDeletes.has(id)) {
+        changed = true;
         return;
-
       }
 
-      if (!synced.has(id)) {
+      if (pending.has(id)) {
 
         kept.push(item);
 
@@ -933,11 +1039,16 @@
 
 
 
+    const newlySynced = [];
+
     (serverRows || []).forEach((row) => {
 
       const id = String(row.id || '').trim();
 
       if (!id) return;
+      if (pendingDeletes.has(id)) return;
+      // Conservar ediciones locales aún no enviadas al servidor.
+      if (pending.has(id)) return;
 
       const prev = byId.get(id) || prevById.get(id);
 
@@ -951,9 +1062,16 @@
 
       byId.set(id, merged);
 
-      markSynced(mode, id);
+      newlySynced.push(id);
 
     });
+
+    if (newlySynced.length) {
+      const sets = loadSyncedIds();
+      if (!sets[mode]) sets[mode] = new Set();
+      newlySynced.forEach((id) => sets[mode].add(String(id)));
+      saveSyncedIds(sets);
+    }
 
 
 
@@ -993,7 +1111,11 @@
       });
       return { ...camp, filas };
     }).filter((camp) => {
-      const valid = (camp.filas || []).some((f) => f.placa && Number(f.toneladas) > 0);
+      const valid = (camp.filas || []).some((f) =>
+        typeof isFilaCampamentoActiva === 'function'
+          ? isFilaCampamentoActiva(f, camp.tipo)
+          : (f.placa && Number(f.toneladas) > 0) || (!f.placa && Number(f.toneladas) > 0 && (camp.tipo === 'excavadora' || f.tipo === 'excavadora'))
+      );
       if (!valid) changed = true;
       return valid;
     });
@@ -1035,11 +1157,13 @@
 
 
 
-      const [camionesRes, gastosRes, viajesRes] = await Promise.all([
+      const [camionesRes, gastosRes, ingresosRes, viajesRes] = await Promise.all([
 
         fetchDatosSeguro('camiones'),
 
         fetchDatosSeguro('gastos'),
+
+        fetchDatosSeguro('ingresos'),
 
         fetchDatosSeguro('viajes')
 
@@ -1081,12 +1205,58 @@
 
       );
 
+      const changedIngresos = applyServerPull(
+
+        'ingresos',
+
+        ingresosRes.rows,
+
+        (row, prev) => mapServerGastoToLocal(row, prev),
+
+        'ingresosExtras',
+
+        typeof compareMaintRecords === 'function' ? compareMaintRecords : undefined,
+
+        { fetchOk: ingresosRes.ok }
+
+      );
+
       // Recuperar horas vacías desde horaRegistro / hora_registro del servidor
       let repairedHoras = false;
       if (gastosRes.ok && Array.isArray(state.mantenimiento)) {
         const byServer = new Map((gastosRes.rows || []).map((r) => [String(r.id), r]));
         state.mantenimiento.forEach((m) => {
           const row = byServer.get(String(m.id));
+          const fixed = resolveGastoHora(row || {}, m);
+          if (fixed && fixed !== '00:00' && fixed !== m.hora) {
+            m.hora = fixed;
+            repairedHoras = true;
+          }
+          if ((!m.horaRegistro || m.horaRegistro === '00:00') && row?.hora_registro) {
+            const reg = typeof normalizeTime === 'function'
+              ? normalizeTime(row.hora_registro)
+              : String(row.hora_registro).trim();
+            if (reg) {
+              m.horaRegistro = reg;
+              repairedHoras = true;
+            }
+          }
+          if ((!m.hora || m.hora === '00:00') && m.horaRegistro) {
+            const fromReg = typeof normalizeTime === 'function'
+              ? normalizeTime(m.horaRegistro)
+              : '';
+            if (fromReg && fromReg !== '00:00') {
+              m.hora = fromReg;
+              repairedHoras = true;
+            }
+          }
+        });
+      }
+
+      if (ingresosRes.ok && Array.isArray(state.ingresosExtras)) {
+        const byServerIng = new Map((ingresosRes.rows || []).map((r) => [String(r.id), r]));
+        state.ingresosExtras.forEach((m) => {
+          const row = byServerIng.get(String(m.id));
           const fixed = resolveGastoHora(row || {}, m);
           if (fixed && fixed !== '00:00' && fixed !== m.hora) {
             m.hora = fixed;
@@ -1148,7 +1318,7 @@
 
 
 
-      const changed = changedCamiones || changedGastos || changedViajes || changedCamps || repairedHoras;
+      const changed = changedCamiones || changedGastos || changedIngresos || changedViajes || changedCamps || repairedHoras;
 
 
 
@@ -1169,6 +1339,8 @@
           camiones: camionesRes.rows.length,
 
           gastos: gastosRes.rows.length,
+
+          ingresos: ingresosRes.rows.length,
 
           viajes: viajesRes.rows.length
 
@@ -1251,9 +1423,15 @@
 
 
     window.addEventListener('online', () => {
-
-      sincronizarPendientes().then(() => pullFromServer());
-
+      sincronizarPendientes()
+        .then(() => pullFromServer())
+        .then((result) => {
+          if (result?.changed && typeof refreshCurrentPage === 'function') refreshCurrentPage();
+          if (typeof Mantilla.updateOfflineBadge === 'function') Mantilla.updateOfflineBadge();
+        })
+        .catch(() => {
+          if (typeof Mantilla.updateOfflineBadge === 'function') Mantilla.updateOfflineBadge();
+        });
     });
 
 
@@ -1265,7 +1443,15 @@
         return;
       }
 
-      sincronizarPendientes().then(() => pullFromServer());
+      sincronizarPendientes()
+        .then(() => pullFromServer())
+        .then((result) => {
+          if (result?.changed && typeof refreshCurrentPage === 'function') refreshCurrentPage();
+          if (typeof Mantilla.updateOfflineBadge === 'function') Mantilla.updateOfflineBadge();
+        })
+        .catch(() => {
+          if (typeof Mantilla.updateOfflineBadge === 'function') Mantilla.updateOfflineBadge();
+        });
 
     });
 
@@ -1296,6 +1482,8 @@
     syncViajesFromCamp,
 
     syncGastos,
+
+    syncIngresos,
 
     syncCamion,
 
