@@ -2,10 +2,10 @@
  * Mantilla — Service Worker (PWA offline)
  * Requiere http://localhost o https:// (no file://)
  *
- * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
+ * HTML/JS/CSS: cache-first con actualización en segundo plano.
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.141';
+const CACHE_NAME = 'mantilla-v1.3.143';
 
 const PRECACHE_URLS = [
   './',
@@ -25,7 +25,7 @@ const PRECACHE_URLS = [
   './assets/vendor/sweetalert2.min.css',
   './assets/vendor/jspdf.umd.min.js',
   './css/base/boot.css?v=3',
-  './css/main.css?v=287',
+  './css/main.css?v=288',
   './css/base/view-transitions.css',
   './css/base/variables.css?v=2',
   './css/layout/shell.css?v=8',
@@ -38,7 +38,7 @@ const PRECACHE_URLS = [
   './css/pages/viajes.css',
   './css/pages/camiones.css',
   './css/components/alerts.css',
-  './css/components/bottom-nav.css?v=26',
+  './css/components/bottom-nav.css?v=27',
   './css/components/modals-forms.css?v=2',
   './css/components/welcome.css',
   './css/components/misc.css?v=2',
@@ -60,7 +60,7 @@ const PRECACHE_URLS = [
   './js/components/welcome.js?v=3',
   './js/components/alerts.js?v=10',
   './js/components/shell.js?v=10',
-  './js/components/nav.js?v=25',
+  './js/components/nav.js?v=26',
   './js/pages/camiones.js?v=25',
   './js/pages/mantenimiento.js?v=26',
   './js/pages/ingresos-extras.js?v=3',
@@ -151,17 +151,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML, JS y CSS: red primero para que la PWA muestre cambios inmediatamente.
+  // App instalada: abrir archivos locales al instante y actualizarlos en segundo plano.
   if (isNavigate || isFreshAsset(url)) {
+    const network = fetch(event.request)
+      .then(async (response) => {
+        await cachePut(event.request, response);
+        return response;
+      });
+    event.waitUntil(network.catch(() => null));
     event.respondWith(
-      fetch(event.request)
-        .then(async (response) => {
-          await cachePut(event.request, response);
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(event.request);
-          if (cached) return cached;
+      caches.match(event.request).then(async (cached) => {
+        if (cached) return cached;
+        try {
+          return await network;
+        } catch (_) {
           if (isNavigate) {
             return (
               (await caches.match('./viajes.html'))
@@ -170,7 +173,8 @@ self.addEventListener('fetch', (event) => {
             );
           }
           return Response.error();
-        })
+        }
+      })
     );
     return;
   }

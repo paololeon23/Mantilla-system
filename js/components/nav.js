@@ -11,17 +11,13 @@
   };
 
   const cache = new Map();
+  const pendingDocs = new Map();
   const viewCache = new Map();
   const staleViews = new Set();
   let navigating = false;
   let navigationScheduled = false;
   let pressedLink = null;
   let queuedNavigationHref = null;
-
-  /** Cede el hilo para que el navegador pinte el feedback y la vista nueva. */
-  function nextPaint() {
-    return new Promise((resolve) => requestAnimationFrame(resolve));
-  }
 
   function setPressedLink(link) {
     if (pressedLink && pressedLink !== link) {
@@ -84,21 +80,29 @@
   async function fetchPageDoc(url) {
     const key = new URL(url, location.href).href;
     if (cache.has(key)) return cache.get(key);
+    if (pendingDocs.has(key)) return pendingDocs.get(key);
 
-    try {
-      const res = await fetch(key, {
-        credentials: 'same-origin',
-        headers: { 'X-Mantilla-SPA': '1' }
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const html = await res.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      cache.set(key, doc);
-      return doc;
-    } catch (err) {
-      cache.delete(key);
-      throw err;
-    }
+    const request = (async () => {
+      try {
+        const res = await fetch(key, {
+          credentials: 'same-origin',
+          headers: { 'X-Mantilla-SPA': '1' }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        cache.set(key, doc);
+        return doc;
+      } catch (err) {
+        cache.delete(key);
+        throw err;
+      } finally {
+        pendingDocs.delete(key);
+      }
+    })();
+
+    pendingDocs.set(key, request);
+    return request;
   }
 
   /** Nodos específicos de página que van después de bottom-nav. */
@@ -216,19 +220,20 @@
       rememberCurrentView();
       if (targetPage && restoreView(targetPage)) {
         if (push) history.pushState({ mantilla: targetPage }, '', target);
-        if (staleViews.delete(targetPage) && typeof Mantilla?.refreshCurrentPage === 'function') {
-          Mantilla.refreshCurrentPage();
-          if (typeof renderLucideIconsNow === 'function') renderLucideIconsNow();
-        }
+        const needsRefresh = staleViews.delete(targetPage);
         if (typeof Mantilla?.updateOfflineBadge === 'function') Mantilla.updateOfflineBadge();
         scrollCurrentViewToTop();
+        if (needsRefresh && typeof Mantilla?.refreshCurrentPage === 'function') {
+          requestAnimationFrame(() => {
+            if (document.body.dataset.page !== targetPage) return;
+            Mantilla.refreshCurrentPage();
+            if (typeof renderLucideIconsNow === 'function') renderLucideIconsNow();
+          });
+        }
         return true;
       }
 
-      // Empezar la carga ya, pero permitir que primero se pinte la pestaña tocada.
-      const pageDocPromise = fetchPageDoc(target);
-      await nextPaint();
-      const doc = await pageDocPromise;
+      const doc = await fetchPageDoc(target);
       replaceShell(doc);
       if (push) {
         const page = doc.body?.dataset?.page || pageFromHref(target);
@@ -353,16 +358,11 @@
       link.addEventListener('focus', () => prefetch(link.href), { passive: true });
     });
 
-    // En móvil no existe hover: preparar todas las secciones cuando el
-    // navegador esté libre para que el primer cambio también sea inmediato.
+    // Preparar las cuatro secciones ahora; el SW las entrega desde caché local.
     const prefetchAppPages = () => {
       document.querySelectorAll('.bottom-nav__tab[href]').forEach((link) => prefetch(link.href));
     };
-    if (typeof requestIdleCallback === 'function') {
-      requestIdleCallback(prefetchAppPages, { timeout: 1500 });
-    } else {
-      setTimeout(prefetchAppPages, 250);
-    }
+    prefetchAppPages();
   }
 
   window.Mantilla = window.Mantilla || {};

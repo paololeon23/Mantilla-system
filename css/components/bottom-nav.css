@@ -138,26 +138,13 @@ body:has(.modal-overlay--open) .bottom-nav {
 
 @media (max-width: 899px) {
   :root {
-    --bottom-nav-content-height: 50px;
-    --bottom-safe-area: env(safe-area-inset-bottom, 0px);
-    --bottom-nav-height: calc(var(--bottom-nav-content-height) + var(--bottom-safe-area));
+    --bottom-nav-height: 56px;
+    --bottom-safe-area: min(env(safe-area-inset-bottom, 0px), 16px);
     --bottom-nav-content-shift: min(var(--bottom-safe-area), 10px);
   }
 
-  .bottom-nav {
-    padding-bottom: var(--bottom-safe-area);
-    grid-template-rows: var(--bottom-nav-content-height);
-  }
-
   .bottom-nav__tab {
-    gap: 0.08rem;
-    padding: 0.1rem 0.25rem;
-    height: var(--bottom-nav-content-height);
-  }
-
-  .bottom-nav__tab svg {
-    width: 20px;
-    height: 20px;
+    padding: 0.25rem;
   }
 
   html {
@@ -209,6 +196,15 @@ body:has(.modal-overlay--open) .bottom-nav {
   .mobile-fab:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
+  }
+}
+
+/* iPhone/iPad: altura nativa de tab bar, aparte del área segura inferior. */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 899px) {
+    :root {
+      --bottom-nav-height: 49px;
+    }
   }
 }
 
