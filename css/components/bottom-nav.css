@@ -5,7 +5,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  height: calc(var(--bottom-nav-height) + var(--bottom-safe-area, 0px));
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
@@ -14,7 +14,7 @@
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
   z-index: 150;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: var(--bottom-safe-area, 0px);
   box-shadow: 0 -8px 32px rgba(11, 18, 32, 0.06);
 }
 
@@ -114,6 +114,11 @@
 @media (max-width: 899px) {
   :root {
     --bottom-nav-height: 56px;
+    --bottom-safe-area: min(env(safe-area-inset-bottom, 0px), 34px);
+  }
+
+  .bottom-nav__tab {
+    padding: 0.25rem;
   }
 
   html {
@@ -126,7 +131,7 @@
     justify-content: center;
     position: fixed;
     right: 1.15rem;
-    bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 1rem);
+    bottom: calc(var(--bottom-nav-height) + var(--bottom-safe-area, 0px) + 1rem);
     width: 3.5rem;
     height: 3.5rem;
     padding: 0;
@@ -165,6 +170,15 @@
   .mobile-fab:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
+  }
+}
+
+/* iPhone/iPad: altura nativa de tab bar, aparte del área segura inferior. */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 899px) {
+    :root {
+      --bottom-nav-height: 49px;
+    }
   }
 }
 

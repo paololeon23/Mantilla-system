@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.110';
+const CACHE_NAME = 'mantilla-v1.3.113';
 
 const PRECACHE_URLS = [
   './',
@@ -25,10 +25,10 @@ const PRECACHE_URLS = [
   './assets/vendor/sweetalert2.min.css',
   './assets/vendor/jspdf.umd.min.js',
   './css/base/boot.css?v=3',
-  './css/main.css?v=267',
+  './css/main.css?v=269',
   './css/base/view-transitions.css',
   './css/base/variables.css',
-  './css/layout/shell.css?v=2',
+  './css/layout/shell.css?v=3',
   './css/components/topbar.css',
   './css/components/buttons.css',
   './css/components/kpi.css',
@@ -38,7 +38,7 @@ const PRECACHE_URLS = [
   './css/pages/viajes.css',
   './css/pages/camiones.css',
   './css/components/alerts.css',
-  './css/components/bottom-nav.css?v=4',
+  './css/components/bottom-nav.css?v=6',
   './css/components/modals-forms.css',
   './css/components/welcome.css',
   './css/components/misc.css',
@@ -46,7 +46,7 @@ const PRECACHE_URLS = [
   './css/responsive/desktop.css',
   './js/config/api-config.js?v=3',
   './js/core.js?v=4',
-  './js/config/constants.js?v=9',
+  './js/config/constants.js?v=10',
   './js/core/utils.js?v=13',
   './js/core/placas.js?v=5',
   './js/core/calculations.js?v=24',
@@ -59,7 +59,7 @@ const PRECACHE_URLS = [
   './js/components/welcome.js?v=3',
   './js/components/alerts.js?v=10',
   './js/components/shell.js?v=10',
-  './js/components/nav.js?v=19',
+  './js/components/nav.js?v=20',
   './js/pages/camiones.js?v=24',
   './js/pages/mantenimiento.js?v=26',
   './js/pages/ingresos-extras.js?v=3',

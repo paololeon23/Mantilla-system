@@ -22,10 +22,21 @@ function refreshLucideIcons() {
 
   // Varias partes de una página solicitan iconos durante el mismo render.
   // Agruparlas evita recorrer todo el DOM repetidamente en teléfonos.
-  queueMicrotask(() => {
-    lucideRefreshQueued = false;
-    lucide.createIcons({ attrs: { 'stroke-width': 1.75 } });
-  });
+  const renderIcons = () => {
+    try {
+      lucide.createIcons({ attrs: { 'stroke-width': 1.75 } });
+    } catch (err) {
+      console.warn('[Mantilla] No se pudieron renderizar los iconos:', err);
+    } finally {
+      lucideRefreshQueued = false;
+    }
+  };
+
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(renderIcons);
+  } else {
+    Promise.resolve().then(renderIcons);
+  }
 }
 
 function mantillaPdfIcon(extraClass = '') {
