@@ -2,17 +2,19 @@
 
 .bottom-nav {
   position: fixed;
-  bottom: calc(0px - env(safe-area-inset-bottom, 0px));
+  bottom: 0;
   left: 0;
-  right: 0;
+  width: 100%;
   height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
   background: #fff;
   border-top: 1px solid rgba(213, 222, 233, 0.8);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: var(--bottom-nav-height);
   align-items: stretch;
   z-index: 150;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
   box-shadow: 0 -8px 32px rgba(11, 18, 32, 0.06);
 }
 
@@ -35,6 +37,7 @@
     opacity 0.1s ease,
     transform 0.1s ease;
   position: relative;
+  height: var(--bottom-nav-height);
   min-width: 0;
   text-decoration: none;
   transform: translateY(var(--bottom-nav-content-shift, 0px));
@@ -112,9 +115,8 @@
 
 @media (max-width: 899px) {
   :root {
-    /* La PWA instalada ya reserva el área del indicador de inicio. */
     --bottom-nav-height: 44px;
-    --bottom-safe-area: 0px;
+    --bottom-safe-area: env(safe-area-inset-bottom, 0px);
     --bottom-nav-content-shift: 0px;
   }
 
