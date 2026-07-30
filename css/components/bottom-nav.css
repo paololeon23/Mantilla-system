@@ -124,7 +124,7 @@ body.swal2-shown .bottom-nav {
 
 @media (max-width: 899px) {
   :root {
-    --bottom-nav-height: 44px;
+    --bottom-nav-height: 50px;
     --bottom-safe-area: 0px;
     --bottom-nav-content-shift: 0px;
   }

@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.134';
+const CACHE_NAME = 'mantilla-v1.3.136';
 
 const PRECACHE_URLS = [
   './',
@@ -25,7 +25,7 @@ const PRECACHE_URLS = [
   './assets/vendor/sweetalert2.min.css',
   './assets/vendor/jspdf.umd.min.js',
   './css/base/boot.css?v=3',
-  './css/main.css?v=280',
+  './css/main.css?v=282',
   './css/base/view-transitions.css',
   './css/base/variables.css?v=2',
   './css/layout/shell.css?v=8',
@@ -38,7 +38,7 @@ const PRECACHE_URLS = [
   './css/pages/viajes.css',
   './css/pages/camiones.css',
   './css/components/alerts.css',
-  './css/components/bottom-nav.css?v=19',
+  './css/components/bottom-nav.css?v=21',
   './css/components/modals-forms.css?v=2',
   './css/components/welcome.css',
   './css/components/misc.css?v=2',
@@ -151,20 +151,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App instalada: abrir desde caché al instante y actualizar en segundo plano.
+  // HTML/JS/CSS: priorizar la red para no mostrar una interfaz desactualizada.
   if (isNavigate || isFreshAsset(url)) {
-    const network = fetch(event.request)
-      .then(async (response) => {
-        await cachePut(event.request, response);
-        return response;
-      });
-    event.waitUntil(network.catch(() => null));
     event.respondWith(
-      caches.match(event.request).then(async (cached) => {
-        if (cached) return cached;
+      (async () => {
         try {
-          return await network;
+          const response = await fetch(event.request);
+          await cachePut(event.request, response);
+          return response;
         } catch (_) {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
           if (isNavigate) {
             return (
               (await caches.match('./viajes.html'))
@@ -174,7 +171,7 @@ self.addEventListener('fetch', (event) => {
           }
           return Response.error();
         }
-      })
+      })()
     );
     return;
   }
