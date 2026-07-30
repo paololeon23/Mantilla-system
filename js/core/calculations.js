@@ -436,6 +436,7 @@ function saveData() {
     state.catalogos = CATALOGOS;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     localStorage.setItem('mantilla_last_save', String(Date.now()));
+    document.dispatchEvent(new CustomEvent('mantilla:data-changed'));
   } catch (err) {
     console.error('[Mantilla] No se pudo guardar en el dispositivo:', err);
   }

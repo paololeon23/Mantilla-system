@@ -11,6 +11,7 @@
   };
 
   const cache = new Map();
+  const viewCache = new Map();
   let navigating = false;
   let navigationScheduled = false;
   let pressedLink = null;
@@ -92,21 +93,64 @@
     }
   }
 
-  /** Modales que van después de bottom-nav (hasta los <script>). */
-  function collectModals(root) {
+  /** Nodos específicos de página que van después de bottom-nav. */
+  function collectPageNodes(root) {
     const bottom = root.getElementById('bottomNav');
     const nodes = [];
     let el = bottom ? bottom.nextElementSibling : null;
     while (el) {
       if (el.tagName === 'SCRIPT') break;
-      nodes.push(el);
+      if (el.id !== 'dpBackdrop' && el.id !== 'msBackdrop') nodes.push(el);
       el = el.nextElementSibling;
     }
     return nodes;
   }
 
-  function isPickerBackdrop(el) {
-    return el?.id === 'dpBackdrop' || el?.id === 'msBackdrop';
+  function pageNodesAnchor(bottomNav) {
+    let anchor = bottomNav?.nextElementSibling || null;
+    while (anchor && anchor.tagName !== 'SCRIPT') {
+      anchor = anchor.nextElementSibling;
+    }
+    return anchor;
+  }
+
+  function rememberCurrentView() {
+    const page = document.body.dataset.page || pageFromHref(location.href);
+    const main = document.getElementById('mainWrapper');
+    if (!page || !main) return;
+    viewCache.set(page, {
+      main,
+      fab: document.getElementById('fabAdd'),
+      nodes: collectPageNodes(document),
+      title: document.title
+    });
+  }
+
+  function restoreView(page) {
+    const view = viewCache.get(page);
+    const oldMain = document.getElementById('mainWrapper');
+    const bottomNav = document.getElementById('bottomNav');
+    if (!view?.main || !oldMain || !bottomNav) return false;
+
+    oldMain.replaceWith(view.main);
+
+    const parent = bottomNav.parentNode || document.body;
+    const oldFab = document.getElementById('fabAdd');
+    if (view.fab) {
+      if (oldFab) oldFab.replaceWith(view.fab);
+      else parent.insertBefore(view.fab, bottomNav);
+    } else {
+      oldFab?.remove();
+    }
+
+    collectPageNodes(document).forEach((node) => node.remove());
+    const anchor = pageNodesAnchor(bottomNav);
+    view.nodes.forEach((node) => parent.insertBefore(node, anchor));
+
+    document.body.dataset.page = page;
+    document.title = view.title;
+    syncNavActive(page);
+    return true;
   }
 
   function replaceShell(doc) {
@@ -131,21 +175,13 @@
       oldFab.remove();
     }
 
-    // Quitar modales de la página anterior (después del bottom-nav)
-    let sibling = bottomNav?.nextElementSibling;
-    while (sibling && sibling.tagName !== 'SCRIPT') {
-      const next = sibling.nextElementSibling;
-      if (!isPickerBackdrop(sibling)) sibling.remove();
-      sibling = next;
-    }
+    // Quitar nodos de la página anterior (ya quedaron guardados en memoria).
+    collectPageNodes(document).forEach((node) => node.remove());
 
     // Insertar antes del primer <script> (o al final del body)
-    let anchor = bottomNav ? bottomNav.nextSibling : null;
-    while (anchor && anchor.nodeType === 1 && anchor.tagName !== 'SCRIPT') {
-      anchor = anchor.nextSibling;
-    }
+    const anchor = pageNodesAnchor(bottomNav);
 
-    collectModals(doc).forEach((n) => {
+    collectPageNodes(doc).forEach((n) => {
       parent.insertBefore(n.cloneNode(true), anchor);
     });
 
@@ -158,8 +194,9 @@
 
   async function navigate(href, push = true) {
     const target = new URL(href, location.href).href;
+    const targetPage = pageFromHref(target);
     if (navigating || !isAppPage(target)) return false;
-    if (target === location.href) return true;
+    if (targetPage === document.body.dataset.page) return true;
 
     navigating = true;
 
@@ -167,6 +204,14 @@
       if (typeof closeOverlayPickers === 'function') closeOverlayPickers();
       if (typeof closeTopbarProfileMenu === 'function') closeTopbarProfileMenu();
       if (window.innerWidth < 900 && typeof closeSidebar === 'function') closeSidebar();
+
+      rememberCurrentView();
+      if (targetPage && restoreView(targetPage)) {
+        if (push) history.pushState({ mantilla: targetPage }, '', target);
+        if (typeof Mantilla?.updateOfflineBadge === 'function') Mantilla.updateOfflineBadge();
+        window.scrollTo(0, 0);
+        return true;
+      }
 
       // Empezar la carga ya, pero permitir que primero se pinte la pestaña tocada.
       const pageDocPromise = fetchPageDoc(target);
@@ -261,6 +306,12 @@
     document.addEventListener('pointerup', clearPressedLink, { passive: true });
     document.addEventListener('pointercancel', clearPressedLink, { passive: true });
     document.addEventListener('click', onLinkClick);
+    document.addEventListener('mantilla:data-changed', () => {
+      const currentPage = document.body.dataset.page;
+      viewCache.forEach((_, cachedPage) => {
+        if (cachedPage !== currentPage) viewCache.delete(cachedPage);
+      });
+    });
 
     window.addEventListener('popstate', () => {
       if (!history.state?.mantilla) return;
