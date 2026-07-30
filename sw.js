@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.128';
+const CACHE_NAME = 'mantilla-v1.3.130';
 
 const PRECACHE_URLS = [
   './',
@@ -38,7 +38,7 @@ const PRECACHE_URLS = [
   './css/pages/viajes.css',
   './css/pages/camiones.css',
   './css/components/alerts.css',
-  './css/components/bottom-nav.css?v=12',
+  './css/components/bottom-nav.css?v=15',
   './css/components/modals-forms.css?v=2',
   './css/components/welcome.css',
   './css/components/misc.css?v=2',
@@ -67,7 +67,7 @@ const PRECACHE_URLS = [
   './js/pages/viajes.js?v=93',
   './js/offline.js?v=3',
   './js/app.js?v=37',
-  './js/pwa.js?v=13'
+  './js/pwa.js?v=14'
 ];
 
 const OFFLINE_NAV = ['./viajes.html', './camiones.html', './mantenimiento.html', './ingresos-extras.html', './index.html'];

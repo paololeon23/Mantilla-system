@@ -5,8 +5,8 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
-  padding: 0 0 env(safe-area-inset-bottom, 0px);
+  height: var(--bottom-nav-height);
+  padding: 0;
   box-sizing: border-box;
   background: #fff;
   border-top: 1px solid rgba(213, 222, 233, 0.8);
@@ -16,6 +16,14 @@
   align-items: stretch;
   z-index: 150;
   box-shadow: 0 -8px 32px rgba(11, 18, 32, 0.06);
+}
+
+/* iOS incluye el indicador de inicio dentro del viewport. */
+@supports (-webkit-touch-callout: none) {
+  .bottom-nav {
+    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
 .bottom-nav__tab {
@@ -80,6 +88,15 @@
   outline-offset: -4px;
 }
 
+/*
+ * Android no permite que el backdrop pinte su barra del sistema.
+ * Mantener la navegación sobre el backdrop evita una franja de otro color.
+ */
+body.swal2-shown .bottom-nav {
+  z-index: 1061;
+  pointer-events: none;
+}
+
 .bottom-nav__fab {
   width: 48px;
   height: 48px;
@@ -116,8 +133,14 @@
 @media (max-width: 899px) {
   :root {
     --bottom-nav-height: 44px;
-    --bottom-safe-area: env(safe-area-inset-bottom, 0px);
+    --bottom-safe-area: 0px;
     --bottom-nav-content-shift: 0px;
+  }
+
+  @supports (-webkit-touch-callout: none) {
+    :root {
+      --bottom-safe-area: env(safe-area-inset-bottom, 0px);
+    }
   }
 
   .bottom-nav__tab {
