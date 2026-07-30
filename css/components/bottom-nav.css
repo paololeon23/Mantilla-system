@@ -138,9 +138,9 @@ body:has(.modal-overlay--open) .bottom-nav {
 
 @media (max-width: 899px) {
   :root {
-    --bottom-nav-height: 48px;
-    --bottom-safe-area: 0px;
-    --bottom-nav-content-shift: 0px;
+    --bottom-nav-height: 56px;
+    --bottom-safe-area: min(env(safe-area-inset-bottom, 0px), 34px);
+    --bottom-nav-content-shift: min(var(--bottom-safe-area), 10px);
   }
 
   .bottom-nav__tab {
