@@ -144,7 +144,18 @@ body:has(.modal-overlay--open) .bottom-nav {
   }
 
   .bottom-nav__tab {
+    gap: 0.1rem;
     padding: 0.25rem;
+  }
+
+  .bottom-nav__tab svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .bottom-nav__tab span {
+    font-size: 0.68rem;
+    line-height: 1;
   }
 
   html {
