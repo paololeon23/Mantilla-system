@@ -5,7 +5,7 @@
  * HTML/JS/CSS: cache-first con actualización en segundo plano.
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.154';
+const CACHE_NAME = 'mantilla-v1.3.155';
 
 const PRECACHE_URLS = [
   './',
@@ -25,12 +25,12 @@ const PRECACHE_URLS = [
   './assets/vendor/sweetalert2.min.css',
   './assets/vendor/jspdf.umd.min.js',
   './css/base/boot.css?v=3',
-  './css/main.css?v=294',
+  './css/main.css?v=295',
   './css/base/view-transitions.css',
   './css/base/variables.css?v=2',
   './css/layout/shell.css?v=8',
   './css/components/topbar.css',
-  './css/components/buttons.css?v=2',
+  './css/components/buttons.css?v=3',
   './css/components/kpi.css',
   './css/components/filters.css',
   './css/components/panels-tables.css',

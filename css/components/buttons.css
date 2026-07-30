@@ -175,27 +175,16 @@
   background: linear-gradient(165deg, #ffecec 0%, #fdd9d9 100%);
   border-color: rgba(220, 38, 38, 0.24);
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.14);
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .btn--action-print .mantilla-pdf-icon {
-  transition: transform 0.15s ease;
+  transform: none;
+  transition: none;
 }
 
 .btn--action-print:hover .mantilla-pdf-icon {
-  transform: translateY(-1px) scale(1.06);
-}
-
-@media (hover: none), (pointer: coarse) {
-  .btn--action-print:hover {
-    transform: none;
-  }
-
-  .btn--action-print .mantilla-pdf-icon,
-  .btn--action-print:hover .mantilla-pdf-icon {
-    transform: none;
-    transition: none;
-  }
+  transform: none;
 }
 
 .mantilla-pdf-icon {
@@ -285,6 +274,10 @@
 
 .btn--action:active {
   transform: scale(0.97) translateY(0);
+}
+
+.btn--action-print:active {
+  transform: none;
 }
 
 .btn--action svg {
