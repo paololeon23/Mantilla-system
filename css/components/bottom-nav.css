@@ -124,9 +124,9 @@ body.swal2-shown .bottom-nav {
 
 @media (max-width: 899px) {
   :root {
-    --bottom-nav-height: 50px;
-    --bottom-safe-area: 0px;
-    --bottom-nav-content-shift: 0px;
+    --bottom-safe-area: env(safe-area-inset-bottom, 0px);
+    --bottom-nav-height: calc(50px + var(--bottom-safe-area));
+    --bottom-nav-content-shift: min(var(--bottom-safe-area), 10px);
   }
 
   .bottom-nav__tab {

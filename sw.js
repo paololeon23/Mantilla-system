@@ -5,7 +5,7 @@
  * HTML/JS/CSS: network-first (evita quedar atrapado en versiones viejas).
  * Resto: cache-first con actualización en segundo plano.
  */
-const CACHE_NAME = 'mantilla-v1.3.136';
+const CACHE_NAME = 'mantilla-v1.3.137';
 
 const PRECACHE_URLS = [
   './',
@@ -151,17 +151,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML/JS/CSS: priorizar la red para no mostrar una interfaz desactualizada.
+  // App instalada: abrir desde caché al instante y actualizar en segundo plano.
   if (isNavigate || isFreshAsset(url)) {
+    const network = fetch(event.request)
+      .then(async (response) => {
+        await cachePut(event.request, response);
+        return response;
+      });
+    event.waitUntil(network.catch(() => null));
     event.respondWith(
-      (async () => {
+      caches.match(event.request).then(async (cached) => {
+        if (cached) return cached;
         try {
-          const response = await fetch(event.request);
-          await cachePut(event.request, response);
-          return response;
+          return await network;
         } catch (_) {
-          const cached = await caches.match(event.request);
-          if (cached) return cached;
           if (isNavigate) {
             return (
               (await caches.match('./viajes.html'))
@@ -171,7 +174,7 @@ self.addEventListener('fetch', (event) => {
           }
           return Response.error();
         }
-      })()
+      })
     );
     return;
   }
