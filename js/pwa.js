@@ -41,13 +41,8 @@
         })
         .catch((err) => console.warn('[Mantilla] Service worker:', err));
 
-      // Si hay un SW nuevo tomando control, recargar una vez para scripts frescos
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-        refreshing = true;
-        location.reload();
-      });
+      // Una actualización toma control sin interrumpir la pantalla actual.
+      // El código nuevo se aplicará al volver a abrir o recargar manualmente.
     });
   }
 

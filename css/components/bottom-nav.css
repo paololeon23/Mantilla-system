@@ -32,10 +32,14 @@
   font-weight: 600;
   cursor: pointer;
   padding: 0.5rem 0.25rem;
-  transition: color 0.15s ease;
+  transition:
+    color 0.12s ease,
+    opacity 0.1s ease,
+    transform 0.1s ease;
   position: relative;
   min-width: 0;
   text-decoration: none;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -62,8 +66,16 @@
   font-weight: 700;
 }
 
-.bottom-nav__tab:active {
-  opacity: 0.75;
+.bottom-nav__tab:active,
+.bottom-nav__tab--pressed {
+  color: var(--color-primary);
+  opacity: 0.72;
+  transform: scale(0.96);
+}
+
+.bottom-nav__tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -4px;
 }
 
 .bottom-nav__fab {

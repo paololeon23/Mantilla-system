@@ -13,6 +13,25 @@
   const cache = new Map();
   let navigating = false;
   let navigationScheduled = false;
+  let pressedLink = null;
+
+  /** Cede el hilo para que el navegador pinte el feedback y la vista nueva. */
+  function nextPaint() {
+    return new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+
+  function setPressedLink(link) {
+    if (pressedLink && pressedLink !== link) {
+      pressedLink.classList.remove('bottom-nav__tab--pressed');
+    }
+    pressedLink = link?.classList.contains('bottom-nav__tab') ? link : null;
+    pressedLink?.classList.add('bottom-nav__tab--pressed');
+  }
+
+  function clearPressedLink() {
+    pressedLink?.classList.remove('bottom-nav__tab--pressed');
+    pressedLink = null;
+  }
 
   function spaNavAvailable() {
     return location.protocol === 'http:' || location.protocol === 'https:';
@@ -165,12 +184,18 @@
       if (typeof closeTopbarProfileMenu === 'function') closeTopbarProfileMenu();
       if (window.innerWidth < 900 && typeof closeSidebar === 'function') closeSidebar();
 
-      const doc = await fetchPageDoc(target);
+      // Empezar la carga ya, pero permitir que primero se pinte la pestaña tocada.
+      const pageDocPromise = fetchPageDoc(target);
+      await nextPaint();
+      const doc = await pageDocPromise;
       replaceShell(doc);
       if (push) {
         const page = doc.body?.dataset?.page || pageFromHref(target);
         history.pushState({ mantilla: page }, '', target);
       }
+
+      // Completar el render antes del siguiente paint para evitar parpadeos
+      // o una vista intermedia que parezca una recarga.
       if (typeof Mantilla?.initPageForCurrentRoute === 'function') {
         try {
           Mantilla.initPageForCurrentRoute({ reloadData: false });
@@ -211,6 +236,7 @@
         if (currentPage) syncNavActive(currentPage);
       }
     }).finally(() => {
+      clearPressedLink();
       navigationScheduled = false;
     });
   }
@@ -234,6 +260,7 @@
   function onLinkPointerDown(e) {
     const link = e.target.closest('.nav-btn[href], .bottom-nav__tab[href]');
     if (!link || !isAppPage(link.href)) return;
+    setPressedLink(link);
     const page = pageFromHref(link.href);
     if (page) syncNavActive(page);
   }
@@ -249,6 +276,8 @@
     }
 
     document.addEventListener('pointerdown', onLinkPointerDown, { passive: true });
+    document.addEventListener('pointerup', clearPressedLink, { passive: true });
+    document.addEventListener('pointercancel', clearPressedLink, { passive: true });
     document.addEventListener('touchend', onLinkTouchEnd, { passive: false });
     document.addEventListener('click', onLinkClick);
 
