@@ -17,6 +17,17 @@
   animation: fadeIn 0.2s ease;
 }
 
+@media (max-width: 899px) {
+  .modal-overlay--sheet {
+    bottom: calc(0px - env(safe-area-inset-bottom, 0px));
+  }
+
+  .modal-overlay--sheet > .modal {
+    max-height: calc(92dvh + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }

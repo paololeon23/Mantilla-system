@@ -57,6 +57,20 @@
     if (cache.has(key)) return cache.get(key);
 
     const pending = (async () => {
+      if ('caches' in window) {
+        try {
+          const cached = await caches.match(key);
+          if (cached) {
+            const html = await cached.text();
+            fetch(key, {
+              credentials: 'same-origin',
+              headers: { 'X-Mantilla-SPA': '1' }
+            }).catch(() => {});
+            return new DOMParser().parseFromString(html, 'text/html');
+          }
+        } catch (_) { /* continuar con red */ }
+      }
+
       const res = await fetch(key, {
         credentials: 'same-origin',
         headers: { 'X-Mantilla-SPA': '1' }
@@ -167,7 +181,6 @@
       if (typeof Mantilla?.updateOfflineBadge === 'function') {
         Mantilla.updateOfflineBadge();
       }
-      if (typeof refreshLucideIcons === 'function') refreshLucideIcons();
       window.scrollTo(0, 0);
       return true;
     } catch (err) {
@@ -195,9 +208,12 @@
     const page = pageFromHref(link.href);
     if (page) syncNavActive(page);
 
-    navigate(link.href, true).then((ok) => {
-      if (!ok) hardNavigate(link.href);
-    });
+    // Dar al navegador un frame para pintar el botón activo antes del render.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      navigate(link.href, true).then((ok) => {
+        if (!ok) hardNavigate(link.href);
+      });
+    }));
   }
 
   function initNav() {
