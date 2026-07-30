@@ -186,6 +186,18 @@
   transform: translateY(-1px) scale(1.06);
 }
 
+@media (hover: none), (pointer: coarse) {
+  .btn--action-print:hover {
+    transform: none;
+  }
+
+  .btn--action-print .mantilla-pdf-icon,
+  .btn--action-print:hover .mantilla-pdf-icon {
+    transform: none;
+    transition: none;
+  }
+}
+
 .mantilla-pdf-icon {
   display: inline-flex;
   align-items: center;

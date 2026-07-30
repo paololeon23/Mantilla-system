@@ -1,8 +1,8 @@
 const KPI_INFO_CONTENT = {
   utilidad: {
-    title: 'Utilidad de viajes',
-    detail: 'Es la ganancia obtenida únicamente por los viajes de camiones y excavadoras que coinciden con los filtros. No incluye ingresos extras ni gastos generales de los vehículos.',
-    formula: 'Ingresos de viajes − combustible y viáticos de esos viajes'
+    title: 'Ingresos de viajes',
+    detail: 'Es todo lo facturado únicamente por los viajes de camiones y excavadoras que coinciden con los filtros. No descuenta gastos ni incluye ingresos extras.',
+    formula: 'Suma del total de todos los viajes del período'
   },
   gastos: {
     title: 'Gastos totales',
@@ -10,9 +10,9 @@ const KPI_INFO_CONTENT = {
     formula: 'Gastos de viajes + gastos generales de todos los vehículos'
   },
   ingresos: {
-    title: 'Ingresos totales',
-    detail: 'Es todo el dinero ingresado por los camiones y excavadoras durante el período, antes de descontar cualquier gasto.',
-    formula: 'Ingresos de todos los viajes + todos los ingresos extras'
+    title: 'Ingresos extras',
+    detail: 'Suma únicamente los conceptos adicionales registrados para camiones o excavadoras. No incluye el dinero facturado por viajes.',
+    formula: 'Suma de todos los ingresos extras del período'
   },
   viajes: {
     title: 'Viajes registrados',
@@ -3142,16 +3142,10 @@ async function downloadCampamentoPdf() {
 function buildCampamentoShareText(camp) {
   const filas = camp.filas || [];
   const tipo = normalizeViajeTipo(camp.tipo);
-  const excavadora = isExcavadoraTipo(tipo);
   const totals = calcCampamentoTotals(filas, camp.tarifa, camp.saldoAnterior || 0, tipo);
-  const rows = filas.filter((f) => isFilaCampamentoActiva(f, tipo));
   return [
-    `*${camp.nombre}*`,
-    `Fecha: ${formatDate(camp.fecha)}`,
-    excavadora ? 'Tipo: Excavadora' : 'Tipo: Camión',
-    excavadora ? `Horas: ${totals.toneladas.toFixed(2)}` : `Camiones: ${rows.length}`,
     `Total: ${formatMoney(totals.totalConSaldo)}`,
-    '— Mantilla · Gestión de Flota'
+    `Fecha: ${formatDate(camp.fecha)}`
   ].join('\n');
 }
 

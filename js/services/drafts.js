@@ -4,7 +4,7 @@
  */
 (function () {
   const DRAFT_VIAJE_KEY = 'mantilla_draft_viaje_v1';
-  const DRAFT_GASTO_KEY = 'mantilla_draft_gasto_v1';
+  const DRAFT_GASTO_KEY = 'mantilla_draft_gasto_v2';
 
   let saveTimer = null;
   let restoring = false;
@@ -118,10 +118,14 @@
   }
 
   function clearViajeDraft() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
     clearKey(DRAFT_VIAJE_KEY);
   }
 
   function clearGastoDraft() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
     clearKey(DRAFT_GASTO_KEY);
   }
 

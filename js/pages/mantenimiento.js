@@ -315,6 +315,7 @@ function saveMantenimiento(e) {
   saveData();
   Mantilla.sync?.syncGastos?.(synced);
   deleted.forEach((id) => Mantilla.sync?.syncDelete?.('gastos', id));
+  resetMaintFormState();
   Mantilla.drafts?.clearGasto?.();
   closeModal('modalMantenimiento');
   renderMantenimiento();
@@ -382,6 +383,8 @@ window.deleteMantenimiento = async (id) => {
   Mantilla.sync?.syncDelete?.('gastos', id);
   await deletingTransition();
   state.mantenimiento = state.mantenimiento.filter((m) => m.id !== id);
+  resetMaintFormState();
+  Mantilla.drafts?.clearGasto?.();
   saveData();
   renderMantenimiento();
   updateKPIs(filterOperaciones(), filterMantenimiento());

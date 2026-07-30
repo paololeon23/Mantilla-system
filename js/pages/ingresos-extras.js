@@ -315,6 +315,7 @@ function saveIngreso(e) {
   saveData();
   Mantilla.sync?.syncIngresos?.(synced);
   deleted.forEach((id) => Mantilla.sync?.syncDelete?.('ingresos', id));
+  resetIngresoFormState();
   Mantilla.drafts?.clearIngreso?.();
   closeModal('modalIngresos');
   renderIngresosExtras();
@@ -334,6 +335,8 @@ window.deleteIngreso = async (id) => {
   Mantilla.sync?.syncDelete?.('ingresos', id);
   await deletingTransition();
   state.ingresosExtras = state.ingresosExtras.filter((m) => m.id !== id);
+  resetIngresoFormState();
+  Mantilla.drafts?.clearIngreso?.();
   saveData();
   renderIngresosExtras();
   updateKPIs(filterOperaciones(), filterMantenimiento());

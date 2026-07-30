@@ -600,17 +600,15 @@ function updateKPIs(ops, maint) {
 
   const totalViajes = ops.reduce((s, o) => s + (Number(o.flete) || 0), 0);
   const totalGastosOp = ops.reduce((s, o) => s + (Number(o.gastos) || 0), 0);
-  const utilidadViajes = totalViajes - totalGastosOp;
   const totalMaint = maint.reduce((s, m) => s + (Number(m.monto) || 0), 0);
   const totalGastos = totalGastosOp + totalMaint;
   const ingresosExtras = typeof filterIngresosExtras === 'function'
     ? filterIngresosExtras()
     : (state.ingresosExtras || []);
   const totalIngresosExtras = ingresosExtras.reduce((s, ingreso) => s + (Number(ingreso.monto) || 0), 0);
-  const ingresosTotales = totalViajes + totalIngresosExtras;
 
   if (kpiUtilidad) {
-    kpiUtilidad.textContent = formatMoney(utilidadViajes);
+    kpiUtilidad.textContent = formatMoney(totalViajes);
     animatePop(kpiUtilidad);
   }
   if (kpiGastos) {
@@ -618,7 +616,7 @@ function updateKPIs(ops, maint) {
     animatePop(kpiGastos);
   }
   if (kpiIngresosExtras) {
-    kpiIngresosExtras.textContent = formatMoney(ingresosTotales);
+    kpiIngresosExtras.textContent = formatMoney(totalIngresosExtras);
     animatePop(kpiIngresosExtras);
   }
   if (kpiViajes) {

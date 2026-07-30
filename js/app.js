@@ -73,6 +73,34 @@ function markIngresoFormClean() {
   if (form) form.dataset.initialSnapshot = ingresoFormSnapshot();
 }
 
+function resetMaintFormState() {
+  const form = $('#formMantenimiento');
+  if (!form) return;
+  form.reset();
+  form.dataset.editIds = '';
+  if ($('#maintId')) $('#maintId').value = '';
+  if (typeof setMaintPlacaValue === 'function') setMaintPlacaValue('');
+  if (typeof renderMaintItems === 'function' && typeof defaultMaintItem === 'function') {
+    renderMaintItems([defaultMaintItem()]);
+  }
+  if (typeof setMaintFormMode === 'function') setMaintFormMode(false);
+  markMaintFormClean();
+}
+
+function resetIngresoFormState() {
+  const form = $('#formIngresos');
+  if (!form) return;
+  form.reset();
+  form.dataset.editIds = '';
+  if ($('#ingresoId')) $('#ingresoId').value = '';
+  if (typeof setIngresoPlacaValue === 'function') setIngresoPlacaValue('');
+  if (typeof renderIngresoItems === 'function' && typeof defaultIngresoItem === 'function') {
+    renderIngresoItems([defaultIngresoItem()]);
+  }
+  if (typeof setIngresoFormMode === 'function') setIngresoFormMode(false);
+  markIngresoFormClean();
+}
+
 function markCamionFormClean() {
   const form = $('#formCamion');
   if (form) form.dataset.initialSnapshot = camionFormSnapshot();
@@ -169,12 +197,7 @@ async function handleModalClose(id) {
       const ok = await confirmDiscardModalData();
       if (!ok) return;
     }
-    const form = $('#formMantenimiento');
-    if (form) {
-      form.reset();
-      form.dataset.editIds = '';
-      $('#maintId').value = '';
-    }
+    resetMaintFormState();
     Mantilla.drafts?.clearGasto?.();
     closeModal(id);
     return;
@@ -184,12 +207,7 @@ async function handleModalClose(id) {
       const ok = await confirmDiscardModalData();
       if (!ok) return;
     }
-    const form = $('#formIngresos');
-    if (form) {
-      form.reset();
-      form.dataset.editIds = '';
-      $('#ingresoId').value = '';
-    }
+    resetIngresoFormState();
     Mantilla.drafts?.clearIngreso?.();
     closeModal(id);
     return;
@@ -281,6 +299,13 @@ function consumeLiveViajeParam() {
 
 function initShared() {
   $('#dpBackdrop')?.addEventListener('click', () => closeOverlayPickers());
+
+  // Cerrar al comenzar el toque; evita esperar al click tardío del móvil.
+  document.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('#sidebarBackdrop')) return;
+    e.preventDefault();
+    closeSidebar();
+  });
 
   // Menú, cierre de sidebar y confirm: delegación (SPA reemplaza esos nodos).
   document.addEventListener('click', (e) => {
