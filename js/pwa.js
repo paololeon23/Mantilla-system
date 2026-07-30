@@ -60,7 +60,8 @@
     btn.className = 'sidebar__install-btn';
     btn.setAttribute('data-tooltip', 'Instalar app');
     btn.hidden = true;
-    btn.innerHTML = '<i data-lucide="download" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i><span>Instalar app</span>';
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="download" class="lucide-icon lucide-icon--sm" aria-hidden="true"></i><span>Preparando instalación…</span>';
     btn.addEventListener('click', onInstallClick);
 
     const version = footer.querySelector('.sidebar__version');
@@ -147,11 +148,14 @@
   async function onInstallClick() {
     if (deferredInstall) {
       deferredInstall.prompt();
+      let accepted = false;
       try {
-        await deferredInstall.userChoice;
+        const choice = await deferredInstall.userChoice;
+        accepted = choice?.outcome === 'accepted';
       } catch (_) { /* ignore */ }
       deferredInstall = null;
-      hideInstallButton();
+      if (accepted) hideInstallButton();
+      else showInstallButton();
       return;
     }
 
@@ -165,7 +169,12 @@
 
   function showInstallButton() {
     const btn = document.getElementById('pwaInstallBtn');
-    if (btn && !isStandalone()) btn.hidden = false;
+    if (!btn || isStandalone()) return;
+    const ready = Boolean(deferredInstall) || isIos();
+    const label = btn.querySelector('span');
+    btn.hidden = false;
+    btn.disabled = !ready;
+    if (label) label.textContent = ready ? 'Instalar app' : 'Preparando instalación…';
   }
 
   function hideInstallButton() {
@@ -198,8 +207,7 @@
     ensureInstallButton();
     ensureUpdateButton();
     if (isStandalone()) hideInstallButton();
-    else if (deferredInstall || isIos()) showInstallButton();
-    else hideInstallButton();
+    else showInstallButton();
 
     const updateBtn = document.getElementById('pwaUpdateBtn');
     if (updateBtn) updateBtn.hidden = !isStandalone();

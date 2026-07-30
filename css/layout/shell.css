@@ -354,6 +354,11 @@ body.sidebar-open {
   color: #fff;
 }
 
+.sidebar__install-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 .sidebar__install-btn[hidden] {
   display: none !important;
 }
